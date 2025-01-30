@@ -16,7 +16,9 @@ return new class extends Migration
             $table->enum('role', ['admin', 'student', 'teacher'])->after('password');
             $table->string('username')->unique()->after('role'); // Making username unique
             $table->string('phone')->unique()->after('username'); // Making phone unique
-            $table->string('company_name')->after('phone');
+            $table->integer('otp')->after('phone')->nullable();
+            $table->timestamp('expires_at')->after('otp')->nullable();
+            $table->string('company_name')->after('expires_at');
             $table->string('address')->after('company_name');
             $table->string('pincode')->after('address');
             $table->integer('city')->after('pincode');
