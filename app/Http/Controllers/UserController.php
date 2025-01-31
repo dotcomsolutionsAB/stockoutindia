@@ -3,8 +3,183 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
-    //
+    // create
+    public function register(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|unique:users,email',
+                'password' => 'required|string|min:6',
+                'role' => ['required', Rule::in(['admin', 'user'])],
+                'phone' => 'required|string|unique:users,phone',
+                'company_name' => 'required|string|max:255',
+                'address' => 'required|string|max:255',
+                'pincode' => 'required|string|max:10',
+                'city' => 'required|integer',
+                'state' => 'required|integer',
+                'gstin' => 'required|string|unique:users,gstin',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $validator->errors()->first(),
+                ], 422);
+            }
+
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => bcrypt($request->password),
+                'role' => $request->role,
+                'username' => $request->phone, // Store phone in username
+                'phone' => $request->phone,
+                'company_name' => $request->company_name,
+                'address' => $request->address,
+                'pincode' => $request->pincode,
+                'city' => $request->city,
+                'state' => $request->state,
+                'gstin' => $request->gstin,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'User registered successfully!',
+                'data' => $user,
+            ], 201);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    // view
+    public function viewUsers($id = null)
+    {
+        try {
+            if ($id) {
+                $user = User::find($id);
+                if (!$user) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'User not found!',
+                    ], 404);
+                }
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'User details fetched successfully!',
+                    'data' => $user,
+                ], 200);
+            } else {
+                $users = User::all();
+                return response()->json([
+                    'success' => true,
+                    'message' => 'All users fetched successfully!',
+                    'data' => $users,
+                ], 200);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    // update
+    public function updateUser(Request $request, $id)
+    {
+        try {
+            $user = User::find($id);
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not found!',
+                ], 404);
+            }
+
+            $validator = Validator::make($request->all(), [
+                'name' => 'sometimes|string|max:255',
+                'email' => ['sometimes', 'email', Rule::unique('users')->ignore($user->id)],
+                'password' => 'sometimes|string|min:6',
+                'role' => ['sometimes', Rule::in(['admin', 'student', 'teacher'])],
+                'phone' => ['sometimes', 'string', Rule::unique('users')->ignore($user->id)],
+                'company_name' => 'sometimes|string|max:255',
+                'address' => 'sometimes|string|max:255',
+                'pincode' => 'sometimes|string|max:10',
+                'city' => 'sometimes|integer',
+                'state' => 'sometimes|integer',
+                'gstin' => ['sometimes', 'string', Rule::unique('users')->ignore($user->id)],
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $validator->errors()->first(),
+                ], 422);
+            }
+
+            // Ensure phone update also updates username
+            if ($request->has('phone')) {
+                $user->username = $request->phone;
+            }
+
+            $user->update($request->only([
+                'name', 'email', 'password', 'role', 'phone', 
+                'company_name', 'address', 'pincode', 'city', 'state', 'gstin'
+            ]));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'User updated successfully!',
+                'data' => $user,
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    // delete
+    public function deleteUser($id)
+    {
+        try {
+            $user = User::find($id);
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not found!',
+                ], 404);
+            }
+
+            $user->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'User deleted successfully!',
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
 }

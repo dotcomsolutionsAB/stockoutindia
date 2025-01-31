@@ -8,117 +8,111 @@ use Illuminate\Http\Request;
 class AuthController extends Controller
 {
     //
-     // user `login`
-     public function login(Request $request, $otp = null)
-     {
-        if ($otp) 
+    // user `login`
+    public function login(Request $request, $otp = null)
+    {
+    if ($otp) 
+    {
+        $request->validate([
+            'username' => 'required',
+        ]);
+        
+        $otpRecord = User::select('otp', 'expires_at')
+        ->where('username', $request->username)
+        ->first();
+
+        if($otpRecord)
         {
-            $request->validate([
-                'username' => 'required',
-            ]);
-            
-            $otpRecord = User::select('otp', 'expires_at')
-            ->where('username', $request->username)
-            ->first();
-
-            if($otpRecord)
+            if(!$otpRecord || $otpRecord->otp != $otp)
             {
-                if(!$otpRecord || $otpRecord->otp != $otp)
-                {
-                    return response()->json([
-                        'code' => 200,
-                        'success' => false,
-                        'message' => 'Sorry, invalid OTP!'
-                    ], 200);
-                }
-                elseif ($otpRecord->expires_at < now()) {
-                    return response()->json([
-                        'code' => 200,
-                        'success' => false,
-                        'message' => 'Sorry, OTP has expired!'
-                    ], 200);
-                }
-
-                else {
-                    // Remove OTP record after successful validation
-                    User::select('otp')->where('username', $request->username)->update(['otp' => null, 'expires_at' => null]);
-
-                    // Retrieve the use
-                    $user = User::where('username', $request->username)->first();
-
-                    // Generate a sanctrum token
-                    $generated_token = $user->createToken('API TOKEN')->plainTextToken;
-
-                    return response()->json([
-                        'code' => 200,
-                        'success' => true,
-                        'message' => 'User logged in successfully!',
-                        'data' => [
-                            'token' => $generated_token,
-                            'name' => $user->name,
-                            'role' => $user->role,
-                        ],
-                    ], 200);
-                }
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sorry, invalid OTP!'
+                ], 401);
+            }
+            elseif ($otpRecord->expires_at < now()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sorry, OTP has expired!'
+                ], 400);
             }
 
             else {
-                    return response()->json([
-                        'code' => 200,
-                        'success' => false,
-                        'message' => 'User not register.',
-                    ], 200);
-            }
-        }
-        
-        else {
-            $request->validate([
-                'username' => 'required|string',
-                'password' => [
-                    'required',
-                    'string',
-                    'min:8', // Minimum 8 characters
-                    'regex:/[A-Z]/', // At least one uppercase letter
-                    'regex:/[a-z]/', // At least one lowercase letter
-                    'regex:/[0-9]/', // At least one number
-                    'regex:/[@$!%*?&#]/', // At least one special character
-                ],
-            ]);
+                // Remove OTP record after successful validation
+                User::select('otp')->where('username', $request->username)->update(['otp' => null, 'expires_at' => null]);
 
-            if(Auth::attempt(['username' => $request->username, 'password' => $request->password]))
-            {
-                $user = Auth::user();
+                // Retrieve the use
+                $user = User::where('username', $request->username)->first();
 
-                if ($user->role == "user") {
-                    // Revoke previous tokens
-                    $user->tokens()->delete();
-                }
                 // Generate a sanctrum token
                 $generated_token = $user->createToken('API TOKEN')->plainTextToken;
 
                 return response()->json([
-                    'code' => 200,
                     'success' => true,
+                    'message' => 'User logged in successfully!',
                     'data' => [
                         'token' => $generated_token,
                         'name' => $user->name,
                         'role' => $user->role,
-                        'username' => $user->username,
                     ],
-                    'message' => 'User logged in successfully!',
                 ], 200);
             }
+        }
 
-            else {
+        else {
                 return response()->json([
-                    'code' => 401,
                     'success' => false,
                     'message' => 'User not register.',
-                ], 401);
-            }
+                ], 404);
         }
-     }
- 
+    }
+    
+    else {
+        $request->validate([
+            'username' => 'required|string',
+            'password' => [
+                'required',
+                'string',
+                'min:8', // Minimum 8 characters
+                'regex:/[A-Z]/', // At least one uppercase letter
+                'regex:/[a-z]/', // At least one lowercase letter
+                'regex:/[0-9]/', // At least one number
+                'regex:/[@$!%*?&#]/', // At least one special character
+            ],
+        ]);
+
+        if(Auth::attempt(['username' => $request->username, 'password' => $request->password]))
+        {
+            $user = Auth::user();
+
+            if ($user->role == "user") {
+                // Revoke previous tokens
+                $user->tokens()->delete();
+            }
+            // Generate a sanctrum token
+            $generated_token = $user->createToken('API TOKEN')->plainTextToken;
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'token' => $generated_token,
+                    'name' => $user->name,
+                    'role' => $user->role,
+                    'username' => $user->username,
+                ],
+                'message' => 'User logged in successfully!',
+            ], 200);
+        }
+
+        else {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not register.',
+            ], 404);
+        }
+    }
+    }
+
     // user `logout`
     public function logout(Request $request)
     {
@@ -200,7 +194,6 @@ class AuthController extends Controller
                 $response = $whatsappUtility->sendWhatsApp($mobile, $templateParams, $mobile, 'OTP Campaign');
 
                 return response()->json([
-                    'code' => 200,
                     'success' => true,
                     'message' => 'Otp sent successfully!'
                 ], 200);
@@ -208,10 +201,9 @@ class AuthController extends Controller
         }
         else {
             return response()->json([
-                'code' => 200,
                 'success' => true,
                 'message' => 'User has not registered!',
-            ], 200);
+            ], 404);
         }
     }
 }
