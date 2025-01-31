@@ -16,4 +16,13 @@ class SubIndustryModel extends Model
         'slug',
         'industry',
     ];
+
+    /**
+     * Relationship with IndustryModel
+     * This will allow us to join the industry table and fetch the name instead of the ID.
+     */
+    public function industry()
+    {
+        return $this->belongsTo(IndustryModel::class, 'industry', 'id'); // industry = foreign key in sub_industries
+    }
 }

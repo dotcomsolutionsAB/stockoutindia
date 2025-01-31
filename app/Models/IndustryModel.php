@@ -17,4 +17,13 @@ class IndustryModel extends Model
         'desc',
         'sequence',
     ];
+
+     /**
+     * Relationship with SubIndustryModel
+     * This will allow industries to fetch their related sub-industries.
+     */
+    public function subIndustries()
+    {
+        return $this->hasMany(SubIndustryModel::class, 'industry', 'id'); // industry = foreign key in sub_industries
+    }
 }

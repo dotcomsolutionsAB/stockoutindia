@@ -24,6 +24,7 @@ class ReviewController extends Controller
 
             // Validate request
             $validatedData = $request->validate([
+                'product' => 'nullable|numeric|exists:t_products,id',
                 'rating' => 'required|numeric|min:1|max:5',
                 'review' => 'required|string',
             ]);
@@ -31,6 +32,7 @@ class ReviewController extends Controller
             // Create Review
             $review = new ReviewModel();
             $review->user = Auth::id(); // Logged-in user's ID
+            $review->product = $validatedData['product'];
             $review->rating = $validatedData['rating'];
             $review->review = $validatedData['review'];
             $review->save();
@@ -38,7 +40,7 @@ class ReviewController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Review added successfully!',
-                'data' => $review
+                'data' => $review->makeHidden(['id', 'created_at', 'updated_at'])
             ], 201);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -60,16 +62,18 @@ class ReviewController extends Controller
     public function getReviews($id = null)
     {
         try {
-            // Fetch all reviews with the user's name
-            $reviews = ReviewModel::with('userDetails:id,name');
+            // Initialize query with the user details relationship
+            $query = ReviewModel::with('userDetails:id,name');
 
             // Apply ID filter if provided
             if ($id) {
                 $query->where('id', $id);
             }
 
+            // Fetch the data
             $reviews = $query->get();
 
+            // Check if no reviews exist
             if ($reviews->isEmpty()) {
                 return response()->json([
                     'success' => false,
@@ -101,6 +105,7 @@ class ReviewController extends Controller
             ], 500);
         }
     }
+
 
     // update
     public function updateReview(Request $request, $id)
@@ -134,11 +139,15 @@ class ReviewController extends Controller
 
             // Validate request
             $validatedData = $request->validate([
+                'product' => 'nullable|numeric|exists:t_products,id',
                 'rating' => 'nullable|numeric|min:1|max:5',
                 'review' => 'nullable|string',
             ]);
 
             // Update review fields if provided
+            if ($request->has('product')) {
+                $review->product = $validatedData['product'];
+            }
             if ($request->has('rating')) {
                 $review->rating = $validatedData['rating'];
             }
@@ -151,7 +160,7 @@ class ReviewController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Review updated successfully!',
-                'data' => $review
+                'data' => $review->makeHidden(['id', 'created_at', 'updated_at'])
             ], 200);
 
         } catch (\Illuminate\Validation\ValidationException $e) {

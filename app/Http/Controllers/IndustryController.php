@@ -32,7 +32,7 @@ class IndustryController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Industry created successfully!',
-                'data' => $industry,
+                'data' => $industry->makeHidden(['id', 'created_at', 'updated_at']),
             ], 201);
 
         } catch (\Exception $e) {
@@ -114,7 +114,7 @@ class IndustryController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Industry updated successfully!',
-                'data' => $industry,
+                'data' => $industry->makeHidden(['id', 'created_at', 'updated_at']),
             ], 200);
 
         } catch (\Exception $e) {

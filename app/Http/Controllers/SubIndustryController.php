@@ -35,7 +35,7 @@ class SubIndustryController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Industry created successfully!',
-                'data' => $industry
+                'data' => $industry->makeHidden(['id', 'created_at', 'updated_at'])
             ], 201);
         } catch (QueryException $e) {
             return response()->json([
@@ -50,32 +50,45 @@ class SubIndustryController extends Controller
     {
         try {
             if ($id) {
-                $industry = SubIndustryModel::find($id);
-                if (!$industry) {
+                $subIndustry = SubIndustryModel::with('industry')->find($id);
+                
+                if (!$subIndustry) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Industry not found!',
+                        'message' => 'Sub-Industry not found!',
                     ], 404);
                 }
+    
                 return response()->json([
                     'success' => true,
-                    'message' => 'Industry retrieved successfully!',
-                    'data' => $industry,
+                    'message' => 'Sub-Industry retrieved successfully!',
+                    'data' => [
+                        'name' => $subIndustry->name,
+                        'slug' => $subIndustry->slug,
+                        'industry_name' => optional($subIndustry->industry)->name // Prevents "Attempt to read property 'name' on int"
+                    ],
                 ], 200);
             }
-
-            $industries = SubIndustryModel::all();
+    
+            $subIndustries = SubIndustryModel::with('industry')->get();
+    
             return response()->json([
                 'success' => true,
-                'message' => 'Industries fetched successfully!',
-                'data' => $industries,
+                'message' => 'Sub-Industries fetched successfully!',
+                'data' => $subIndustries->map(function ($subIndustry) {
+                    return [
+                        'name' => $subIndustry->name,
+                        'slug' => $subIndustry->slug,
+                        'industry_name' => optional($subIndustry->industry)->name, // Avoids errors if industry is null
+                    ];
+                }),
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error fetching industries: ' . $e->getMessage(),
+                'message' => 'Error fetching sub-industries: ' . $e->getMessage(),
             ], 500);
-        }
+        }     
     }
 
     // edit
@@ -93,7 +106,7 @@ class SubIndustryController extends Controller
             $validator = Validator::make($request->all(), [
                 'name' => 'sometimes|string|max:255',
                 'slug' => 'sometimes|string|max:255|unique:t_industries,slug,' . $id,
-                'industry' => 'sometimes|integer',
+                'industry' => 'sometimes|integer|exists:t_industries,id',
             ]);
 
             if ($validator->fails()) {
@@ -108,7 +121,7 @@ class SubIndustryController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Industry updated successfully!',
-                'data' => $industry,
+                'data' => $industry->makeHidden(['id', 'created_at', 'updated_at']),
             ], 200);
         } catch (QueryException $e) {
             return response()->json([

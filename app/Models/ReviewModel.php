@@ -13,6 +13,7 @@ class ReviewModel extends Model
     // Fillable columns
     protected $fillable = [
         'user',
+        'product',
         'rating',
         'review',
     ];

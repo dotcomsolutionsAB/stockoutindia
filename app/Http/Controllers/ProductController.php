@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\ProductModel;
-use App\Models\UploadModels;
+use App\Models\UploadModel;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Database\QueryException;
 use Auth;
@@ -22,8 +22,8 @@ class ProductController extends Controller
                 'offer_quantity' => 'required|integer',
                 'minimum_quantity' => 'required|integer',
                 'unit' => 'required|string',
-                'industry' => 'required|integer',
-                'sub_industry' => 'required|integer',
+                'industry' => 'required|integer|exists:t_industries,id',
+                'sub_industry' => 'required|integer|exists:t_sub_industries,id',
                 'status' => 'sometimes|in:active,in-active',
                 'description' => 'nullable|string',
             ]);
@@ -53,7 +53,7 @@ class ProductController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Product created successfully!',
-                'data' => $product,
+                'data' => $product->makeHidden(['id', 'created_at', 'updated_at']),
             ], 201);
 
         } catch (\Exception $e) {
@@ -98,7 +98,7 @@ class ProductController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Product details fetched successfully!',
-                    'data' => $product,
+                    'data' => $product->makeHidden(['id', 'created_at', 'updated_at']),
                 ], 200);
             } else {
                 $products = ProductModel::all();
@@ -124,7 +124,7 @@ class ProductController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'All products fetched successfully!',
-                    'data' => $products,
+                    'data' => $products->makeHidden(['id', 'created_at', 'updated_at']),
                 ], 200);
             }
         } catch (\Exception $e) {
@@ -176,7 +176,7 @@ class ProductController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Product updated successfully!',
-                'data' => $product,
+                'data' => $product->makeHidden(['id', 'created_at', 'updated_at']),
             ], 200);
 
         } catch (\Exception $e) {

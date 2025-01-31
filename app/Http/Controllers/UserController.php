@@ -20,12 +20,18 @@ class UserController extends Controller
                 'password' => 'required|string|min:6',
                 'role' => ['required', Rule::in(['admin', 'user'])],
                 'phone' => 'required|string|unique:users,phone',
-                'company_name' => 'required|string|max:255',
-                'address' => 'required|string|max:255',
-                'pincode' => 'required|string|max:10',
-                'city' => 'required|integer',
-                'state' => 'required|integer',
+
+                // Make `gstin` optional; if present, must be unique
                 'gstin' => 'required|string|unique:users,gstin',
+
+                // If `gstin` is present => these are optional,
+                // otherwise they are required.
+
+                'company_name' => 'required_without:gstin|string|max:255',
+                'address' => 'required_without:gstin|string|max:255',
+                'pincode' => 'required_without:gstin|string|max:10',
+                'city' => 'required_without:gstin|integer',
+                'state' => 'required_without:gstin|integer',
             ]);
 
             if ($validator->fails()) {
@@ -53,7 +59,7 @@ class UserController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'User registered successfully!',
-                'data' => $user,
+                'data' => $user->makeHidden(['id', 'created_at', 'updated_at']),
             ], 201);
 
         } catch (\Exception $e) {

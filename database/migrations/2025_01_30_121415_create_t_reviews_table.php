@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('t_reviews', function (Blueprint $table) {
             $table->id();
             $table->integer('user');
+            $table->integer('product');
             $table->float('rating');
             $table->longText('review');
             $table->timestamps();

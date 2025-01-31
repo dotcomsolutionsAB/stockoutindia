@@ -8,13 +8,13 @@ use App\Http\Controllers\MasterController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SubIndustryController;
-use App\Http\Controllers\UsersController;
+use App\Http\Controllers\UserController;
 
 // Route::get('/user', function (Request $request) {
 //     return $request->user();
 // })->middleware('auth:sanctum');
 
-Route::post('/register', [UsersController::class, 'register']);
+Route::post('/register', [UserController::class, 'register']);
 
 Route::post('/login/{otp?}', [AuthController::class, 'login']);
 
@@ -32,10 +32,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     Route::prefix('sub_industry')->group(function () {
-        Route::post('/', [ReviewController::class, 'createSubIndustry']); // Create a new review record
-        Route::get('/{id?}', [ReviewController::class, 'getSubIndustries']); // Retrieve review record (all or specific)
-        Route::post('/{id}', [ReviewController::class, 'updateSubIndustry']); // Update a specific review record
-        Route::delete('/{id}', [ReviewController::class, 'deleteSubIndustry']); // Delete a specific review record
+        Route::post('/', [SubIndustryController::class, 'createSubIndustry']); // Create a new review record
+        Route::get('/{id?}', [SubIndustryController::class, 'getSubIndustries']); // Retrieve review record (all or specific)
+        Route::post('/{id}', [SubIndustryController::class, 'updateSubIndustry']); // Update a specific review record
+        Route::delete('/{id}', [SubIndustryController::class, 'deleteSubIndustry']); // Delete a specific review record
     });
 
     Route::prefix('product')->group(function () {
@@ -53,9 +53,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     Route::prefix('user')->group(function () {
-        Route::post('/', [ReviewController::class, 'register']); // Create a new user
-        Route::get('/{id?}', [ReviewController::class, 'viewUsers']); // Retrieve user (all or specific)
-        Route::post('/{id}', [ReviewController::class, 'updateUser']); // Update a speciic user
-        Route::delete('/{id}', [ReviewController::class, 'deleteUser']); // Update a specific user
+        Route::post('/', [UserController::class, 'register']); // Create a new user
+        Route::get('/{id?}', [UserController::class, 'viewUsers']); // Retrieve user (all or specific)
+        Route::post('/{id}', [UserController::class, 'updateUser']); // Update a speciic user
+        Route::delete('/{id}', [UserController::class, 'deleteUser']); // Update a specific user
     });
 });
