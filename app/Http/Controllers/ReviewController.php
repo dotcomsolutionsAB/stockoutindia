@@ -102,6 +102,7 @@ class ReviewController extends Controller
                 'success' => true,
                 'message' => 'Reviews fetched successfully!',
                 'data' => $reviews,
+                'total_record' => count($reviews),
             ], 200);
 
         } catch (\Exception $e) {

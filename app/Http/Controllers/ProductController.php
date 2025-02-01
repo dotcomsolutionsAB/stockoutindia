@@ -123,6 +123,7 @@ class ProductController extends Controller
                     'success' => true,
                     'message' => 'All products fetched successfully!',
                     'data' => $products->makeHidden(['id', 'created_at', 'updated_at']),
+                    'total_record' => count($products),
                 ], 200);
             }
         } catch (\Exception $e) {
