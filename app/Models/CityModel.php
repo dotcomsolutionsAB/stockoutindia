@@ -15,4 +15,10 @@ class CityModel extends Model
         'name',
         'state',
     ];
+
+    // Relationship with State
+    public function stateDetails()
+    {
+        return $this->belongsTo(StateModel::class, 'state', 'id');
+    }
 }

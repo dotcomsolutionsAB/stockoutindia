@@ -58,4 +58,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/{id}', [UserController::class, 'updateUser']); // Update a speciic user
         Route::delete('/{id}', [UserController::class, 'deleteUser']); // Update a specific user
     });
+
+    Route::get('/countries', [MasterController::class, 'fetchAllCountries']);
+    Route::get('/states', [MasterController::class, 'fetchAllStates']);
+    Route::get('/cities', [MasterController::class, 'fetchAllCities']);
 });
