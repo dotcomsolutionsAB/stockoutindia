@@ -48,20 +48,44 @@ class IndustryController extends Controller
     public function getIndustries($id = null)
     {
         try {
-            // Fetch industries or single record by ID
-            $industries = $id 
-            ? IndustryModel::with('subIndustries:id,industry,name')->find($id) 
-            : IndustryModel::with('subIndustries:id,industry,name')->get();
-
-            if (!$industries) {
+            // Fetch industries with sub-industries
+            if ($id) {
+                $industry = IndustryModel::with('subIndustries:id,industry,name')->find($id);
+    
+                if (!$industry) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Industry not found!',
+                    ], 404);
+                }
+    
+                // Transform single industry response
+                $formattedIndustry = [
+                    'id' => $industry->id,
+                    'name' => $industry->name,
+                    'slug' => $industry->slug,
+                    'desc' => $industry->desc,
+                    'sequence' => $industry->sequence,
+                    'sub_industries' => $industry->subIndustries->map(function ($sub) {
+                        return [
+                            'id' => $sub->id,
+                            'name' => $sub->name
+                        ];
+                    }),
+                ];
+    
                 return response()->json([
-                    'success' => false,
-                    'message' => 'Industry not found!',
-                ], 404);
+                    'success' => true,
+                    'message' => 'Industry data retrieved successfully!',
+                    'data' => $formattedIndustry,
+                ], 200);
             }
-
-             // Transform data to format sub-industries as an array of objects
-            $industries->transform(function ($industry) {
+    
+            // Fetch all industries
+            $industries = IndustryModel::with('subIndustries:id,industry,name')->get();
+    
+            // Transform all industries response
+            $formattedIndustries = $industries->map(function ($industry) {
                 return [
                     'id' => $industry->id,
                     'name' => $industry->name,
@@ -76,14 +100,14 @@ class IndustryController extends Controller
                     }),
                 ];
             });
-
+    
             return response()->json([
                 'success' => true,
                 'message' => 'Industry data retrieved successfully!',
-                'data' => $industries,
+                'data' => $formattedIndustries,
                 'total_record' => $industries->count(),
             ], 200);
-
+    
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -92,6 +116,7 @@ class IndustryController extends Controller
             ], 500);
         }
     }
+    
 
     // update
     public function updateIndustry(Request $request, $id)
