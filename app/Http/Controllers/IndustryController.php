@@ -62,7 +62,7 @@ class IndustryController extends Controller
                 'success' => true,
                 'message' => 'Industry data retrieved successfully!',
                 'data' => $industries->makeHidden(['created_at', 'updated_at']),
-                'total_record' => count($industries),
+                'total_record' => $industries->count(),
             ], 200);
 
         } catch (\Exception $e) {
