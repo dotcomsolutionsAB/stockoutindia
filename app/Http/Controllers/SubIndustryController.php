@@ -50,7 +50,7 @@ class SubIndustryController extends Controller
     {
         try {
             if ($id) {
-                $subIndustry = SubIndustryModel::with('industry')->find($id);
+                $subIndustry = SubIndustryModel::with('get_industry')->find($id);
                 
                 if (!$subIndustry) {
                     return response()->json([
@@ -65,13 +65,13 @@ class SubIndustryController extends Controller
                     'data' => [
                         'name' => $subIndustry->name,
                         'slug' => $subIndustry->slug,
-                        'industry_name' => optional($subIndustry->industry)->name // Prevents "Attempt to read property 'name' on int"
+                        'industry_name' => $subIndustry->get_industry ? $subIndustry->get_industry->name : 'Unknown', 
                     ],
                 ], 200);
             }
     
-            $subIndustries = SubIndustryModel::with('industry')->get();
-    
+            $subIndustries = SubIndustryModel::with('get_industry')->get();
+
             return response()->json([
                 'success' => true,
                 'message' => 'Sub-Industries fetched successfully!',
@@ -79,7 +79,9 @@ class SubIndustryController extends Controller
                     return [
                         'name' => $subIndustry->name,
                         'slug' => $subIndustry->slug,
-                        'industry_name' => optional($subIndustry->industry)->name, // Avoids errors if industry is null
+                        // 'industry_name' => optional($subIndustry->industry)->name, // Avoids errors if industry is null
+                        'industry_name' => $subIndustry->get_industry ? $subIndustry->get_industry->name : 'Unknown',
+
                     ];
                 }),
             ], 200);
