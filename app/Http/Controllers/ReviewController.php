@@ -62,8 +62,14 @@ class ReviewController extends Controller
     public function getReviews($id = null)
     {
         try {
-            // Initialize query with the user details relationship
-            $query = ReviewModel::with('userDetails:id,name');
+            // Initialize query with the user relationship
+                $query = ReviewModel::with(['userDetails' => function ($query) {
+                    $query->select('id', 'name'); // Fetch only id and name
+                },
+                'productDetails' => function ($query) {
+                    $query->select('id', 'product_name'); // Fetch only product id and name
+                }
+            ]);
 
             // Apply ID filter if provided
             if ($id) {
@@ -85,6 +91,7 @@ class ReviewController extends Controller
             $reviews->transform(function ($review) {
                 return [
                     'id' => $review->id,
+                    'product' => $review->productDetails->product_name ?? 'Unknown', // Replace product_id with product name
                     'user' => $review->userDetails->name ?? 'Unknown',
                     'rating' => $review->rating,
                     'review' => $review->review,
