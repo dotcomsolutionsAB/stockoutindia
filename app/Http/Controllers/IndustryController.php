@@ -49,7 +49,9 @@ class IndustryController extends Controller
     {
         try {
             // Fetch industries or single record by ID
-            $industries = $id ? IndustryModel::find($id) : IndustryModel::all();
+            $industries = $id 
+            ? IndustryModel::with('subIndustries:id,industry,name')->find($id) 
+            : IndustryModel::with('subIndustries:id,industry,name')->get();
 
             if (!$industries) {
                 return response()->json([
@@ -58,10 +60,27 @@ class IndustryController extends Controller
                 ], 404);
             }
 
+             // Transform data to format sub-industries as an array of objects
+            $industries->transform(function ($industry) {
+                return [
+                    'id' => $industry->id,
+                    'name' => $industry->name,
+                    'slug' => $industry->slug,
+                    'desc' => $industry->desc,
+                    'sequence' => $industry->sequence,
+                    'sub_industries' => $industry->subIndustries->map(function ($sub) {
+                        return [
+                            'id' => $sub->id,
+                            'name' => $sub->name
+                        ];
+                    }),
+                ];
+            });
+
             return response()->json([
                 'success' => true,
                 'message' => 'Industry data retrieved successfully!',
-                'data' => $industries->makeHidden(['created_at', 'updated_at']),
+                'data' => $industries,
                 'total_record' => $industries->count(),
             ], 200);
 
