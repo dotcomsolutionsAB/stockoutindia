@@ -7,6 +7,7 @@ use App\Models\ProductModel;
 use App\Models\UploadModel;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Storage;
 use Auth;
 
 class ProductController extends Controller
@@ -83,17 +84,15 @@ class ProductController extends Controller
                 $uploads = UploadModel::whereIn('id', $uploadIds)->pluck('file_url', 'id');
 
                 // You can return them as an array of file_urls
-                $imageFiles = [];
+                $imageUrls = [];
                 foreach ($uploadIds as $uid) {
                     if (isset($uploads[$uid])) {
-                        $imageFiles[] = [
-                            'id' => $uid,
-                            'file_url' => $uploads[$uid],
-                        ];
+                        $imageUrls[] = url($uploads[$uid]);
                     }
                 }
 
-                $product->image_files = $imageFiles; // attach to response
+                // Overwrite product->image with array of file objects
+                $product->image = $imageUrls; // attach to response
 
                 return response()->json([
                     'success' => true,
@@ -108,17 +107,16 @@ class ProductController extends Controller
                     $uploadIds = $prod->image ? explode(',', $prod->image) : [];
                     $uploads = UploadModel::whereIn('id', $uploadIds)->pluck('file_url', 'id');
 
-                    $imageFiles = [];
+                    $imageUrls = [];
                     foreach ($uploadIds as $uid) {
                         if (isset($uploads[$uid])) {
-                            $imageFiles[] = [
-                                'id' => $uid,
-                                'file_url' => $uploads[$uid],
-                            ];
+                            $imageUrls[] = url($uploads[$uid]);
                         }
                     }
-                    $prod->image_files = $imageFiles;
-                    return $prod;
+
+                    // Overwrite product->image with array of file objects
+                    $prod->image = $imageUrls;
+                    return $prod->makeHidden(['id', 'created_at', 'updated_at']);
                 });
 
                 return response()->json([
@@ -188,10 +186,10 @@ class ProductController extends Controller
     }
 
     // upload image
-    public function updateProductImages(Request $request, $id)
+    public function uploadProductImages(Request $request, $id)
     {
         try {
-            $product = ProductModels::find($id);
+            $product = ProductModel::find($id);
             if (!$product) {
                 return response()->json([
                     'success' => false,
@@ -201,7 +199,7 @@ class ProductController extends Controller
 
             // Validate new files
             $validator = Validator::make($request->all(), [
-                'files.*' => 'required|mimes:jpg,jpeg,png|max:2048',
+                'files.*' => 'required|mimes:jpg,jpeg,png,heif|max:2048',
             ]);
 
             if ($validator->fails()) {
@@ -213,11 +211,17 @@ class ProductController extends Controller
 
             // Delete old images from DB + server
             $oldImageIds = $product->image ? explode(',', $product->image) : [];
+
             foreach ($oldImageIds as $imgId) {
                 $upload = UploadModel::find($imgId);
                 if ($upload) {
+                    // Extract only the relative file path
+                    $filePath = str_replace(asset('storage/'), '', $upload->file_url);
+
                     // Delete from server
-                    Storage::delete($upload->file_url);
+                    if (Storage::disk('public')->exists($filePath)) {
+                        Storage::disk('public')->delete($filePath);
+                    }
                     // Delete from DB
                     $upload->delete();
                 }
@@ -227,10 +231,20 @@ class ProductController extends Controller
             // Handle new files
             if ($request->hasFile('files')) {
                 foreach ($request->file('files') as $file) {
-                    // Store file in "uploads" disk/folder
-                    $path = $file->store('uploads', 'public');
-                    // Create DB record
-                    $upload = UploadModel::create(['file_url' => $path]);
+                    // 1. Store file in "uploads/products" folder on the "public" disk
+                    $path = $file->store('uploads/products', 'public');
+
+                    // 2. Extract file details
+                    $originalName = $file->getClientOriginalName(); // e.g. "photo.jpg"
+                    $extension = $file->extension();                // e.g. "jpg"
+                    $size = $file->getSize();                       // e.g. 123456 (bytes)
+
+                    $upload = UploadModel::create([
+                        'file_name' => $originalName,
+                        'file_ext' => $extension,
+                        'file_url' => asset("storage/$path"),
+                        'file_size' => $size,
+                    ]);
                     $uploadIds[] = $upload->id;
                 }
             }
@@ -242,7 +256,9 @@ class ProductController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Product images updated successfully!',
-                'data' => $product
+                'data' => $product->makeHidden(['id', 'created_at', 'updated_at']),
+                // 'data_product' => $product->makeHidden(['id', 'created_at', 'updated_at']),
+                // 'data_upload' => $upload->makeHidden(['id', 'created_at', 'updated_at'])
             ], 200);
 
         } catch (\Exception $e) {
@@ -267,10 +283,25 @@ class ProductController extends Controller
 
             // Delete existing images
             $oldImageIds = $product->image ? explode(',', $product->image) : [];
+
             foreach ($oldImageIds as $imgId) {
                 $upload = UploadModel::find($imgId);
                 if ($upload) {
-                    Storage::delete($upload->file_url);
+                    // Convert DB URL to actual storage path
+                    $filePath = str_replace(asset('storage/'), '', $upload->file_url);
+                    $filePath = 'uploads/products/' . basename($filePath); // Ensure correct path
+
+                    // Debugging: Log file path before deletion
+                    \Log::info("Deleting File: " . $filePath);
+
+                    // Delete from server
+                    if (Storage::disk('public')->exists($filePath)) {
+                        Storage::disk('public')->delete($filePath);
+                        \Log::info("Deleted File: " . $filePath);
+                    } else {
+                        \Log::error("File not found for deletion: " . $filePath);
+                    }
+
                     $upload->delete();
                 }
             }
