@@ -186,4 +186,51 @@ class ReviewController extends Controller
         }
     }
 
+    // delete
+    public function deleteReview($id)
+    {
+        try {
+            // Ensure user is logged in
+            if (!Auth::check()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sorry, no user is logged in now!',
+                ], 401);
+            }
+
+            // Find the review by ID
+            $review = ReviewModel::find($id);
+
+            if (!$review) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Review not found!',
+                ], 404);
+            }
+
+            // Ensure that the logged-in user can only delete their own review
+            if ($review->user !== Auth::id()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You are not authorized to delete this review!',
+                ], 403);
+            }
+
+            // Delete the review
+            $review->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Review deleted successfully!',
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong!',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
 }

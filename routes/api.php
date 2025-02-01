@@ -50,6 +50,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/', [ReviewController::class, 'createReview']); // Create a new review
         Route::get('/{id?}', [ReviewController::class, 'getReviews']); // Retrieve review (all or specific)
         Route::post('/{id}', [ReviewController::class, 'updateReview']); // Update a specific review
+        Route::delete('/{id}', [ReviewController::class, 'deleteReview']); // Delete a specific review
     });
 
     Route::prefix('user')->group(function () {
