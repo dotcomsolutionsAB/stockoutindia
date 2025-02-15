@@ -377,7 +377,7 @@ class ProductController extends Controller
 
             // Query products with relationships
             $query = ProductModel::with([
-                'user:id,name,phone',
+                'user:id,name,phone,city',
                 'industryDetails:id,name',
                 'subIndustryDetails:id,name'
             ]);
