@@ -183,7 +183,7 @@ class ProductController extends Controller
                 $responseData = [
                     'user' => [
                         'name' => optional($product->user)->name,
-                        'mobile' => optional($product->user)->mobile,
+                        'phone' => optional($product->user)->phone,
                     ],
                     'industry' => optional($product->industryDetails)->name,
                     'sub_industry' => optional($product->subIndustryDetails)->name,
@@ -224,7 +224,7 @@ class ProductController extends Controller
                 return collect([
                     'user' => [
                         'name' => optional($prod->user)->name,
-                        'mobile' => optional($prod->user)->mobile,
+                        'phone' => optional($prod->user)->phone,
                     ],
                     'industry' => optional($prod->industryDetails)->name,
                     'sub_industry' => optional($prod->subIndustryDetails)->name,
