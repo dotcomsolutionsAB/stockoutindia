@@ -86,7 +86,7 @@ class MasterController extends Controller
 
             // If state_id is provided, filter cities by that state
             if (!empty($stateId)) {
-                $query->where('state_id', $stateId);
+                $query->where('state', $stateId);
             } else {
                 // Ensure only cities from states where country_code is 101 are included
                 $query->whereHas('stateDetails', function ($query) {
