@@ -22,11 +22,14 @@ class ProductController extends Controller
                 'selling_price' => 'required|numeric',
                 'offer_quantity' => 'required|integer',
                 'minimum_quantity' => 'required|integer',
-                'unit' => 'required|string',
+                'unit' => 'required|string|max:255',
                 'industry' => 'required|integer|exists:t_industries,id',
                 'sub_industry' => 'required|integer|exists:t_sub_industries,id',
+                'city' => 'nullable|string|max:255',
+                'state_id' => 'nullable|integer|exists:t_states,id',
                 'status' => 'sometimes|in:active,in-active',
                 'description' => 'nullable|string',
+                'dimensions' => 'nullable|string|max:256',
             ]);
 
             if ($validator->fails()) {
@@ -46,8 +49,11 @@ class ProductController extends Controller
                 'unit' => $request->unit,
                 'industry' => $request->industry,
                 'sub_industry' => $request->sub_industry,
+                'city' => $request->city,
+                'state_id' => $request->state_id,
                 'status' => $request->status ?? 'active',
                 'description' => $request->description,
+                'dimensions' => $request->dimensions,
                 // 'image' => will be empty or null initially; handled in separate method
             ]);
 
@@ -66,6 +72,7 @@ class ProductController extends Controller
     }
 
     // view
+    // for logged-in user
     public function fetchProducts($id = null)
     {
         try {
@@ -134,6 +141,75 @@ class ProductController extends Controller
         }
     }
 
+    // for guest-user
+    public function fetchOnlyProducts($id = null)
+    {
+        try {
+            if ($id) {
+                $product = ProductModel::find($id);
+                if (!$product) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Product not found!',
+                    ], 404);
+                }
+
+                // Parse image column
+                $uploadIds = $product->image ? explode(',', $product->image) : [];
+                // Retrieve file URLs from `uploads` table
+                $uploads = UploadModel::whereIn('id', $uploadIds)->pluck('file_url', 'id');
+
+                // You can return them as an array of file_urls
+                $imageUrls = [];
+                foreach ($uploadIds as $uid) {
+                    if (isset($uploads[$uid])) {
+                        $imageUrls[] = url($uploads[$uid]);
+                    }
+                }
+
+                // Overwrite product->image with array of file objects
+                $product->image = $imageUrls; // attach to response
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Product details fetched successfully!',
+                    'data' => $product->makeHidden(['id', 'user_id', 'created_at', 'updated_at']),
+                ], 200);
+            } else {
+                $products = ProductModel::all();
+
+                // For each product, parse the images
+                $products->transform(function ($prod) {
+                    $uploadIds = $prod->image ? explode(',', $prod->image) : [];
+                    $uploads = UploadModel::whereIn('id', $uploadIds)->pluck('file_url', 'id');
+
+                    $imageUrls = [];
+                    foreach ($uploadIds as $uid) {
+                        if (isset($uploads[$uid])) {
+                            $imageUrls[] = url($uploads[$uid]);
+                        }
+                    }
+
+                    // Overwrite product->image with array of file objects
+                    $prod->image = $imageUrls;
+                    return $prod->makeHidden(['id', 'user_id', 'created_at', 'updated_at']);
+                });
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'All products fetched successfully!',
+                    'data' => $products->makeHidden(['id', 'created_at', 'updated_at']),
+                    'total_record' => count($products),
+                ], 200);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
     // update
     public function updateProduct(Request $request, $id)
     {
@@ -152,12 +228,15 @@ class ProductController extends Controller
                 'selling_price' => 'sometimes|numeric',
                 'offer_quantity' => 'sometimes|integer',
                 'minimum_quantity' => 'sometimes|integer',
-                'unit' => 'sometimes|string|max:50',
-                'industry' => 'sometimes|integer',
-                'sub_industry' => 'sometimes|integer',
+                'unit' => 'sometimes|string|max:255', // Updated max length from 50 to 255 to match DB
+                'industry' => 'sometimes|integer|exists:t_industries,id',
+                'sub_industry' => 'sometimes|integer|exists:t_sub_industries,id',
+                'city' => 'sometimes|nullable|string|max:255', // Added city field
+                'state_id' => 'sometimes|nullable|integer|exists:t_states,id', // Added state_id validation
                 'status' => 'sometimes|in:active,in-active',
-                'description' => 'sometimes|string',
-            ]);
+                'description' => 'sometimes|nullable|string',
+                'dimensions' => 'sometimes|nullable|string|max:256', // Added dimensions field
+                        ]);
 
             if ($validator->fails()) {
                 return response()->json([
@@ -167,10 +246,26 @@ class ProductController extends Controller
             }
 
             // Column-wise update
-            $product->update($request->only([
-                'product_name', 'original_price', 'selling_price', 'offer_quantity',
-                'minimum_quantity', 'unit', 'industry', 'sub_industry', 'status', 'description'
-            ]));
+            // $product->update($request->only([
+            //     'product_name', 'original_price', 'selling_price', 'offer_quantity',
+            //     'minimum_quantity', 'unit', 'industry', 'sub_industry', 'status', 'description'
+            // ]));
+
+            $product->update([
+                'product_name' => $request->product_name ?? $product->product_name,
+                'original_price' => $request->original_price ?? $product->original_price,
+                'selling_price' => $request->selling_price ?? $product->selling_price,
+                'offer_quantity' => $request->offer_quantity ?? $product->offer_quantity,
+                'minimum_quantity' => $request->minimum_quantity ?? $product->minimum_quantity,
+                'unit' => $request->unit ?? $product->unit,
+                'industry' => $request->industry ?? $product->industry,
+                'sub_industry' => $request->sub_industry ?? $product->sub_industry,
+                'city' => $request->city ?? $product->city,
+                'state_id' => $request->state_id ?? $product->state_id,
+                'status' => $request->status ?? $product->status, // Defaulting to existing status if not provided
+                'description' => $request->description ?? $product->description,
+                'dimensions' => $request->dimensions ?? $product->dimensions,
+            ]);
 
             return response()->json([
                 'success' => true,

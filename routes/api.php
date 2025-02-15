@@ -64,3 +64,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/states', [MasterController::class, 'fetchAllStates']);
     Route::get('/cities/{id?}', [MasterController::class, 'fetchAllCities']);
 });
+
+    Route::get('/get_products/{id?}', [ProductController::class, 'fetchOnlyProducts']); // Retrieve product (all or specific)
+

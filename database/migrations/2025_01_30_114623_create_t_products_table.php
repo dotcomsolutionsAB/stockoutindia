@@ -15,16 +15,19 @@ return new class extends Migration
             $table->id();
             $table->integer('user_id');
             $table->string('product_name');
-            $table->float('original_price', 8, 2);
+            $table->float('original_price', 8, 2)->nullable();
             $table->float('selling_price', 8, 2);
             $table->integer('offer_quantity');
             $table->integer('minimum_quantity');
             $table->string('unit');
             $table->integer('industry');
             $table->integer('sub_industry');
+            $table->string('city', 256)->nullable();
+            $table->unsignedBigInteger('state_id')->nullable();
             $table->enum('status', ['active', 'in-active'])->default('active');
             $table->string('image')->nullable();
             $table->longText('description')->nullable();
+            $table->string('dimensions', 256)->nullable();
             $table->timestamps();
         });
     }
