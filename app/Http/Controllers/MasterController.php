@@ -32,7 +32,7 @@ class MasterController extends Controller
     }
 
     //for state
-    public function fetchAllStates($stateId)
+    public function fetchAllStates($stateId = null)
     {
         try {
             // $states = StateModel::with('get_country:id,name')->get();
