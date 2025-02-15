@@ -48,7 +48,7 @@ class MasterController extends Controller
 
             // Query builder with conditions
             $query = CityModel::with(['stateDetails' => function ($query) {
-                $query->where('country_code', 101);
+                $query->where('country', 101);
             }]);
 
             // If state_id is provided, filter cities by that state
