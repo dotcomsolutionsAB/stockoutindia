@@ -40,7 +40,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::prefix('product')->group(function () {
         Route::post('/', [ProductController::class, 'createProduct']); // Create a new product
-        Route::get('/{id?}', [ProductController::class, 'fetchProducts']); // Retrieve product (all or specific)
+        Route::post('/get_products/{id?}', [ProductController::class, 'fetchProducts']); // Retrieve product (all or specific)
         Route::post('/{id}', [ProductController::class, 'updateProduct']); // Update a specific product
         Route::post('/images/{id}', [ProductController::class, 'uploadProductImages']); // Upload image for a specific product
         Route::delete('/{id}', [ProductController::class, 'deleteProduct']); // Delete a specific product

@@ -155,7 +155,7 @@ class ProductController extends Controller
     //     }
     // }
 
-    public function fetchProducts($id = null)
+    public function fetchProducts(Request $request, $id = null)
     {
         try {
             if ($id) {
