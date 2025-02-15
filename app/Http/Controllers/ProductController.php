@@ -60,7 +60,7 @@ class ProductController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Product created successfully!',
-                'data' => $product->makeHidden(['id', 'created_at', 'updated_at']),
+                'data' => $product->makeHidden(['created_at', 'updated_at']),
             ], 201);
 
         } catch (\Exception $e) {
