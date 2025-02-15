@@ -383,13 +383,22 @@ class ProductController extends Controller
             ]);
 
             // Search in product_name, city, and user->name
+            // if (!empty($search)) {
+            //     $query->where(function ($q) use ($search) {
+            //         $q->where('product_name', 'like', "%{$search}%")
+            //         ->orWhere('city', 'like', "%{$search}%")
+            //         ->orWhereHas('user', function ($q) use ($search) {
+            //             $q->where('name', 'like', "%{$search}%");
+            //         });
+            //     });
+            // }
             if (!empty($search)) {
                 $query->where(function ($q) use ($search) {
                     $q->where('product_name', 'like', "%{$search}%")
-                    ->orWhere('city', 'like', "%{$search}%")
-                    ->orWhereHas('user', function ($q) use ($search) {
-                        $q->where('name', 'like', "%{$search}%");
-                    });
+                      ->orWhereHas('user', function ($q) use ($search) {
+                          $q->where('name', 'like', "%{$search}%") // Search by user name
+                            ->orWhere('city', 'like', "%{$search}%"); // Search by user city
+                      });
                 });
             }
 
