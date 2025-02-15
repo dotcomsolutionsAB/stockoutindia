@@ -29,8 +29,8 @@ class UserController extends Controller
                 'company_name' => 'required_without:gstin|string|max:255',
                 'address' => 'required_without:gstin|string|max:255',
                 'pincode' => 'required_without:gstin|string|max:10',
-                'city' => 'required_without:gstin|integer',
-                'state' => 'required_without:gstin|integer',
+                'city' => 'required_without:gstin|string',
+                'state' => 'required_without:gstin|integer|exists:t_states,id',
             ]);
 
             if ($validator->fails()) {

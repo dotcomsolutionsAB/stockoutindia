@@ -22,7 +22,7 @@ return new class extends Migration
             $table->string('company_name')->after('expires_at');
             $table->string('address')->after('company_name');
             $table->string('pincode')->after('address');
-            $table->integer('city')->after('pincode');
+            $table->string('city')->after('pincode');
             $table->integer('state')->after('city');
             $table->string('gstin')->unique()->after('state'); // Making GSTIN unique
         });
