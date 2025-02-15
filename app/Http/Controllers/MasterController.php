@@ -57,7 +57,7 @@ class MasterController extends Controller
             } else {
                 // Ensure only cities from states where country_code is 101 are included
                 $query->whereHas('stateDetails', function ($query) {
-                    $query->where('country_code', 101);
+                    $query->where('country', 101);
                 });
             }
 
