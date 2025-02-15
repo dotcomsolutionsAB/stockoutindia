@@ -15,10 +15,9 @@ class UserController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:users,email',
                 'password' => 'required|string|min:6',
-                'role' => ['required', Rule::in(['admin', 'user'])],
+                // 'role' => ['required', Rule::in(['admin', 'user'])],
                 'phone' => 'required|string|unique:users,phone',
 
                 // Make `gstin` optional; if present, must be unique
@@ -26,7 +25,7 @@ class UserController extends Controller
 
                 // If `gstin` is present => these are optional,
                 // otherwise they are required.
-
+                'name' => 'required_without:gstin|string|max:255',
                 'company_name' => 'required_without:gstin|string|max:255',
                 'address' => 'required_without:gstin|string|max:255',
                 'pincode' => 'required_without:gstin|string|max:10',
@@ -45,7 +44,8 @@ class UserController extends Controller
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => bcrypt($request->password),
-                'role' => $request->role,
+                // 'role' => $request->role,
+                'role' => "user",
                 'username' => $request->phone, // Store phone in username
                 'phone' => $request->phone,
                 'company_name' => $request->company_name,
