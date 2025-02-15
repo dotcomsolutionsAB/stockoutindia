@@ -21,7 +21,7 @@ class UserController extends Controller
                 'phone' => 'required|string|unique:users,phone',
 
                 // Make `gstin` optional; if present, must be unique
-                'gstin' => 'required|string|unique:users,gstin',
+                'gstin' => 'nullable|string|unique:users,gstin',
 
                 // If `gstin` is present => these are optional,
                 // otherwise they are required.
