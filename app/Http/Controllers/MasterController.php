@@ -32,17 +32,44 @@ class MasterController extends Controller
     }
 
     //for state
-    public function fetchAllStates()
+    public function fetchAllStates($stateId)
     {
         try {
-            $states = StateModel::with('get_country:id,name')->get();
+            // $states = StateModel::with('get_country:id,name')->get();
 
-            // Transform response to replace nested "country" with "country_name"
-            $states->transform(function ($state) {
+            // // Transform response to replace nested "country" with "country_name"
+            // $states->transform(function ($state) {
+            //     return [
+            //         'id' => $state->id,
+            //         'name' => $state->name,
+            //         'country_name' => optional($state->get_country)->name, // Avoids errors if country is null
+            //     ];
+            // });            
+
+            // Query builder with conditions
+            $query = CityModel::with(['stateDetails' => function ($query) {
+                $query->where('country_code', 101);
+            }]);
+
+            // If state_id is provided, filter cities by that state
+            if (!empty($stateId)) {
+                $query->where('state_id', $stateId);
+            } else {
+                // Ensure only cities from states where country_code is 101 are included
+                $query->whereHas('stateDetails', function ($query) {
+                    $query->where('country_code', 101);
+                });
+            }
+
+            // Fetch cities
+            $cities = $query->get();
+
+            // Transform response
+            $cities->transform(function ($city) {
                 return [
-                    'id' => $state->id,
-                    'name' => $state->name,
-                    'country_name' => optional($state->get_country)->name, // Avoids errors if country is null
+                    'id' => $city->id,
+                    'name' => $city->name,
+                    'state_name' => optional($city->stateDetails)->name, // Avoids null errors
                 ];
             });
 
