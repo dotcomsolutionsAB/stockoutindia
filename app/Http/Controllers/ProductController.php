@@ -161,7 +161,7 @@ class ProductController extends Controller
             if ($id) {
                 // Fetch a single product with related user, industry, and sub-industry
                 $product = ProductModel::with([
-                    'user:id,name,mobile',
+                    'user:id,name,phone',
                     'industryDetails:id,name',
                     'subIndustryDetails:id,name'
                 ])->find($id);
@@ -198,7 +198,7 @@ class ProductController extends Controller
 
             // Fetch all products with relationships
             $products = ProductModel::with([
-                'user:id,name,mobile',
+                'user:id,name,phone',
                 'industryDetails:id,name',
                 'subIndustryDetails:id,name'
             ])->get();
