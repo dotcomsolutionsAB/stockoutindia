@@ -73,11 +73,99 @@ class ProductController extends Controller
 
     // view
     // for logged-in user
+    // public function fetchProducts($id = null)
+    // {
+    //     try {
+    //         if ($id) {
+    //             // $product = ProductModel::find($id);
+
+    //             $product = ProductModel::with([
+    //                 'user:id,name,mobile',
+    //                 'industryDetails:id,name',
+    //                 'subIndustryDetails:id,name'
+    //             ])->find($id);
+    
+    //             if (!$product) {
+    //                 return response()->json([
+    //                     'success' => false,
+    //                     'message' => 'Product not found!',
+    //                 ], 404);
+    //             }
+
+    //             // Parse image column
+    //             $uploadIds = $product->image ? explode(',', $product->image) : [];
+    //             // Retrieve file URLs from `uploads` table
+    //             $uploads = UploadModel::whereIn('id', $uploadIds)->pluck('file_url', 'id');
+
+    //             // You can return them as an array of file_urls
+    //             $imageUrls = [];
+    //             foreach ($uploadIds as $uid) {
+    //                 if (isset($uploads[$uid])) {
+    //                     $imageUrls[] = url($uploads[$uid]);
+    //                 }
+    //             }
+
+    //             // Overwrite product->image with array of file objects
+    //             $product->image = $imageUrls; // attach to response
+
+    //             return response()->json([
+    //                 'success' => true,
+    //                 'message' => 'Product details fetched successfully!',
+    //                 'data' => $product->makeHidden(['id', 'created_at', 'updated_at']),
+    //             ], 200);
+    //         } else {
+    //             // $products = ProductModel::all();
+    //             // Fetch all products with relationships
+    //             $products = ProductModel::with([
+    //                 'user:id,name,mobile',
+    //                 'industryDetails:id,name',
+    //                 'subIndustryDetails:id,name'
+    //             ])->get();
+
+
+    //             // For each product, parse the images
+    //             $products->transform(function ($prod) {
+    //                 $uploadIds = $prod->image ? explode(',', $prod->image) : [];
+    //                 $uploads = UploadModel::whereIn('id', $uploadIds)->pluck('file_url', 'id');
+
+    //                 $imageUrls = [];
+    //                 foreach ($uploadIds as $uid) {
+    //                     if (isset($uploads[$uid])) {
+    //                         $imageUrls[] = url($uploads[$uid]);
+    //                     }
+    //                 }
+
+    //                 // Overwrite product->image with array of file objects
+    //                 $prod->image = $imageUrls;
+    //                 return $prod->makeHidden(['id', 'created_at', 'updated_at']);
+    //             });
+
+    //             return response()->json([
+    //                 'success' => true,
+    //                 'message' => 'All products fetched successfully!',
+    //                 'data' => $products->makeHidden(['id', 'created_at', 'updated_at']),
+    //                 'total_record' => count($products),
+    //             ], 200);
+    //         }
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Something went wrong: ' . $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
+
     public function fetchProducts($id = null)
     {
         try {
             if ($id) {
-                $product = ProductModel::find($id);
+                // Fetch a single product with related user, industry, and sub-industry
+                $product = ProductModel::with([
+                    'user:id,name,mobile',
+                    'industryDetails:id,name',
+                    'subIndustryDetails:id,name'
+                ])->find($id);
+
                 if (!$product) {
                     return response()->json([
                         'success' => false,
@@ -85,54 +173,70 @@ class ProductController extends Controller
                     ], 404);
                 }
 
-                // Parse image column
+                // Parse images
                 $uploadIds = $product->image ? explode(',', $product->image) : [];
-                // Retrieve file URLs from `uploads` table
                 $uploads = UploadModel::whereIn('id', $uploadIds)->pluck('file_url', 'id');
 
-                // You can return them as an array of file_urls
-                $imageUrls = [];
-                foreach ($uploadIds as $uid) {
-                    if (isset($uploads[$uid])) {
-                        $imageUrls[] = url($uploads[$uid]);
-                    }
-                }
+                $product->image = array_map(fn($uid) => isset($uploads[$uid]) ? url($uploads[$uid]) : null, $uploadIds);
 
-                // Overwrite product->image with array of file objects
-                $product->image = $imageUrls; // attach to response
+                // Attach user details
+                $responseData = [
+                    'user' => [
+                        'name' => optional($product->user)->name,
+                        'mobile' => optional($product->user)->mobile,
+                    ],
+                    'industry' => optional($product->industryDetails)->name,
+                    'sub_industry' => optional($product->subIndustryDetails)->name,
+                ] + $product->toArray();
 
                 return response()->json([
                     'success' => true,
                     'message' => 'Product details fetched successfully!',
-                    'data' => $product->makeHidden(['id', 'created_at', 'updated_at']),
-                ], 200);
-            } else {
-                $products = ProductModel::all();
-
-                // For each product, parse the images
-                $products->transform(function ($prod) {
-                    $uploadIds = $prod->image ? explode(',', $prod->image) : [];
-                    $uploads = UploadModel::whereIn('id', $uploadIds)->pluck('file_url', 'id');
-
-                    $imageUrls = [];
-                    foreach ($uploadIds as $uid) {
-                        if (isset($uploads[$uid])) {
-                            $imageUrls[] = url($uploads[$uid]);
-                        }
-                    }
-
-                    // Overwrite product->image with array of file objects
-                    $prod->image = $imageUrls;
-                    return $prod->makeHidden(['id', 'created_at', 'updated_at']);
-                });
-
-                return response()->json([
-                    'success' => true,
-                    'message' => 'All products fetched successfully!',
-                    'data' => $products->makeHidden(['id', 'created_at', 'updated_at']),
-                    'total_record' => count($products),
+                    'data' => collect($responseData)->except(['id', 'created_at', 'updated_at']),
                 ], 200);
             }
+
+            // Fetch all products with relationships
+            $products = ProductModel::with([
+                'user:id,name,mobile',
+                'industryDetails:id,name',
+                'subIndustryDetails:id,name'
+            ])->get();
+
+            if ($products->isEmpty()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'No products found!',
+                    'data' => [],
+                    'total_record' => 0,
+                ], 200);
+            }
+
+            // Get all image IDs in one go
+            $allImageIds = collect($products)->flatMap(fn($p) => explode(',', $p->image ?? ''))->unique()->filter();
+            $uploads = UploadModel::whereIn('id', $allImageIds)->pluck('file_url', 'id');
+
+            // Transform each product
+            $products->transform(function ($prod) use ($uploads) {
+                $uploadIds = $prod->image ? explode(',', $prod->image) : [];
+                $prod->image = array_map(fn($uid) => isset($uploads[$uid]) ? url($uploads[$uid]) : null, $uploadIds);
+
+                return collect([
+                    'user' => [
+                        'name' => optional($prod->user)->name,
+                        'mobile' => optional($prod->user)->mobile,
+                    ],
+                    'industry' => optional($prod->industryDetails)->name,
+                    'sub_industry' => optional($prod->subIndustryDetails)->name,
+                ] + $prod->toArray())->except(['id', 'created_at', 'updated_at']);
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'All products fetched successfully!',
+                'data' => $products,
+                'total_record' => $products->count(),
+            ], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -140,6 +244,7 @@ class ProductController extends Controller
             ], 500);
         }
     }
+
 
     // for guest-user
     public function fetchOnlyProducts($id = null)

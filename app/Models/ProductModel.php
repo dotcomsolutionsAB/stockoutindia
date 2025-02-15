@@ -25,4 +25,20 @@ class ProductModel extends Model
         'image',
         'description',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id', 'id');
+    }
+
+    public function industryDetails()
+    {
+        return $this->belongsTo(IndustryModel::class, 'industry', 'id');
+    }
+
+    public function subIndustryDetails()
+    {
+        return $this->belongsTo(SubIndustryModel::class, 'sub_industry', 'id');
+    }
+
 }
