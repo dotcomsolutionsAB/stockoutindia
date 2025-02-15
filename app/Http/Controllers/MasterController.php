@@ -50,8 +50,8 @@ class MasterController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'States fetched successfully!',
-                'data' => $cities,
-                'total_record' => count($cities),
+                'data' => $states,
+                'total_record' => count($states),
             ], 200);
 
         } catch (\Exception $e) {
