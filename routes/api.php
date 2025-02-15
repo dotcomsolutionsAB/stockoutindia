@@ -61,6 +61,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     Route::get('/countries', [MasterController::class, 'fetchAllCountries']);
-    Route::get('/states/{id?}', [MasterController::class, 'fetchAllStates']);
-    Route::get('/cities', [MasterController::class, 'fetchAllCities']);
+    Route::get('/states', [MasterController::class, 'fetchAllStates']);
+    Route::get('/cities/{id?}', [MasterController::class, 'fetchAllCities']);
 });

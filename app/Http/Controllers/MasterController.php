@@ -32,19 +32,52 @@ class MasterController extends Controller
     }
 
     //for state
-    public function fetchAllStates($stateId = null)
+    public function fetchAllStates()
     {
         try {
-            // $states = StateModel::with('get_country:id,name')->get();
+            $states = StateModel::with('get_country:id,name')->get();
 
-            // // Transform response to replace nested "country" with "country_name"
-            // $states->transform(function ($state) {
+            // Transform response to replace nested "country" with "country_name"
+            $states->transform(function ($state) {
+                return [
+                    'id' => $state->id,
+                    'name' => $state->name,
+                    'country_name' => optional($state->get_country)->name, // Avoids errors if country is null
+                ];
+            });            
+
+
+            return response()->json([
+                'success' => true,
+                'message' => 'States fetched successfully!',
+                'data' => $cities,
+                'total_record' => count($cities),
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching states!',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    // for city
+    public function fetchAllCities($stateId = null)
+    {
+        try {
+            // // Fetch cities with their related state
+            // $cities = CityModel::with('stateDetails:id,name')->get();
+
+            // // Transform response to return state name instead of nested object
+            // $cities->transform(function ($city) {
             //     return [
-            //         'id' => $state->id,
-            //         'name' => $state->name,
-            //         'country_name' => optional($state->get_country)->name, // Avoids errors if country is null
+            //         'id' => $city->id,
+            //         'name' => $city->name,
+            //         'state_name' => optional($city->stateDetails)->name, // Avoids null errors
             //     ];
-            // });            
+            // });
 
             // Query builder with conditions
             $query = CityModel::with(['stateDetails' => function ($query) {
@@ -65,38 +98,6 @@ class MasterController extends Controller
             $cities = $query->get();
 
             // Transform response
-            $cities->transform(function ($city) {
-                return [
-                    'id' => $city->id,
-                    'name' => $city->name,
-                    'state_name' => optional($city->stateDetails)->name, // Avoids null errors
-                ];
-            });
-
-            return response()->json([
-                'success' => true,
-                'message' => 'States fetched successfully!',
-                'data' => $states,
-                'total_record' => count($states),
-            ], 200);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error fetching states!',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
-    }
-
-    // for city
-    public function fetchAllCities()
-    {
-        try {
-            // Fetch cities with their related state
-            $cities = CityModel::with('stateDetails:id,name')->get();
-
-            // Transform response to return state name instead of nested object
             $cities->transform(function ($city) {
                 return [
                     'id' => $city->id,
