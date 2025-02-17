@@ -890,6 +890,9 @@ class ProductController extends Controller
             // Start DB Transaction
             DB::beginTransaction();
 
+            // Clear old data before import
+            UploadModel::truncate();
+
             // Define CSV file path
             $filePath = public_path('storage/uploads/migration_exports/product_images.csv');
 
