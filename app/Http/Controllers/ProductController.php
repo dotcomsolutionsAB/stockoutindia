@@ -712,89 +712,89 @@ class ProductController extends Controller
     //     }
     // }
 
-    public function importProductImagesFromCSV()
-    {
-        try {
-            // Start DB Transaction
-            DB::beginTransaction();
+    // public function importProductImagesFromCSV()
+    // {
+    //     try {
+    //         // Start DB Transaction
+    //         DB::beginTransaction();
 
-            // Define paths
-            $filePath = public_path('storage/uploads/migration_exports/product_images.csv');
+    //         // Define paths
+    //         $filePath = public_path('storage/uploads/migration_exports/product_images.csv');
 
-            if (!file_exists($filePath)) {
-                return response()->json(['success' => false, 'message' => 'CSV file not found!'], 404);
-            }
+    //         if (!file_exists($filePath)) {
+    //             return response()->json(['success' => false, 'message' => 'CSV file not found!'], 404);
+    //         }
 
-            // Read CSV file
-            $file = fopen($filePath, 'r');
-            $uploadIdsByProduct = [];
-            $existingUploads = [];
+    //         // Read CSV file
+    //         $file = fopen($filePath, 'r');
+    //         $uploadIdsByProduct = [];
+    //         $existingUploads = [];
 
-            // Skip the first row (headers)
-            fgetcsv($file);
+    //         // Skip the first row (headers)
+    //         fgetcsv($file);
 
-            while (($row = fgetcsv($file, 1000, ",")) !== false) {
-                if (count($row) < 4) continue; // Skip malformed rows
+    //         while (($row = fgetcsv($file, 1000, ",")) !== false) {
+    //             if (count($row) < 4) continue; // Skip malformed rows
 
-                [$id, $productId, $imageUrl, $status] = $row;
+    //             [$id, $productId, $imageUrl, $status] = $row;
 
-                // ✅ Extract file details
-                $fileNameWithExt = basename($imageUrl);
-                $fileName = pathinfo($fileNameWithExt, PATHINFO_FILENAME);
-                $fileExt = pathinfo($fileNameWithExt, PATHINFO_EXTENSION);
+    //             // ✅ Extract file details
+    //             $fileNameWithExt = basename($imageUrl);
+    //             $fileName = pathinfo($fileNameWithExt, PATHINFO_FILENAME);
+    //             $fileExt = pathinfo($fileNameWithExt, PATHINFO_EXTENSION);
 
-                // ✅ Construct correct file path
-                $serverFilePath = public_path("storage/uploads/products/" . $fileNameWithExt);
-                $accessibleFileUrl = asset("storage/uploads/products/" . $fileNameWithExt); // Corrected URL
+    //             // ✅ Construct correct file path
+    //             $serverFilePath = public_path("storage/uploads/products/" . $fileNameWithExt);
+    //             $accessibleFileUrl = asset("storage/uploads/products/" . $fileNameWithExt); // Corrected URL
 
-                if (!file_exists($serverFilePath)) {
-                    continue; // Skip missing images
-                }
+    //             if (!file_exists($serverFilePath)) {
+    //                 continue; // Skip missing images
+    //             }
 
-                $fileSize = filesize($serverFilePath);
+    //             $fileSize = filesize($serverFilePath);
 
-                // ✅ Check if this image is already stored for the product
-                if (isset($existingUploads[$productId]) && in_array($fileNameWithExt, $existingUploads[$productId])) {
-                    continue; // Skip duplicate image for the same product
-                }
+    //             // ✅ Check if this image is already stored for the product
+    //             if (isset($existingUploads[$productId]) && in_array($fileNameWithExt, $existingUploads[$productId])) {
+    //                 continue; // Skip duplicate image for the same product
+    //             }
 
-                // ✅ Store in `t_uploads`
-                $uploadId = DB::table('t_uploads')->insertGetId([
-                    'file_name' => $fileName,
-                    'file_ext' => $fileExt,
-                    'file_url' => $accessibleFileUrl, // Store accessible URL
-                    'file_size' => $fileSize,
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]);
+    //             // ✅ Store in `t_uploads`
+    //             $uploadId = DB::table('t_uploads')->insertGetId([
+    //                 'file_name' => $fileName,
+    //                 'file_ext' => $fileExt,
+    //                 'file_url' => $accessibleFileUrl, // Store accessible URL
+    //                 'file_size' => $fileSize,
+    //                 'created_at' => now(),
+    //                 'updated_at' => now()
+    //             ]);
 
-                // ✅ Track inserted images per product to avoid duplicates
-                $existingUploads[$productId][] = $fileNameWithExt;
+    //             // ✅ Track inserted images per product to avoid duplicates
+    //             $existingUploads[$productId][] = $fileNameWithExt;
 
-                // ✅ Check if product exists in `t_products`
-                $productExists = DB::table('t_products')->where('id', $productId)->exists();
+    //             // ✅ Check if product exists in `t_products`
+    //             $productExists = UploadModel::where('id', $productId)->exists();
 
-                if ($productExists) {
-                    $uploadIdsByProduct[$productId][] = $uploadId;
-                }
-            }
-            fclose($file);
+    //             if ($productExists) {
+    //                 $uploadIdsByProduct[$productId][] = $uploadId;
+    //             }
+    //         }
+    //         fclose($file);
 
-            // ✅ Update `t_products.image` with comma-separated upload IDs
-            foreach ($uploadIdsByProduct as $productId => $uploadIds) {
-                DB::table('t_products')->where('id', $productId)->update([
-                    'image' => implode(',', $uploadIds)
-                ]);
-            }
+    //         // ✅ Update `t_products.image` with comma-separated upload IDs
+    //         foreach ($uploadIdsByProduct as $productId => $uploadIds) {
+    //             DB::table('t_products')->where('id', $productId)->update([
+    //                 'image' => implode(',', $uploadIds)
+    //             ]);
+    //         }
 
-            DB::commit();
-            return response()->json(['success' => true, 'message' => 'Product images migrated successfully!']);
+    //         DB::commit();
+    //         return response()->json(['success' => true, 'message' => 'Product images migrated successfully!']);
 
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
-        }
-    }
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
+    //         return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+    //     }
+    // }
 
     // public function importProductImagesFromCSV()
     // {
@@ -883,5 +883,93 @@ class ProductController extends Controller
     //     }
     // }
 
+
+    public function importProductImagesFromCSV()
+    {
+        try {
+            // Start DB Transaction
+            DB::beginTransaction();
+
+            // Define CSV file path
+            $filePath = public_path('storage/uploads/migration_exports/product_images.csv');
+
+            if (!file_exists($filePath)) {
+                return response()->json(['success' => false, 'message' => 'CSV file not found!'], 404);
+            }
+
+            // Define the correct image directory (physical location)
+            $imageDirectory = public_path('storage/uploads/products/product_images'); 
+
+            // Read CSV file
+            $file = fopen($filePath, 'r');
+            $uploadIdsByProduct = [];
+            $existingUploads = [];
+
+            // Skip the first row (headers)
+            fgetcsv($file);
+
+            while (($row = fgetcsv($file, 1000, ",")) !== false) {
+                if (count($row) < 4) continue; // Skip malformed rows
+
+                [$id, $productId, $imageUrl, $status] = $row;
+
+                // Extract file details
+                $fileNameWithExt = basename($imageUrl);
+                $fileName = pathinfo($fileNameWithExt, PATHINFO_FILENAME);
+                $fileExt = pathinfo($fileNameWithExt, PATHINFO_EXTENSION);
+
+                // Construct the correct physical file path (from product_images folder)
+                $serverFilePath = $imageDirectory . '/' . $fileNameWithExt;
+                // Build an accessible URL using the same folder structure
+                $accessibleFileUrl = asset("storage/uploads/products/product_images/" . $fileNameWithExt);
+
+                if (!file_exists($serverFilePath)) {
+                    continue; // Skip missing images
+                }
+
+                $fileSize = filesize($serverFilePath);
+
+                // Check if this image is already stored for the product
+                if (isset($existingUploads[$productId]) && in_array($fileNameWithExt, $existingUploads[$productId])) {
+                    continue; // Skip duplicate image for the same product
+                }
+
+                // Store in `t_uploads`
+                $uploadId = DB::table('t_uploads')->insertGetId([
+                    'file_name' => $fileName,
+                    'file_ext' => $fileExt,
+                    'file_url' => $accessibleFileUrl, // Now storing the accessible URL
+                    'file_size' => $fileSize,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+
+                // Track inserted images per product to avoid duplicates
+                $existingUploads[$productId][] = $fileNameWithExt;
+
+                // Check if product exists in `t_products`
+                $productExists = DB::table('t_products')->where('id', $productId)->exists();
+
+                if ($productExists) {
+                    $uploadIdsByProduct[$productId][] = $uploadId;
+                }
+            }
+            fclose($file);
+
+            // Update `t_products.image` with comma-separated upload IDs
+            foreach ($uploadIdsByProduct as $productId => $uploadIds) {
+                DB::table('t_products')->where('id', $productId)->update([
+                    'image' => implode(',', $uploadIds)
+                ]);
+            }
+
+            DB::commit();
+            return response()->json(['success' => true, 'message' => 'Product images migrated successfully!']);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+        }
+    }
 
 }
