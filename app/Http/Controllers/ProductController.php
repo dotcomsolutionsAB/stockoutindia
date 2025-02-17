@@ -921,7 +921,7 @@ class ProductController extends Controller
                 // Construct the correct physical file path (from product_images folder)
                 $serverFilePath = $imageDirectory . '/' . $fileNameWithExt;
                 // Build an accessible URL using the same folder structure
-                $accessibleFileUrl = asset("storage/uploads/products/product_images/" . $fileNameWithExt);
+                $accessibleFileUrl = "storage/uploads/products/product_images/" . $fileNameWithExt;
 
                 if (!file_exists($serverFilePath)) {
                     continue; // Skip missing images
