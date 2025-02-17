@@ -579,7 +579,8 @@ class ProductController extends Controller
 
             UploadModel::truncate();
 
-            $filePath = storage_path('migration_exports/product_images.csv');
+            // $filePath = storage_path('migration_exports/product_images.csv');
+            $filePath = public_path('storage/uploads/migration_exports/product_images.csv');;
 
             if (!file_exists($filePath)) {
                 return response()->json(['success' => false, 'message' => 'CSV file not found!'], 404);
