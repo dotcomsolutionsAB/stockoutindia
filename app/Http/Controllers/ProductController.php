@@ -73,639 +73,151 @@ class ProductController extends Controller
 
     // view
     // for logged-in user
-    // public function fetchProducts($id = null)
-    // {
-    //     try {
-    //         if ($id) {
-    //             // $product = ProductModel::find($id);
 
-    //             $product = ProductModel::with([
-    //                 'user:id,name,mobile',
-    //                 'industryDetails:id,name',
-    //                 'subIndustryDetails:id,name'
-    //             ])->find($id);
-    
-    //             if (!$product) {
-    //                 return response()->json([
-    //                     'success' => false,
-    //                     'message' => 'Product not found!',
-    //                 ], 404);
-    //             }
-
-    //             // Parse image column
-    //             $uploadIds = $product->image ? explode(',', $product->image) : [];
-    //             // Retrieve file URLs from `uploads` table
-    //             $uploads = UploadModel::whereIn('id', $uploadIds)->pluck('file_url', 'id');
-
-    //             // You can return them as an array of file_urls
-    //             $imageUrls = [];
-    //             foreach ($uploadIds as $uid) {
-    //                 if (isset($uploads[$uid])) {
-    //                     $imageUrls[] = url($uploads[$uid]);
-    //                 }
-    //             }
-
-    //             // Overwrite product->image with array of file objects
-    //             $product->image = $imageUrls; // attach to response
-
-    //             return response()->json([
-    //                 'success' => true,
-    //                 'message' => 'Product details fetched successfully!',
-    //                 'data' => $product->makeHidden(['id', 'created_at', 'updated_at']),
-    //             ], 200);
-    //         } else {
-    //             // $products = ProductModel::all();
-    //             // Fetch all products with relationships
-    //             $products = ProductModel::with([
-    //                 'user:id,name,mobile',
-    //                 'industryDetails:id,name',
-    //                 'subIndustryDetails:id,name'
-    //             ])->get();
-
-
-    //             // For each product, parse the images
-    //             $products->transform(function ($prod) {
-    //                 $uploadIds = $prod->image ? explode(',', $prod->image) : [];
-    //                 $uploads = UploadModel::whereIn('id', $uploadIds)->pluck('file_url', 'id');
-
-    //                 $imageUrls = [];
-    //                 foreach ($uploadIds as $uid) {
-    //                     if (isset($uploads[$uid])) {
-    //                         $imageUrls[] = url($uploads[$uid]);
-    //                     }
-    //                 }
-
-    //                 // Overwrite product->image with array of file objects
-    //                 $prod->image = $imageUrls;
-    //                 return $prod->makeHidden(['id', 'created_at', 'updated_at']);
-    //             });
-
-    //             return response()->json([
-    //                 'success' => true,
-    //                 'message' => 'All products fetched successfully!',
-    //                 'data' => $products->makeHidden(['id', 'created_at', 'updated_at']),
-    //                 'total_record' => count($products),
-    //             ], 200);
-    //         }
-    //     } catch (\Exception $e) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Something went wrong: ' . $e->getMessage(),
-    //         ], 500);
-    //     }
-    // }
-
-    // public function fetchProducts(Request $request, $id = null)
-    // {
-    //     try {
-    //         if ($id) {
-    //             // Fetch a single product with related user, industry, and sub-industry
-    //             $product = ProductModel::with([
-    //                 'user:id,name,phone',
-    //                 'industryDetails:id,name',
-    //                 'subIndustryDetails:id,name'
-    //             ])->find($id);
-
-    //             if (!$product) {
-    //                 return response()->json([
-    //                     'success' => false,
-    //                     'message' => 'Product not found!',
-    //                 ], 404);
-    //             }
-
-    //             // Parse images
-    //             $uploadIds = $product->image ? explode(',', $product->image) : [];
-    //             $uploads = UploadModel::whereIn('id', $uploadIds)->pluck('file_url', 'id');
-
-    //             $product->image = array_map(fn($uid) => isset($uploads[$uid]) ? url($uploads[$uid]) : null, $uploadIds);
-
-    //             // Attach user details
-    //             $responseData = [
-    //                 'user' => [
-    //                     'name' => optional($product->user)->name,
-    //                     'phone' => optional($product->user)->phone,
-    //                 ],
-    //                 'industry' => optional($product->industryDetails)->name,
-    //                 'sub_industry' => optional($product->subIndustryDetails)->name,
-    //             ] + $product->toArray();
-
-    //             return response()->json([
-    //                 'success' => true,
-    //                 'message' => 'Product details fetched successfully!',
-    //                 'data' => collect($responseData)->except(['id', 'created_at', 'updated_at']),
-    //             ], 200);
-    //         }
-
-    //         // Fetch input filters
-    //         $search = $request->input('search'); // Search in product_name, city, user->name
-    //         $industryIds = $request->input('industry') ? explode(',', $request->input('industry')) : [];
-    //         $subIndustryIds = $request->input('sub_industry') ? explode(',', $request->input('sub_industry')) : [];
-    //         $userIds = $request->input('user_id') ? explode(',', $request->input('user_id')) : [];
-    //         $cities = $request->input('city') ? explode(',', $request->input('city')) : [];
-    //         $stateIds = $request->input('state_id') ? explode(',', $request->input('state_id')) : [];
-
-    //         $limit = $request->input('limit', 10); // Default limit
-    //         $offset = $request->input('offset', 0); // Default offset
-
-    //         // // Fetch all products with relationships
-    //         // $products = ProductModel::with([
-    //         //     'user:id,name,phone',
-    //         //     'industryDetails:id,name',
-    //         //     'subIndustryDetails:id,name'
-    //         // ])->get();
-
-    //         // Query products with relationships
-    //         $query = ProductModel::with([
-    //             'user:id,name,mobile',
-    //             'industryDetails:id,name',
-    //             'subIndustryDetails:id,name'
-    //         ]);
-
-    //         // Search in product_name, city, and user->name
-    //         if (!empty($search)) {
-    //             $query->where(function ($q) use ($search) {
-    //                 $q->where('product_name', 'like', "%{$search}%")
-    //                 ->orWhere('city', 'like', "%{$search}%")
-    //                 ->orWhereHas('user', function ($q) use ($search) {
-    //                     $q->where('name', 'like', "%{$search}%");
-    //                 });
-    //             });
-    //         }
-
-    //         // Apply filters if provided
-    //         if (!empty($industryIds)) {
-    //             $query->whereIn('industry', $industryIds);
-    //         }
-    //         if (!empty($subIndustryIds)) {
-    //             $query->whereIn('sub_industry', $subIndustryIds);
-    //         }
-    //         if (!empty($userIds)) {
-    //             $query->whereIn('user_id', $userIds);
-    //         }
-    //         if (!empty($cities)) {
-    //             $query->whereIn('city', $cities);
-    //         }
-    //         if (!empty($stateIds)) {
-    //             $query->whereIn('state_id', $stateIds);
-    //         }
-
-    //         // Apply pagination
-    //         $totalRecords = $query->count();
-    //         $products = $query->offset($offset)->limit($limit)->get();
-
-    //         // if ($products->isEmpty()) {
-    //         //     return response()->json([
-    //         //         'success' => true,
-    //         //         'message' => 'No products found!',
-    //         //         'data' => [],
-    //         //         'total_record' => 0,
-    //         //     ], 200);
-    //         // }
-
-    //         if ($products->isEmpty()) {
-    //             return response()->json([
-    //                 'success' => true,
-    //                 'message' => 'No products found!',
-    //                 'data' => [],
-    //                 'total_record' => 0,
-    //             ], 200);
-    //         }
-
-    //         // // Get all image IDs in one go
-    //         // $allImageIds = collect($products)->flatMap(fn($p) => explode(',', $p->image ?? ''))->unique()->filter();
-    //         // $uploads = UploadModel::whereIn('id', $allImageIds)->pluck('file_url', 'id');
-
-    //         // // Transform each product
-    //         // $products->transform(function ($prod) use ($uploads) {
-    //         //     $uploadIds = $prod->image ? explode(',', $prod->image) : [];
-    //         //     $prod->image = array_map(fn($uid) => isset($uploads[$uid]) ? url($uploads[$uid]) : null, $uploadIds);
-
-    //         //     return collect([
-    //         //         'user' => [
-    //         //             'name' => optional($prod->user)->name,
-    //         //             'phone' => optional($prod->user)->phone,
-    //         //         ],
-    //         //         'industry' => optional($prod->industryDetails)->name,
-    //         //         'sub_industry' => optional($prod->subIndustryDetails)->name,
-    //         //     ] + $prod->toArray())->except(['id', 'created_at', 'updated_at']);
-    //         // });
-
-    //          // Get all image IDs in one go
-    //         $allImageIds = collect($products)->flatMap(fn($p) => explode(',', $p->image ?? ''))->unique()->filter();
-    //         $uploads = UploadModel::whereIn('id', $allImageIds)->pluck('file_url', 'id');
-
-    //         // Transform each product
-    //         $products->transform(function ($prod) use ($uploads) {
-    //             $uploadIds = $prod->image ? explode(',', $prod->image) : [];
-    //             $prod->image = array_map(fn($uid) => isset($uploads[$uid]) ? url($uploads[$uid]) : null, $uploadIds);
-
-    //         return collect([
-    //             'user' => [
-    //                 'name' => optional($prod->user)->name,
-    //                 'mobile' => optional($prod->user)->mobile,
-    //             ],
-    //             'industry' => optional($prod->industryDetails)->name,
-    //             'sub_industry' => optional($prod->subIndustryDetails)->name,
-    //         ] + $prod->toArray())->except(['id', 'created_at', 'updated_at']);
-    //     });
-
-    //         return response()->json([
-    //             'success' => true,
-    //             'message' => 'All products fetched successfully!',
-    //             'data' => $products,
-    //             'total_record' => $products->count(),
-    //         ], 200);
-    //     } catch (\Exception $e) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Something went wrong: ' . $e->getMessage(),
-    //         ], 500);
-    //     }
-    // }
-
-    // public function fetchProducts(Request $request, $id = null)
-    // {
-    //     try {
-    //         if ($id) {
-    //             // Fetch a single product with related user, industry, and sub-industry
-    //             $product = ProductModel::with([
-    //                 'user:id,name,phone',
-    //                 'industryDetails:id,name',
-    //                 'subIndustryDetails:id,name'
-    //             ])->find($id);
-
-    //             if (!$product) {
-    //                 return response()->json([
-    //                     'success' => false,
-    //                     'message' => 'Product not found!',
-    //                 ], 404);
-    //             }
-
-    //             // Parse images
-    //             $uploadIds = $product->image ? explode(',', $product->image) : [];
-    //             $uploads = UploadModel::whereIn('id', $uploadIds)->pluck('file_url', 'id');
-
-    //             $product->image = array_map(fn($uid) => isset($uploads[$uid]) ? url($uploads[$uid]) : null, $uploadIds);
-
-    //             // Format response correctly
-    //             $responseData = [
-    //                 'user' => [
-    //                     'name' => optional($product->user)->name,
-    //                     'phone' => optional($product->user)->phone,
-    //                 ],
-    //                 'industry' => optional($product->industryDetails)->name,
-    //                 'sub_industry' => optional($product->subIndustryDetails)->name,
-    //             ] + $product->toArray();
-
-    //             return response()->json([
-    //                 'success' => true,
-    //                 'message' => 'Product details fetched successfully!',
-    //                 'data' => collect($responseData)->except(['id', 'user_id', 'industry', 'sub_industry', 'created_at', 'updated_at']),
-    //             ], 200);
-    //         }
-
-    //         // // Fetch input filters
-    //         // $search = $request->input('search');
-    //         // $industryIds = $request->input('industry') ? explode(',', $request->input('industry')) : [];
-    //         // $subIndustryIds = $request->input('sub_industry') ? explode(',', $request->input('sub_industry')) : [];
-    //         // $userIds = $request->input('user_id') ? explode(',', $request->input('user_id')) : [];
-    //         // $cities = $request->input('city') ? explode(',', $request->input('city')) : [];
-    //         // $stateIds = $request->input('state_id') ? explode(',', $request->input('state_id')) : [];
-
-    //         // $limit = 10;
-    //         // $offset = $request->input('offset', 0);
-
-    //         // // Query products with relationships
-    //         // $query = ProductModel::with([
-    //         //     'user:id,name,phone,city',
-    //         //     'industryDetails:id,name',
-    //         //     'subIndustryDetails:id,name'
-    //         // ]);
-
-    //         // // Search in product_name, city, and user->name
-    //         // // if (!empty($search)) {
-    //         // //     $query->where(function ($q) use ($search) {
-    //         // //         $q->where('product_name', 'like', "%{$search}%")
-    //         // //         ->orWhere('city', 'like', "%{$search}%")
-    //         // //         ->orWhereHas('user', function ($q) use ($search) {
-    //         // //             $q->where('name', 'like', "%{$search}%");
-    //         // //         });
-    //         // //     });
-    //         // // }
-    //         // if (!empty($search)) {
-    //         //     $query->where(function ($q) use ($search) {
-    //         //         $q->where('product_name', 'like', "%{$search}%")
-    //         //           ->orWhereHas('user', function ($q) use ($search) {
-    //         //               $q->where('name', 'like', "%{$search}%") // Search by user name
-    //         //                 ->orWhere('city', 'like', "%{$search}%"); // Search by user city
-    //         //           });
-    //         //     });
-    //         // }
-
-    //         // // Apply filters if provided
-    //         // if (!empty($industryIds)) {
-    //         //     $query->whereIn('industry', $industryIds);
-    //         // }
-    //         // if (!empty($subIndustryIds)) {
-    //         //     $query->whereIn('sub_industry', $subIndustryIds);
-    //         // }
-    //         // if (!empty($userIds)) {
-    //         //     $query->whereIn('user_id', $userIds);
-    //         // }
-    //         // if (!empty($cities)) {
-    //         //     $query->whereIn('city', $cities);
-    //         // }
-    //         // if (!empty($stateIds)) {
-    //         //     $query->whereIn('state_id', $stateIds);
-    //         // }
-
-    //         // // Apply pagination
-    //         // $totalRecords = $query->count();
-    //         // $products = $query->offset($offset)->limit($limit)->get();
-
-    //         // if ($products->isEmpty()) {
-    //         //     return response()->json([
-    //         //         'success' => true,
-    //         //         'message' => 'No products found!',
-    //         //         'data' => [],
-    //         //         'total_record' => 0,
-    //         //     ], 200);
-    //         // }
-
-    //         // // Get all image IDs in one go
-    //         // $allImageIds = collect($products)->flatMap(fn($p) => explode(',', $p->image ?? ''))->unique()->filter();
-    //         // $uploads = UploadModel::whereIn('id', $allImageIds)->pluck('file_url', 'id');
-
-    //         // // Transform each product correctly
-    //         // $products->transform(function ($prod) use ($uploads) {
-    //         //     $uploadIds = $prod->image ? explode(',', $prod->image) : [];
-    //         //     $prod->image = array_map(fn($uid) => isset($uploads[$uid]) ? url($uploads[$uid]) : null, $uploadIds);
-
-    //         //     return collect([
-    //         //         'user' => [
-    //         //             'name' => optional($prod->user)->name,
-    //         //             'phone' => optional($prod->user)->phone,
-    //         //         ],
-    //         //         'industry' => optional($prod->industryDetails)->name,  // Fixed industry name
-    //         //         'sub_industry' => optional($prod->subIndustryDetails)->name,  // Fixed sub-industry name
-    //         //     ] + $prod->toArray())->except(['id', 'user_id', 'industry', 'sub_industry', 'created_at', 'updated_at']);
-    //         // });
-
-    //         // return response()->json([
-    //         //     'success' => true,
-    //         //     'message' => 'All products fetched successfully!',
-    //         //     'data' => $products,
-    //         //     'total_record' => $totalRecords,
-    //         // ], 200);
-
-    //         // Fetch input filters
-    //         $search = $request->input('search');
-    //         $industryIds = $request->input('industry') ? explode(',', $request->input('industry')) : [];
-    //         $subIndustryIds = $request->input('sub_industry') ? explode(',', $request->input('sub_industry')) : [];
-    //         $userIds = $request->input('user_id') ? explode(',', $request->input('user_id')) : [];
-    //         $cities = $request->input('city') ? explode(',', $request->input('city')) : [];
-    //         $stateIds = $request->input('state_id') ? explode(',', $request->input('state_id')) : [];
-
-    //         $limit = $request->input('limit', 10); // Dynamic limit (default 10)
-    //         $offset = $request->input('offset', 0); // Default offset 0
-
-    //         // Query products with relationships
-    //         $query = ProductModel::with([
-    //             'user:id,name,phone,city',
-    //             'industryDetails:id,name',
-    //             'subIndustryDetails:id,name'
-    //         ]);
-
-    //         // 🔹 **Fix: Search in product_name, user->name, and user->city**
-    //         if (!empty($search)) {
-    //             $query->where(function ($q) use ($search) {
-    //                 $q->where('product_name', 'like', "%{$search}%")
-    //                 ->orWhereHas('user', function ($q) use ($search) {
-    //                     $q->where('name', 'like', "%{$search}%")  // Search in user name
-    //                         ->orWhere('city', 'like', "%{$search}%"); // Search in user city
-    //                 });
-    //             });
-    //         }
-
-    //         // 🔹 **Fix: Apply City Filtering for Users & Products**
-    //         if (!empty($cities)) {
-    //             $query->where(function ($q) use ($cities) {
-    //                 $q->whereIn('city', $cities) // City in Products
-    //                 ->orWhereHas('user', function ($q) use ($cities) {
-    //                     $q->whereIn('city', $cities); // City in Users
-    //                 });
-    //             });
-    //         }
-
-    //         // Apply Filters if Provided
-    //         if (!empty($industryIds)) {
-    //             $query->whereIn('industry', $industryIds);
-    //         }
-    //         if (!empty($subIndustryIds)) {
-    //             $query->whereIn('sub_industry', $subIndustryIds);
-    //         }
-    //         if (!empty($userIds)) {
-    //             $query->whereIn('user_id', $userIds);
-    //         }
-    //         if (!empty($stateIds)) {
-    //             $query->whereIn('state_id', $stateIds);
-    //         }
-
-    //         // Apply pagination
-    //         $totalRecords = $query->count();
-    //         $products = $query->offset($offset)->limit($limit)->get();
-
-    //         // Handle Empty Results
-    //         if ($products->isEmpty()) {
-    //             return response()->json([
-    //                 'success' => true,
-    //                 'message' => 'No products found!',
-    //                 'data' => [],
-    //                 'total_record' => 0,
-    //             ], 200);
-    //         }
-
-    //         // Get all image IDs in one go
-    //         $allImageIds = collect($products)->flatMap(fn($p) => explode(',', $p->image ?? ''))->unique()->filter();
-    //         $uploads = UploadModel::whereIn('id', $allImageIds)->pluck('file_url', 'id');
-
-    //         // 🔹 **Fix: Transform Each Product Correctly**
-    //         $products->transform(function ($prod) use ($uploads) {
-    //             $uploadIds = $prod->image ? explode(',', $prod->image) : [];
-    //             $prod->image = array_map(fn($uid) => isset($uploads[$uid]) ? url($uploads[$uid]) : null, $uploadIds);
-
-    //             return collect([
-    //                 'user' => [
-    //                     'name' => optional($prod->user)->name,
-    //                     'phone' => optional($prod->user)->phone,
-    //                     'city' => optional($prod->user)->city // Fix: Include user city
-    //                 ],
-    //                 'industry' => optional($prod->industryDetails)->name,  // Fix: Industry name
-    //                 'sub_industry' => optional($prod->subIndustryDetails)->name,  // Fix: Sub-industry name
-    //             ] + $prod->toArray())->except(['id', 'user_id', 'industry', 'sub_industry', 'created_at', 'updated_at']);
-    //         });
-
-    //         // Return Final JSON Response
-    //         return response()->json([
-    //             'success' => true,
-    //             'message' => 'All products fetched successfully!',
-    //             'data' => $products,
-    //             'total_record' => $totalRecords,
-    //         ], 200);
-
-    //                 } catch (\Exception $e) {
-    //                     return response()->json([
-    //                         'success' => false,
-    //                         'message' => 'Something went wrong: ' . $e->getMessage(),
-    //                     ], 500);
-    //                 }
-    //             }
     public function fetchProducts(Request $request, $id = null)
-{
-    try {
-        if ($id) {
-            // Fetch a single product with related user, industry, and sub-industry
-            $product = ProductModel::with([
+    {
+        try {
+            if ($id) {
+                // Fetch a single product with related user, industry, and sub-industry
+                $product = ProductModel::with([
+                    'user:id,name,phone,city',
+                    'industryDetails:id,name',
+                    'subIndustryDetails:id,name'
+                ])->find($id);
+
+                if (!$product) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Product not found!',
+                    ], 404);
+                }
+
+                // Parse images
+                $uploadIds = $product->image ? explode(',', $product->image) : [];
+                $uploads = UploadModel::whereIn('id', $uploadIds)->pluck('file_url', 'id');
+
+                $product->image = array_map(fn($uid) => isset($uploads[$uid]) ? url($uploads[$uid]) : null, $uploadIds);
+
+                // Format response correctly
+                $responseData = [
+                    'user' => [
+                        'name' => optional($product->user)->name,
+                        'phone' => optional($product->user)->phone,
+                        'city' => optional($product->user)->city
+                    ],
+                    'industry' => optional($product->industryDetails)->name,
+                    'sub_industry' => optional($product->subIndustryDetails)->name,
+                ] + $product->toArray();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Product details fetched successfully!',
+                    'data' => collect($responseData)->except(['id', 'user_id', 'industry', 'sub_industry', 'created_at', 'updated_at']),
+                ], 200);
+            }
+
+            // Fetch input filters
+            $search = $request->input('search');
+            $industryIds = $request->input('industry') ? explode(',', $request->input('industry')) : [];
+            $subIndustryIds = $request->input('sub_industry') ? explode(',', $request->input('sub_industry')) : [];
+            $userIds = $request->input('user_id') ? explode(',', $request->input('user_id')) : [];
+            $cities = $request->input('city') ? explode(',', $request->input('city')) : [];
+            $stateIds = $request->input('state_id') ? explode(',', $request->input('state_id')) : [];
+
+            $limit = $request->input('limit', 10); // Dynamic limit (default 10)
+            $offset = $request->input('offset', 0); // Default offset 0
+
+            // Query products with relationships
+            $query = ProductModel::with([
                 'user:id,name,phone,city',
                 'industryDetails:id,name',
                 'subIndustryDetails:id,name'
-            ])->find($id);
+            ]);
 
-            if (!$product) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Product not found!',
-                ], 404);
+            // 🔹 **Fix: Search in product_name, user->name, and user->city**
+            if (!empty($search)) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('product_name', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%")
+                            ->orWhere('city', 'like', "%{$search}%");
+                    });
+                });
             }
 
-            // Parse images
-            $uploadIds = $product->image ? explode(',', $product->image) : [];
-            $uploads = UploadModel::whereIn('id', $uploadIds)->pluck('file_url', 'id');
+            // 🔹 **Fix: Apply City Filtering for Users & Products**
+            if (!empty($cities)) {
+                $query->where(function ($q) use ($cities) {
+                    $q->whereIn('city', $cities)
+                    ->orWhereHas('user', function ($q) use ($cities) {
+                        $q->whereIn('city', $cities);
+                    });
+                });
+            }
 
-            $product->image = array_map(fn($uid) => isset($uploads[$uid]) ? url($uploads[$uid]) : null, $uploadIds);
+            // Apply Filters if Provided
+            if (!empty($industryIds)) {
+                $query->whereIn('industry', $industryIds);
+            }
+            if (!empty($subIndustryIds)) {
+                $query->whereIn('sub_industry', $subIndustryIds);
+            }
+            if (!empty($userIds)) {
+                $query->whereIn('user_id', $userIds);
+            }
+            if (!empty($stateIds)) {
+                $query->whereIn('state_id', $stateIds);
+            }
 
-            // Format response correctly
-            $responseData = [
-                'user' => [
-                    'name' => optional($product->user)->name,
-                    'phone' => optional($product->user)->phone,
-                    'city' => optional($product->user)->city
-                ],
-                'industry' => optional($product->industryDetails)->name,
-                'sub_industry' => optional($product->subIndustryDetails)->name,
-            ] + $product->toArray();
+            // Apply pagination
+            $totalRecords = $query->count();
+            $products = $query->offset($offset)->limit($limit)->get();
 
+            // Handle Empty Results
+            if ($products->isEmpty()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'No products found!',
+                    'data' => [],
+                    'total_record' => 0,
+                ], 200);
+            }
+
+            // Get all image IDs in one go
+            $allImageIds = collect($products)->flatMap(fn($p) => explode(',', $p->image ?? ''))->unique()->filter();
+            $uploads = UploadModel::whereIn('id', $allImageIds)->pluck('file_url', 'id');
+
+            // 🔹 **Fix: Transform Each Product Correctly**
+            $products->transform(function ($prod) use ($uploads) {
+                $uploadIds = $prod->image ? explode(',', $prod->image) : [];
+                $prod->image = array_map(fn($uid) => isset($uploads[$uid]) ? url($uploads[$uid]) : null, $uploadIds);
+
+                return collect([
+                    'user' => [
+                        'name' => optional($prod->user)->name,
+                        'phone' => optional($prod->user)->phone,
+                        'city' => optional($prod->user)->city
+                    ],
+                    'industry' => optional($prod->industryDetails)->name,
+                    'sub_industry' => optional($prod->subIndustryDetails)->name,
+                ] + $prod->toArray())->except(['id', 'user_id', 'industry', 'sub_industry', 'created_at', 'updated_at']);
+            });
+
+            // Return Final JSON Response
             return response()->json([
                 'success' => true,
-                'message' => 'Product details fetched successfully!',
-                'data' => collect($responseData)->except(['id', 'user_id', 'industry', 'sub_industry', 'created_at', 'updated_at']),
+                'message' => 'All products fetched successfully!',
+                'data' => $products,
+                'total_record' => $totalRecords,
             ], 200);
-        }
 
-        // Fetch input filters
-        $search = $request->input('search');
-        $industryIds = $request->input('industry') ? explode(',', $request->input('industry')) : [];
-        $subIndustryIds = $request->input('sub_industry') ? explode(',', $request->input('sub_industry')) : [];
-        $userIds = $request->input('user_id') ? explode(',', $request->input('user_id')) : [];
-        $cities = $request->input('city') ? explode(',', $request->input('city')) : [];
-        $stateIds = $request->input('state_id') ? explode(',', $request->input('state_id')) : [];
-
-        $limit = $request->input('limit', 10); // Dynamic limit (default 10)
-        $offset = $request->input('offset', 0); // Default offset 0
-
-        // Query products with relationships
-        $query = ProductModel::with([
-            'user:id,name,phone,city',
-            'industryDetails:id,name',
-            'subIndustryDetails:id,name'
-        ]);
-
-        // 🔹 **Fix: Search in product_name, user->name, and user->city**
-        if (!empty($search)) {
-            $query->where(function ($q) use ($search) {
-                $q->where('product_name', 'like', "%{$search}%")
-                  ->orWhereHas('user', function ($q) use ($search) {
-                      $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('city', 'like', "%{$search}%");
-                  });
-            });
-        }
-
-        // 🔹 **Fix: Apply City Filtering for Users & Products**
-        if (!empty($cities)) {
-            $query->where(function ($q) use ($cities) {
-                $q->whereIn('city', $cities)
-                  ->orWhereHas('user', function ($q) use ($cities) {
-                      $q->whereIn('city', $cities);
-                  });
-            });
-        }
-
-        // Apply Filters if Provided
-        if (!empty($industryIds)) {
-            $query->whereIn('industry', $industryIds);
-        }
-        if (!empty($subIndustryIds)) {
-            $query->whereIn('sub_industry', $subIndustryIds);
-        }
-        if (!empty($userIds)) {
-            $query->whereIn('user_id', $userIds);
-        }
-        if (!empty($stateIds)) {
-            $query->whereIn('state_id', $stateIds);
-        }
-
-        // Apply pagination
-        $totalRecords = $query->count();
-        $products = $query->offset($offset)->limit($limit)->get();
-
-        // Handle Empty Results
-        if ($products->isEmpty()) {
+        } catch (\Exception $e) {
             return response()->json([
-                'success' => true,
-                'message' => 'No products found!',
-                'data' => [],
-                'total_record' => 0,
-            ], 200);
+                'success' => false,
+                'message' => 'Something went wrong: ' . $e->getMessage(),
+            ], 500);
         }
-
-        // Get all image IDs in one go
-        $allImageIds = collect($products)->flatMap(fn($p) => explode(',', $p->image ?? ''))->unique()->filter();
-        $uploads = UploadModel::whereIn('id', $allImageIds)->pluck('file_url', 'id');
-
-        // 🔹 **Fix: Transform Each Product Correctly**
-        $products->transform(function ($prod) use ($uploads) {
-            $uploadIds = $prod->image ? explode(',', $prod->image) : [];
-            $prod->image = array_map(fn($uid) => isset($uploads[$uid]) ? url($uploads[$uid]) : null, $uploadIds);
-
-            return collect([
-                'user' => [
-                    'name' => optional($prod->user)->name,
-                    'phone' => optional($prod->user)->phone,
-                    'city' => optional($prod->user)->city
-                ],
-                'industry' => optional($prod->industryDetails)->name,
-                'sub_industry' => optional($prod->subIndustryDetails)->name,
-            ] + $prod->toArray())->except(['id', 'user_id', 'industry', 'sub_industry', 'created_at', 'updated_at']);
-        });
-
-        // Return Final JSON Response
-        return response()->json([
-            'success' => true,
-            'message' => 'All products fetched successfully!',
-            'data' => $products,
-            'total_record' => $totalRecords,
-        ], 200);
-
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Something went wrong: ' . $e->getMessage(),
-        ], 500);
     }
-}
-
-
 
 
     // for guest-user
