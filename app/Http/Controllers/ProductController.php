@@ -569,4 +569,66 @@ class ProductController extends Controller
             ], 500);
         }
     }
+
+    // import images
+    public function importProductImagesFromCSV()
+    {
+        try {
+            DB::beginTransaction();
+
+            UploadModel::truncate();
+
+            $filePath = storage_path('migration_exports/product_images.csv');
+
+            if (!file_exists($filePath)) {
+                return response()->json(['success' => false, 'message' => 'CSV file not found!'], 404);
+            }
+
+            // Read CSV file
+            $file = fopen($filePath, 'r');
+            $uploadIdsByProduct = [];
+
+            // Skip the first row (headers)
+            fgetcsv($file);
+
+            while (($row = fgetcsv($file, 1000, "\t")) !== false) {
+                [$id, $productId, $imageUrl, $status] = $row;
+
+                // ✅ Extract the actual filename
+                $fileNameWithExt = basename($imageUrl); // e.g. "images (1)1659076538.jpeg"
+                $fileName = pathinfo($fileNameWithExt, PATHINFO_FILENAME); // "images (1)1659076538"
+                $fileExt = pathinfo($fileNameWithExt, PATHINFO_EXTENSION); // "jpeg"
+                $fileSize = file_exists(public_path($imageUrl)) ? filesize(public_path($imageUrl)) : 0; // Get file size if exists
+
+                // ✅ Store in `t_uploads`
+                $uploadId = DB::table('t_uploads')->insertGetId([
+                    'file_name' => $fileName,
+                    'file_ext' => $fileExt,
+                    'file_url' => $imageUrl,
+                    'file_size' => $fileSize,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+
+                // ✅ Store upload ID for corresponding product
+                $uploadIdsByProduct[$productId][] = $uploadId;
+            }
+            fclose($file);
+
+            // ✅ Update `t_products.image` with comma-separated upload IDs
+            foreach ($uploadIdsByProduct as $productId => $uploadIds) {
+                DB::table('t_products')->where('id', $productId)->update([
+                    'image' => implode(',', $uploadIds)
+                ]);
+            }
+
+            DB::commit();
+            return response()->json(['success' => true, 'message' => 'Product images migrated successfully!']);
+        
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+        }
+    }
+
 }
