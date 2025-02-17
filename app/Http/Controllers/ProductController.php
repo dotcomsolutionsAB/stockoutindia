@@ -572,15 +572,81 @@ class ProductController extends Controller
     }
 
     // import images
+    // public function importProductImagesFromCSV()
+    // {
+    //     try {
+    //         DB::beginTransaction();
+
+    //         UploadModel::truncate();
+
+    //         // $filePath = storage_path('migration_exports/product_images.csv');
+    //         $filePath = public_path('storage/uploads/migration_exports/product_images.csv');;
+
+    //         if (!file_exists($filePath)) {
+    //             return response()->json(['success' => false, 'message' => 'CSV file not found!'], 404);
+    //         }
+
+    //         // Read CSV file
+    //         $file = fopen($filePath, 'r');
+    //         $uploadIdsByProduct = [];
+
+    //         // Skip the first row (headers)
+    //         fgetcsv($file);
+
+    //         // while (($row = fgetcsv($file, 1000, "\t")) !== false) {
+    //         //     [$id, $productId, $imageUrl, $status] = $row;
+    //         while (($row = fgetcsv($file, 1000, ",")) !== false) { // ✅ Use `,` delimiter
+    //             if (count($row) < 4) continue; // ✅ Skip bad row
+
+    //             [$id, $productId, $imageUrl, $status] = $row;
+
+    //             // ✅ Extract file details
+    //             $fileNameWithExt = basename($imageUrl);
+    //             $fileName = pathinfo($fileNameWithExt, PATHINFO_FILENAME);
+    //             $fileExt = pathinfo($fileNameWithExt, PATHINFO_EXTENSION);
+
+    //             // ✅ Ensure correct file path
+    //             $fullPath = public_path("storage/uploads/products/" . $fileNameWithExt);
+    //             $fileSize = file_exists($fullPath) ? filesize($fullPath) : 0;
+    //                 // ✅ Store in `t_uploads`
+    //             $uploadId = DB::table('t_uploads')->insertGetId([
+    //                 'file_name' => $fileName,
+    //                 'file_ext' => $fileExt,
+    //                 'file_url' => $imageUrl,
+    //                 'file_size' => $fileSize,
+    //                 'created_at' => now(),
+    //                 'updated_at' => now()
+    //             ]);
+
+    //             // ✅ Store upload ID for corresponding product
+    //             $uploadIdsByProduct[$productId][] = $uploadId;
+    //         }
+    //         fclose($file);
+
+    //         // ✅ Update `t_products.image` with comma-separated upload IDs
+    //         foreach ($uploadIdsByProduct as $productId => $uploadIds) {
+    //             DB::table('t_products')->where('id', $productId)->update([
+    //                 'image' => implode(',', $uploadIds)
+    //             ]);
+    //         }
+
+    //         DB::commit();
+    //         return response()->json(['success' => true, 'message' => 'Product images migrated successfully!']);
+        
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
+    //         return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+    //     }
+    // }
+
     public function importProductImagesFromCSV()
     {
         try {
+            // Start DB Transaction
             DB::beginTransaction();
 
-            UploadModel::truncate();
-
-            // $filePath = storage_path('migration_exports/product_images.csv');
-            $filePath = public_path('storage/uploads/migration_exports/product_images.csv');;
+            // Define paths
+            $filePath = public_path('storage/uploads/migration_exports/product_images.csv');
 
             if (!file_exists($filePath)) {
                 return response()->json(['success' => false, 'message' => 'CSV file not found!'], 404);
@@ -593,33 +659,40 @@ class ProductController extends Controller
             // Skip the first row (headers)
             fgetcsv($file);
 
-            // while (($row = fgetcsv($file, 1000, "\t")) !== false) {
-            //     [$id, $productId, $imageUrl, $status] = $row;
-            while (($row = fgetcsv($file, 1000, ",")) !== false) { // ✅ Use `,` delimiter
-                if (count($row) < 4) continue; // ✅ Skip bad row
+            while (($row = fgetcsv($file, 1000, ",")) !== false) {
+                if (count($row) < 4) continue; // Skip malformed rows
 
                 [$id, $productId, $imageUrl, $status] = $row;
 
-                // ✅ Extract file details
+                // Extract file details
                 $fileNameWithExt = basename($imageUrl);
                 $fileName = pathinfo($fileNameWithExt, PATHINFO_FILENAME);
                 $fileExt = pathinfo($fileNameWithExt, PATHINFO_EXTENSION);
-
+                
                 // ✅ Ensure correct file path
-                $fullPath = public_path("storage/uploads/products/" . $fileNameWithExt);
-                $fileSize = file_exists($fullPath) ? filesize($fullPath) : 0;
-                    // ✅ Store in `t_uploads`
+                $serverFilePath = public_path("storage/uploads/products/" . $fileNameWithExt);
+                if (!file_exists($serverFilePath)) {
+                    continue; // Skip missing images
+                }
+
+                $fileSize = filesize($serverFilePath);
+
+                // ✅ Store in `t_uploads`
                 $uploadId = DB::table('t_uploads')->insertGetId([
                     'file_name' => $fileName,
                     'file_ext' => $fileExt,
-                    'file_url' => $imageUrl,
+                    'file_url' => "storage/uploads/products/" . $fileNameWithExt,
                     'file_size' => $fileSize,
                     'created_at' => now(),
                     'updated_at' => now()
                 ]);
 
-                // ✅ Store upload ID for corresponding product
-                $uploadIdsByProduct[$productId][] = $uploadId;
+                // ✅ Check if product exists in `t_products`
+                $productExists = DB::table('t_products')->where('id', $productId)->exists();
+
+                if ($productExists) {
+                    $uploadIdsByProduct[$productId][] = $uploadId;
+                }
             }
             fclose($file);
 
