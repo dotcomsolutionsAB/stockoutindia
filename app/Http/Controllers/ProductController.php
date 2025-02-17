@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Storage;
 use Auth;
+use DB;
 
 class ProductController extends Controller
 {
