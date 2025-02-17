@@ -593,16 +593,22 @@ class ProductController extends Controller
             // Skip the first row (headers)
             fgetcsv($file);
 
-            while (($row = fgetcsv($file, 1000, "\t")) !== false) {
+            // while (($row = fgetcsv($file, 1000, "\t")) !== false) {
+            //     [$id, $productId, $imageUrl, $status] = $row;
+            while (($row = fgetcsv($file, 1000, ",")) !== false) { // ✅ Use `,` delimiter
+                if (count($row) < 4) continue; // ✅ Skip bad row
+
                 [$id, $productId, $imageUrl, $status] = $row;
 
-                // ✅ Extract the actual filename
-                $fileNameWithExt = basename($imageUrl); // e.g. "images (1)1659076538.jpeg"
-                $fileName = pathinfo($fileNameWithExt, PATHINFO_FILENAME); // "images (1)1659076538"
-                $fileExt = pathinfo($fileNameWithExt, PATHINFO_EXTENSION); // "jpeg"
-                $fileSize = file_exists(public_path($imageUrl)) ? filesize(public_path($imageUrl)) : 0; // Get file size if exists
+                // ✅ Extract file details
+                $fileNameWithExt = basename($imageUrl);
+                $fileName = pathinfo($fileNameWithExt, PATHINFO_FILENAME);
+                $fileExt = pathinfo($fileNameWithExt, PATHINFO_EXTENSION);
 
-                // ✅ Store in `t_uploads`
+                // ✅ Ensure correct file path
+                $fullPath = public_path("storage/uploads/products/" . $fileNameWithExt);
+                $fileSize = file_exists($fullPath) ? filesize($fullPath) : 0;
+                    // ✅ Store in `t_uploads`
                 $uploadId = DB::table('t_uploads')->insertGetId([
                     'file_name' => $fileName,
                     'file_ext' => $fileExt,
