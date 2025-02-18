@@ -482,7 +482,7 @@ class ProductController extends Controller
             if ($request->hasFile('files')) {
                 foreach ($request->file('files') as $file) {
                     // 1. Store file in "uploads/products" folder on the "public" disk
-                    $path = $file->store('uploads/products', 'public');
+                    $path = $file->store('uploads/products/product_images', 'public');
 
                     // 2. Extract file details
                     $originalName = $file->getClientOriginalName(); // e.g. "photo.jpg"
@@ -539,7 +539,7 @@ class ProductController extends Controller
                 if ($upload) {
                     // Convert DB URL to actual storage path
                     $filePath = str_replace(asset('storage/'), '', $upload->file_url);
-                    $filePath = 'uploads/products/' . basename($filePath); // Ensure correct path
+                    $filePath = 'uploads/products/product_images/' . basename($filePath); // Ensure correct path
 
                     // Debugging: Log file path before deletion
                     \Log::info("Deleting File: " . $filePath);
