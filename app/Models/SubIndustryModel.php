@@ -15,6 +15,7 @@ class SubIndustryModel extends Model
         'name',
         'slug',
         'industry',
+        'image'
     ];
 
     /**
@@ -25,4 +26,10 @@ class SubIndustryModel extends Model
     {
         return $this->belongsTo(IndustryModel::class, 'industry', 'id'); // industry = foreign key in sub_industries
     }
+
+    public function products()
+    {
+        return $this->hasMany(ProductModel::class, 'sub_industry', 'id');
+    }
+
 }

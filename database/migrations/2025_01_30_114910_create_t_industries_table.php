@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('slug')->unique();
             $table->longText('desc')->nullable();
             $table->integer('sequence')->default(0);
+            $table->integer('image')->nullable();
             $table->timestamps();
         });
     }

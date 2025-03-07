@@ -66,10 +66,14 @@ class IndustryController extends Controller
                     'slug' => $industry->slug,
                     'desc' => $industry->desc,
                     'sequence' => $industry->sequence,
+                    'industry_image' => $industry->image,
                     'sub_industries' => $industry->subIndustries->map(function ($sub) {
                         return [
                             'id' => $sub->id,
-                            'name' => $sub->name
+                            'name' => $sub->name,
+                            'image' => $sub->image,
+                             // Count the products in this sub-industry using the relationship
+                            'product_count' => $sub->products()->count(),
                         ];
                     }),
                 ];
@@ -82,8 +86,8 @@ class IndustryController extends Controller
             }
     
             // Fetch all industries
-            $industries = IndustryModel::with('subIndustries:id,industry,name')->get();
-    
+            $industries = IndustryModel::with('subIndustries:id,industry,name,image')->get();
+
             // Transform all industries response
             $formattedIndustries = $industries->map(function ($industry) {
                 return [
@@ -92,10 +96,14 @@ class IndustryController extends Controller
                     'slug' => $industry->slug,
                     'desc' => $industry->desc,
                     'sequence' => $industry->sequence,
+                    'industry_image' => $industry->image,
                     'sub_industries' => $industry->subIndustries->map(function ($sub) {
                         return [
                             'id' => $sub->id,
-                            'name' => $sub->name
+                            'name' => $sub->name,
+                            'image' => $sub->image,
+                            // Count the products in this sub-industry using the relationship
+                            'product_count' => $sub->products()->count(),
                         ];
                     }),
                 ];

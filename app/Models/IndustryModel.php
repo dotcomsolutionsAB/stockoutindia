@@ -16,6 +16,7 @@ class IndustryModel extends Model
         'slug',
         'desc',
         'sequence',
+        'image'
     ];
 
      /**
