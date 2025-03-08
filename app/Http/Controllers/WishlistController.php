@@ -109,7 +109,7 @@ class WishlistController extends Controller
             }
 
             // Find the wishlist item ensuring it belongs to the target user.
-            $wishlistItem = WishlistModel::where('id', $wishlistItemId)
+            $wishlistItem = WishlistModel::where('product_id', $wishlistItemId)
                 ->where('user_id', $targetUserId)
                 ->first();
 
