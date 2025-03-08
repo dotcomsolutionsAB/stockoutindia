@@ -40,7 +40,7 @@ class WishlistController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Product added to wishlist successfully!',
-                'data'    => $wishlistItem,
+                'data'    => $wishlistItem->makeHidden(['id', 'created_at', 'updated_at']),
             ], 201);
         } catch (Exception $e) {
             \Log::error("Error adding product to wishlist: " . $e->getMessage());
@@ -77,7 +77,7 @@ class WishlistController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Wishlist fetched successfully!',
-                'data'    => $wishlistItems,
+                'data'    => $wishlistItems->makeHidden(['id', 'created_at', 'updated_at']),
             ], 200);
         } catch (Exception $e) {
             \Log::error("Error fetching wishlist: " . $e->getMessage());
