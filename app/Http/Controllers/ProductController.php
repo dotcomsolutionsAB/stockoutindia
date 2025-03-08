@@ -345,7 +345,7 @@ class ProductController extends Controller
                     ],
                     'industry' => optional($prod->industryDetails)->name,
                     'sub_industry' => optional($prod->subIndustryDetails)->name,
-                ] + $prod->toArray())->except(['id', 'user_id', 'industry', 'sub_industry', 'created_at', 'updated_at']);
+                ] + $prod->toArray())->except(['user_id', 'industry', 'sub_industry', 'created_at', 'updated_at']);
             });
 
             return response()->json([

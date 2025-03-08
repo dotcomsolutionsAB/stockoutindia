@@ -8,6 +8,7 @@ use App\Http\Controllers\MasterController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SubIndustryController;
+use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\UserController;
 
 // Route::get('/user', function (Request $request) {
@@ -65,6 +66,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/countries', [MasterController::class, 'fetchAllCountries']);
     Route::get('/states', [MasterController::class, 'fetchAllStates']);
     Route::get('/cities/{id?}', [MasterController::class, 'fetchAllCities']);
+
+    Route::prefix('wishlist')->group(function () {
+        Route::post('/add', [WishlistController::class, 'addProduct']); // Create Products
+        Route::post('/fetch', [WishlistController::class, 'fetchWishlist']); // Retrieve products
+        Route::delete('/{id}', [WishlistController::class, 'deleteProduct']); // Update a specific user
+    });
 });
 
     Route::get('/get_products/{id?}', [ProductController::class, 'fetchOnlyProducts']); // Retrieve product (all or specific)
