@@ -74,6 +74,23 @@ class WishlistController extends Controller
                 ->where('user_id', $targetUserId)
                 ->get();
 
+            // Transform each wishlist item
+            $wishlistItems->transform(function ($item) {
+                if ($item->product) {
+                    // Step 1: Get the product's image field (a comma-separated list of upload IDs)
+                    $uploadIds = $item->product->image ? explode(',', $item->product->image) : [];
+                    
+                    // Step 2: Query UploadModel to get file_url for each upload id.
+                    $uploads = \App\Models\UploadModel::whereIn('id', $uploadIds)->pluck('file_url', 'id');
+
+                    // Step 3: Map each upload id to its full URL using the url() helper.
+                    $item->product->image = array_map(function ($uid) use ($uploads) {
+                        return isset($uploads[$uid]) ? url($uploads[$uid]) : null;
+                    }, $uploadIds);
+                }
+                return $item;
+            });
+
             return response()->json([
                 'success' => true,
                 'message' => 'Wishlist fetched successfully!',
