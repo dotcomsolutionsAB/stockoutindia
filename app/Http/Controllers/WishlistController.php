@@ -30,6 +30,16 @@ class WishlistController extends Controller
                 $targetUserId = $user->id;
             }
 
+            // Check if the product is already in the wishlist for this user
+            if (WishlistModel::where('user_id', $targetUserId)
+                    ->where('product_id', $validatedData['product_id'])
+                    ->exists()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Product already exists in wishlist.'
+                    ], 409); // 409 Conflict
+            }
+
             // Create the wishlist item record.
             $wishlistItem = WishlistModel::create([
                 'user_id'    => $targetUserId,
