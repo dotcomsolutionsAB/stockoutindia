@@ -200,7 +200,7 @@ class ProductController extends Controller
             ->toArray();
 
             // 🔹 **Fix: Transform Each Product Correctly**
-            $products->transform(function ($prod) use ($uploads) {
+            $products->transform(function ($prod) use ($uploads, $wishlistProductIds) {
                 $uploadIds = $prod->image ? explode(',', $prod->image) : [];
                 $prod->image = array_map(fn($uid) => isset($uploads[$uid]) ? secure_url($uploads[$uid]) : null, $uploadIds);
 
