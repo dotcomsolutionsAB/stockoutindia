@@ -97,7 +97,7 @@ class ProductController extends Controller
                 $uploadIds = $product->image ? explode(',', $product->image) : [];
                 $uploads = UploadModel::whereIn('id', $uploadIds)->pluck('file_url', 'id');
 
-                $product->image = array_map(fn($uid) => isset($uploads[$uid]) ? url($uploads[$uid]) : null, $uploadIds);
+                $product->image = array_map(fn($uid) => isset($uploads[$uid]) ? secure_url($uploads[$uid]) : null, $uploadIds);
 
                 // Format response correctly
                 $responseData = [
@@ -244,7 +244,7 @@ class ProductController extends Controller
                 $uploadIds = $product->image ? explode(',', $product->image) : [];
                 $uploads = UploadModel::whereIn('id', $uploadIds)->pluck('file_url', 'id');
 
-                $product->image = array_map(fn($uid) => isset($uploads[$uid]) ? url($uploads[$uid]) : null, $uploadIds);
+                $product->image = array_map(fn($uid) => isset($uploads[$uid]) ? secure_url($uploads[$uid]) : null, $uploadIds);
 
                 // Prepare response, removing phone number & unnecessary fields
                 $responseData = [
@@ -336,7 +336,7 @@ class ProductController extends Controller
             // 🔹 **Transform Products**
             $products->transform(function ($prod) use ($uploads) {
                 $uploadIds = $prod->image ? explode(',', $prod->image) : [];
-                $prod->image = array_map(fn($uid) => isset($uploads[$uid]) ? url($uploads[$uid]) : null, $uploadIds);
+                $prod->image = array_map(fn($uid) => isset($uploads[$uid]) ? secure_url($uploads[$uid]) : null, $uploadIds);
 
                 return collect([
                     'user' => [

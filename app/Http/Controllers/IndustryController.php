@@ -68,14 +68,14 @@ class IndustryController extends Controller
                     'desc' => $industry->desc,
                     'sequence' => $industry->sequence,
                     'industry_image' => $industry->image
-                        ? url(optional(UploadModel::find($industry->image))->file_url)
+                        ? secure_url(optional(UploadModel::find($industry->image))->file_url)
                         : null,
                     'sub_industries' => $industry->subIndustries->map(function ($sub) {
                         return [
                             'id' => $sub->id,
                             'name' => $sub->name,
                             'image' => $sub->image
-                                ? url(optional(UploadModel::find($sub->image))->file_url)
+                                ? secure_url(optional(UploadModel::find($sub->image))->file_url)
                                 : null,
                              // Count the products in this sub-industry using the relationship
                             'product_count' => $sub->products()->count(),
@@ -102,14 +102,14 @@ class IndustryController extends Controller
                     'desc' => $industry->desc,
                     'sequence' => $industry->sequence,
                     'industry_image' => $industry->image
-                        ? url(optional(UploadModel::find($industry->image))->file_url)
+                        ? secure_url(optional(UploadModel::find($industry->image))->file_url)
                         : null,
                     'sub_industries' => $industry->subIndustries->map(function ($sub) {
                         return [
                             'id' => $sub->id,
                             'name' => $sub->name,
                             'image' => $sub->image
-                                ? url(optional(UploadModel::find($sub->image))->file_url)
+                                ? secure_url(optional(UploadModel::find($sub->image))->file_url)
                                 : null,
                             // Count the products in this sub-industry using the relationship
                             'product_count' => $sub->products()->count(),

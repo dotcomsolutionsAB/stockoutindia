@@ -95,7 +95,7 @@ class WishlistController extends Controller
 
                     // Step 3: Map each upload id to its full URL using the url() helper.
                     $item->product->image = array_map(function ($uid) use ($uploads) {
-                        return isset($uploads[$uid]) ? url($uploads[$uid]) : null;
+                        return isset($uploads[$uid]) ? secure_url($uploads[$uid]) : null;
                     }, $uploadIds);
                 }
                 return $item;
