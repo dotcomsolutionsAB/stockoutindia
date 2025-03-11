@@ -73,18 +73,20 @@ class SubIndustryController extends Controller
             $subIndustries = SubIndustryModel::with('get_industry')->get();
 
             return response()->json([
-                'success' => true,
-                'message' => 'Sub-Industries fetched successfully!',
-                'data' => $subIndustries->map(function ($subIndustry) {
+                'success'      => true,
+                'message'      => 'Sub-Industries fetched successfully!',
+                'data'         => $subIndustries->map(function ($subIndustry) {
                     return [
-                        'id' =>  $subIndustry->id,
-                        'name' => $subIndustry->name,
-                        'slug' => $subIndustry->slug,
-                        // 'industry_name' => optional($subIndustry->industry)->name, // Avoids errors if industry is null
-                        'industry_name' => $subIndustry->get_industry ? $subIndustry->get_industry->name : 'Unknown',
-                        'total_record' => $subIndustry->count(),
+                        'id'             => $subIndustry->id,
+                        'name'           => $subIndustry->name,
+                        'slug'           => $subIndustry->slug,
+                        'desc'           => $subIndustry->desc, // returns sub-industry description (or null if not set)
+                        'sequence'       => $subIndustry->sequence ?? 0,
+                        'industry_image' => $subIndustry->image ? url(optional(\App\Models\UploadModel::find($subIndustry->image))->file_url) : null,
+                        'sub_industries' => [] // if no nested sub-industries exist, return empty array
                     ];
                 }),
+                'total_record' => $subIndustries->count(),
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
