@@ -25,6 +25,7 @@ return new class extends Migration
             $table->string('city')->after('pincode');
             $table->integer('state')->after('city');
             $table->string('gstin')->unique()->after('state'); // Making GSTIN unique
+            $table->integer('credit')->after('gstin');
         });
     }
 

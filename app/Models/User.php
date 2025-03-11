@@ -33,6 +33,7 @@ class User extends Authenticatable
         'city',
         'state',
         'gstin',
+        'credit',
     ];
 
     /**
