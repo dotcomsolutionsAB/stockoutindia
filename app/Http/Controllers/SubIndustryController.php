@@ -77,6 +77,7 @@ class SubIndustryController extends Controller
                 'message' => 'Sub-Industries fetched successfully!',
                 'data' => $subIndustries->map(function ($subIndustry) {
                     return [
+                        'id' =>  $subIndustry->id,
                         'name' => $subIndustry->name,
                         'slug' => $subIndustry->slug,
                         // 'industry_name' => optional($subIndustry->industry)->name, // Avoids errors if industry is null
