@@ -191,7 +191,7 @@ class ProductController extends Controller
             // 🔹 **Fix: Transform Each Product Correctly**
             $products->transform(function ($prod) use ($uploads) {
                 $uploadIds = $prod->image ? explode(',', $prod->image) : [];
-                $prod->image = array_map(fn($uid) => isset($uploads[$uid]) ? url($uploads[$uid]) : null, $uploadIds);
+                $prod->image = array_map(fn($uid) => isset($uploads[$uid]) ? secure_url($uploads[$uid]) : null, $uploadIds);
 
                 return collect([
                     'user' => [
