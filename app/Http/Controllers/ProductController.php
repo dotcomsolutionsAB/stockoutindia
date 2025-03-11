@@ -100,6 +100,10 @@ class ProductController extends Controller
 
                 $product->image = array_map(fn($uid) => isset($uploads[$uid]) ? secure_url($uploads[$uid]) : null, $uploadIds);
 
+                // Check if product is in the wishlist for the current user
+                $isWishlist = WishlistModel::where('user_id', Auth::id())
+                ->where('product_id', $product->id)
+                ->exists();
                 // Format response correctly
                 $responseData = [
                     'user' => [
@@ -109,6 +113,7 @@ class ProductController extends Controller
                     ],
                     'industry' => optional($product->industryDetails)->name,
                     'sub_industry' => optional($product->subIndustryDetails)->name,
+                    'is_wishlist' => $isWishlist,
                 ] + $product->toArray();
 
                 return response()->json([
@@ -189,6 +194,11 @@ class ProductController extends Controller
             $allImageIds = collect($products)->flatMap(fn($p) => explode(',', $p->image ?? ''))->unique()->filter();
             $uploads = UploadModel::whereIn('id', $allImageIds)->pluck('file_url', 'id');
 
+            // Pre-fetch wishlist product IDs for the authenticated user
+            $wishlistProductIds = WishlistModel::where('user_id', Auth::id())
+            ->pluck('product_id')
+            ->toArray();
+
             // 🔹 **Fix: Transform Each Product Correctly**
             $products->transform(function ($prod) use ($uploads) {
                 $uploadIds = $prod->image ? explode(',', $prod->image) : [];
@@ -202,6 +212,8 @@ class ProductController extends Controller
                     ],
                     'industry' => optional($prod->industryDetails)->name,
                     'sub_industry' => optional($prod->subIndustryDetails)->name,
+                    // Add is_wishlist: true if product exists in user's wishlist, else false.
+                    'is_wishlist' => in_array($prod->id, $wishlistProductIds),
                 ] + $prod->toArray())->except(['user_id', 'industry', 'sub_industry', 'created_at', 'updated_at']);
             });
 
@@ -260,7 +272,6 @@ class ProductController extends Controller
                     ],
                     'industry' => optional($product->industryDetails)->name,
                     'sub_industry' => optional($product->subIndustryDetails)->name,
-                    'is_wishlist' => $isWishlist,
                 ] + $product->toArray();
 
                 return response()->json([
@@ -340,11 +351,6 @@ class ProductController extends Controller
             $allImageIds = collect($products)->flatMap(fn($p) => explode(',', $p->image ?? ''))->unique()->filter();
             $uploads = UploadModel::whereIn('id', $allImageIds)->pluck('file_url', 'id');
 
-            // Pre-fetch wishlist product IDs for the authenticated user
-            $wishlistProductIds = WishlistModel::where('user_id', Auth::id())
-            ->pluck('product_id')
-            ->toArray();
-
             // 🔹 **Transform Products**
             $products->transform(function ($prod) use ($uploads) {
                 $uploadIds = $prod->image ? explode(',', $prod->image) : [];
@@ -357,8 +363,6 @@ class ProductController extends Controller
                     ],
                     'industry' => optional($prod->industryDetails)->name,
                     'sub_industry' => optional($prod->subIndustryDetails)->name,
-                    // Add is_wishlist: true if product exists in user's wishlist, else false.
-                    'is_wishlist' => in_array($prod->id, $wishlistProductIds),
                 ] + $prod->toArray())->except(['user_id', 'industry', 'sub_industry', 'created_at', 'updated_at']);
             });
 
