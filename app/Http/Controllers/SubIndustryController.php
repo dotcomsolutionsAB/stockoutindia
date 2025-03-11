@@ -82,7 +82,6 @@ class SubIndustryController extends Controller
                         'slug' => $subIndustry->slug,
                         // 'industry_name' => optional($subIndustry->industry)->name, // Avoids errors if industry is null
                         'industry_name' => $subIndustry->get_industry ? $subIndustry->get_industry->name : 'Unknown',
-                        'sub_industries' => [] // if no nested sub-industries exist, return empty array
                     ];
                 }),
                 'total_record' => $subIndustries->count(),
