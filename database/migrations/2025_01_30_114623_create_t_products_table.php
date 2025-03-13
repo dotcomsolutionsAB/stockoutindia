@@ -28,6 +28,7 @@ return new class extends Migration
             $table->string('image')->nullable();
             $table->longText('description')->nullable();
             $table->string('dimensions', 256)->nullable();
+            $table->date('validity')->nullable();
             $table->timestamps();
         });
     }
