@@ -4,10 +4,51 @@ namespace App\Http\Controllers;
 use App\Models\RazorpayOrdersModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Razorpay\Api\Api;
 
 class RazorpayController extends Controller
 {
     //
+    protected $razorpay;
+
+    public function __construct()
+    {
+        // Replace with your Razorpay API key and secret
+        $this->razorpay = new Api(env('RAZORPAY_KEY'), env('RAZORPAY_SECRET'));
+    }
+
+    /**
+     * Create an order in Razorpay
+     */
+    public function createOrder($amount)
+    {
+        try {
+            // ✅ Prepare order data
+            $orderData = [
+                'amount' => $amount * 100, // Convert to paise
+                'currency' => 'INR',
+                'receipt' => 'order_receipt_' . time(),
+                'payment_capture' => 1, // Auto capture payment
+            ];
+
+            // ✅ Create Order in Razorpay
+            $order = $this->razorpay->order->create($orderData);
+            $orderId = $order['id'];
+
+            return [
+                'success' => true,
+                'order_id' => $orderId,
+                'order' => $order->toArray(),
+            ];
+
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Error creating Razorpay order: ' . $e->getMessage(),
+            ];
+        }
+    }
+    
     /**
      * Handle payment and store details after Razorpay order creation
      */
