@@ -75,17 +75,13 @@ class RazorpayController extends Controller
             $razorpayResponse = $this->createOrder($request->payment_amount); // Pass amount directly
 
 
-            // ✅ Extract Razorpay Order ID
-            $razorpayOrderId = $razorpayResponse['order_id'];
-            $status = $razorpayResponse['status']; // Default status for Razorpay order
-
             // ✅ Store payment details in database
             $payment = RazorpayOrdersModel::create([
                 'user' => $user->id,
                 'product' => $request->product_id,
                 'payment_amount' => $request->payment_amount,
-                'razorpay_order_id' => $razorpayOrderId,
-                'status' => $status,
+                'razorpay_order_id' => $razorpayResponse['order_id'],
+                'status' => $razorpayResponse['order']['status'],
                 'comments' => $request->comments,
                 'date' => now()->toDateString(),
             ]);
