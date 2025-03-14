@@ -79,7 +79,8 @@ class RazorpayController extends Controller
             ]));
 
             // ✅ Decode response
-            $razorpayData = json_decode($razorpayResponse->getContent(), true);
+            // $razorpayData = json_decode($razorpayResponse->getContent(), true);
+            $razorpayData = $razorpayResponse; // ✅ No need to decode since it's already an array
             if (!$razorpayData['success']) {
                 return response()->json(['success' => false, 'message' => 'Razorpay order failed'], 500);
             }
