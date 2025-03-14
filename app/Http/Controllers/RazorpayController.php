@@ -78,7 +78,7 @@ class RazorpayController extends Controller
             // ✅ Store payment details in database
             $payment = RazorpayOrdersModel::create([
                 'user' => $user->id,
-                'product' => $request->product_id,
+                'product' => $request->product,
                 'payment_amount' => $request->payment_amount,
                 'razorpay_order_id' => $razorpayResponse['order_id'],
                 'status' => $razorpayResponse['order']['status'],
