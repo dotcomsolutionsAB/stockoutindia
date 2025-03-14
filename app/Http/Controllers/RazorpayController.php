@@ -71,23 +71,13 @@ class RazorpayController extends Controller
                 return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
             }
 
-            // ✅ Call Razorpay Order Creation API
-            $razorpayResponse = $this->createOrder(new Request([
-                'amount' => $request->payment_amount,
-                'currency' => 'INR',
-                'receipt' => 'order_receipt_' . time(),
-            ]));
+            // ✅ Pass the payment amount directly to createOrder
+            $razorpayResponse = $this->createOrder($request->payment_amount); // Pass amount directly
 
-            // ✅ Decode response
-            // $razorpayData = json_decode($razorpayResponse->getContent(), true);
-            $razorpayData = $razorpayResponse; // ✅ No need to decode since it's already an array
-            if (!$razorpayData['success']) {
-                return response()->json(['success' => false, 'message' => 'Razorpay order failed'], 500);
-            }
 
             // ✅ Extract Razorpay Order ID
-            $razorpayOrderId = $razorpayData['order_id'];
-            $status = 'created'; // Default status for Razorpay order
+            $razorpayOrderId = $razorpayResponse['order_id'];
+            $status = $razorpayResponse['status']; // Default status for Razorpay order
 
             // ✅ Store payment details in database
             $payment = RazorpayOrdersModel::create([
