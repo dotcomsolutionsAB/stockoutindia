@@ -113,7 +113,7 @@ class RazorpayController extends Controller
             if ($user->role == 'admin') {
                  // Validate that user_id exists in the users table if provided
                  $request->validate([
-                    'user_id' => 'required|integer|exists:users,id', // Ensure user_id exists in the users table
+                    'user' => 'required|integer|exists:users,id', // Ensure user_id exists in the users table
                 ]);
 
                 // Get the user_id from the request
@@ -124,7 +124,7 @@ class RazorpayController extends Controller
             }
 
             // Fetch payments for the specified user
-            $payments = Payment::where('user_id', $userId)->get();
+            $payments = Payment::where('user', $userId)->get();
 
             // Return response with payment data
             return response()->json([
