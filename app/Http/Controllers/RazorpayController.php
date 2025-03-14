@@ -124,7 +124,7 @@ class RazorpayController extends Controller
             }
 
             // Fetch payments for the specified user
-            $payments = Payment::where('user', $userId)->get();
+            $payments = RazorpayOrdersModel::where('user', $userId)->get();
 
             // Return response with payment data
             return response()->json([
