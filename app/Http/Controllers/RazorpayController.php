@@ -117,7 +117,7 @@ class RazorpayController extends Controller
                 ]);
 
                 // Get the user_id from the request
-                $userId = $request->user_id;
+                $userId = $request->user;
             } else {
                 // For regular users, use the authenticated user's ID
                 $userId = $user->id;
