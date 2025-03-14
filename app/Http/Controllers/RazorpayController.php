@@ -23,6 +23,9 @@ class RazorpayController extends Controller
     public function createOrder($amount)
     {
         try {
+             // ✅ Ensure $amount is numeric (Fix the error)
+            $amount = (float) $amount; 
+
             // ✅ Prepare order data
             $orderData = [
                 'amount' => $amount * 100, // Convert to paise
@@ -48,7 +51,7 @@ class RazorpayController extends Controller
             ];
         }
     }
-    
+
     /**
      * Handle payment and store details after Razorpay order creation
      */
