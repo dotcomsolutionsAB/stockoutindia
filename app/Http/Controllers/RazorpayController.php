@@ -130,7 +130,7 @@ class RazorpayController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Payments fetched successfully!',
-                'data' => $payments,
+                'data' => $payments->makeHidden(['updated_at', 'created_at']),
             ], 200);
 
         } catch (\Exception $e) {
