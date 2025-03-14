@@ -89,13 +89,55 @@ class RazorpayController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Payment processed successfully!',
-                'data' => $payment
+                'data' => $payment->makeHidden(['updated_at', 'created_at'])
             ], 201);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Error processing payment: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Fetch payments for the logged-in user (or admin-provided user_id)
+     */
+    public function fetchPayments(Request $request)
+    {
+        try {
+            // Check if the user is an admin or a regular user
+            $user = Auth::user();
+
+            // If the user is an admin and the user_id is provided, fetch payments for that user
+            if ($user->role == 'admin') {
+                 // Validate that user_id exists in the users table if provided
+                 $request->validate([
+                    'user_id' => 'required|integer|exists:users,id', // Ensure user_id exists in the users table
+                ]);
+
+                // Get the user_id from the request
+                $userId = $request->user_id;
+            } else {
+                // For regular users, use the authenticated user's ID
+                $userId = $user->id;
+            }
+
+            // Fetch payments for the specified user
+            $payments = Payment::where('user_id', $userId)->get();
+
+            // Return response with payment data
+            return response()->json([
+                'success' => true,
+                'message' => 'Payments fetched successfully!',
+                'data' => $payments,
+            ], 200);
+
+        } catch (\Exception $e) {
+            // Handle any exceptions and return error message
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching payments: ' . $e->getMessage(),
             ], 500);
         }
     }
