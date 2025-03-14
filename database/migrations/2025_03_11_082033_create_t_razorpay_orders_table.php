@@ -13,10 +13,13 @@ return new class extends Migration
     {
         Schema::create('t_razorpay_orders', function (Blueprint $table) {
             $table->id();
-            $table->string('razorpay_order_id')->unique();
+            $table->unsignedBigInteger('user'); // User from Auth
+            $table->unsignedBigInteger('product'); // Product ID from frontend
+            $table->float('payment_amount', 10, 2); // Payment amount
+            $table->string('razorpay_order_id')->unique(); // Razorpay Order ID
+            $table->string('status'); // Payment status from Razorpay
+            $table->text('comments')->nullable(); // Optional user comments
             $table->date('date'); // Use date or dateTime as needed
-            $table->unsignedBigInteger('user'); // Stores user id
-            $table->float('payment_amount', 10, 2);
             $table->timestamps();
         });
     }
