@@ -151,7 +151,7 @@ class RazorpayController extends Controller
         try {
             // ✅ Validate Input Data
             $request->validate([
-                'order_id' => 'required|integer|exists:t_orders,id', // Ensure order exists
+                'order' => 'required|integer|exists:t_orders,id', // Ensure order exists
                 'status' => 'required|string|max:255',
                 'razorpay_payment_id' => 'required|string|max:255',
                 'mode_of_payment' => 'required|string|max:255',
@@ -159,10 +159,10 @@ class RazorpayController extends Controller
 
             // ✅ Insert data column-wise
             $upload = RazorpayPaymentsModel::create([
-                $payment->order_id = $request->order_id, // Order ID from frontend
+                $payment->order = $request->order_id, // Order ID from frontend
                 $payment->status = $request->status, // Status from frontend
                 $payment->date = now()->toDateString(), // Current date
-                $payment->user_id = Auth::user()->id, // Logged-in user
+                $payment->user = Auth::user()->id, // Logged-in user
                 $payment->razorpay_payment_id = $request->razorpay_payment_id, // Payment ID from Razorpay
                 $payment->mode_of_payment = $request->mode_of_payment, // Payment method from frontend
             ]);
