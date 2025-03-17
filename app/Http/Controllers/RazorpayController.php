@@ -158,20 +158,20 @@ class RazorpayController extends Controller
             ]);
 
             // ✅ Insert data column-wise
-            $upload = RazorpayPaymentsModel::create([
-                $payment->order = $request->order, // Order ID from frontend
-                $payment->status = $request->status, // Status from frontend
-                $payment->date = now()->toDateString(), // Current date
-                $payment->user = Auth::user()->id, // Logged-in user
-                $payment->razorpay_payment_id = $request->razorpay_payment_id, // Payment ID from Razorpay
-                $payment->mode_of_payment = $request->mode_of_payment, // Payment method from frontend
+            $store_payment = RazorpayPaymentsModel::create([
+                $store_payment->order = $request->order, // Order ID from frontend
+                $store_payment->status = $request->status, // Status from frontend
+                $store_payment->date = now()->toDateString(), // Current date
+                $store_payment->user = Auth::user()->id, // Logged-in user
+                $store_payment->razorpay_payment_id = $request->razorpay_payment_id, // Payment ID from Razorpay
+                $store_payment->mode_of_payment = $request->mode_of_payment, // Payment method from frontend
             ]);
 
             // ✅ Return success response
             return response()->json([
                 'success' => true,
                 'message' => 'Payment stored successfully!',
-                'data' => $payment,
+                'data' => $store_payment,
             ], 201);
 
         } catch (\Exception $e) {
