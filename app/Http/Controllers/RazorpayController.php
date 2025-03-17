@@ -153,7 +153,7 @@ class RazorpayController extends Controller
             $request->validate([
                 'order' => 'required|integer|exists:t_razorpay_orders,id', // Ensure order exists
                 'status' => 'required|string|max:255',
-                'razorpay_payment_id' => 'required|string|max:255',
+                'razorpay_payment_id' => 'required|string|max:255||unique:t_razorpay_payments,razorpay_payment_id', // Ensure uniqueness
                 'mode_of_payment' => 'required|string|max:255',
             ]);
 
@@ -171,7 +171,7 @@ class RazorpayController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Payment stored successfully!',
-                'data' => $store_payment->nakeHidden(['updated_at', 'created_at']),
+                'data' => $store_payment->makeHidden(['updated_at', 'created_at']),
             ], 201);
 
         } catch (\Exception $e) {
