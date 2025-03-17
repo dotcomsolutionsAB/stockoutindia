@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('t_razorpay_payments', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('order');
-            $table->enum('status', ['pending', 'paid', 'failed'])->default('pending');
+            $table->string('status')->default('pending');
             $table->date('date'); // Use date or dateTime as needed
             $table->unsignedBigInteger('user'); // Stores user id
             $table->string('razorpay_payment_id')->unique();
