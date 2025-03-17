@@ -149,22 +149,34 @@ class RazorpayController extends Controller
     public function storePayment(Request $request)
     {
         try {
-            // ✅ Validate Input Data
+            // ✅ Validate Input Data (Only `razorpay_payment_id` is required from frontend)
             $request->validate([
-                'order' => 'required|integer|exists:t_razorpay_orders,id', // Ensure order exists
-                'status' => 'required|string|max:255',
-                'razorpay_payment_id' => 'required|string|max:255||unique:t_razorpay_payments,razorpay_payment_id', // Ensure uniqueness
-                'mode_of_payment' => 'required|string|max:255',
+                'razorpay_payment_id' => 'required|string|max:255|unique:t_razorpay_payments,razorpay_payment_id',
             ]);
+
+            // ✅ Fetch payment details from Razorpay
+            $razorpayPaymentId = $request->razorpay_payment_id;
+            $payment = $this->razorpay->payment->fetch($razorpayPaymentId);
+            $paymentDetails = $payment->toArray(); // Convert response to array
+
+            // ✅ Ensure the `order_id` exists in the database
+            $order = RazorpayOrdersModel::where('razorpay_order_id', $paymentDetails['order_id'])->first();
+
+            if (!$order) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Order not found in the database!',
+                ], 404);
+            }
 
             // ✅ Insert data column-wise
             $store_payment = RazorpayPaymentsModel::create([
-                'order' => $request->order, // Order ID from frontend
-                'status' => $request->status, // Status from frontend
-                'date' => now()->toDateString(), // Current date
-                'user' => Auth::user()->id, // Logged-in user
-                'razorpay_payment_id' => $request->razorpay_payment_id, // Payment ID from Razorpay
-                'mode_of_payment' => $request->mode_of_payment, // Payment method from frontend
+                'order_id' => $order->id, // Link payment to order
+                'status' => $paymentDetails['status'], // Status from Razorpay
+                'date' => now()->toDateString(), // Auto-fill current date
+                'user_id' => Auth::user()->id, // Authenticated user ID
+                'razorpay_payment_id' => $razorpayPaymentId, // Payment ID from Razorpay
+                'mode_of_payment' => $paymentDetails['method'], // Payment method (UPI, Card, NetBanking)
             ]);
 
             // ✅ Return success response
