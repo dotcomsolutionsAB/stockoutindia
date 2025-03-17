@@ -171,7 +171,7 @@ class RazorpayController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Payment stored successfully!',
-                'data' => $store_payment,
+                'data' => $store_payment->nakeHidden(['updated_at', 'created_at']),
             ], 201);
 
         } catch (\Exception $e) {
