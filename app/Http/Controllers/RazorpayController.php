@@ -151,7 +151,7 @@ class RazorpayController extends Controller
         try {
             // ✅ Validate Input Data
             $request->validate([
-                'order' => 'required|integer|exists:t_orders,id', // Ensure order exists
+                'order' => 'required|integer|exists:t_razorpay_orders,id', // Ensure order exists
                 'status' => 'required|string|max:255',
                 'razorpay_payment_id' => 'required|string|max:255',
                 'mode_of_payment' => 'required|string|max:255',
