@@ -454,6 +454,7 @@ class ProductController extends Controller
     }
 
     // upload image
+    //only new image will create and replace the old one
     public function uploadProductImages(Request $request, $id)
     {
         try {
@@ -478,25 +479,40 @@ class ProductController extends Controller
             }
 
             // Delete old images from DB + server
-            // $oldImageIds = $product->image ? explode(',', $product->image) : [];
+            $oldImageIds = $product->image ? explode(',', $product->image) : [];
 
-            // foreach ($oldImageIds as $imgId) {
-            //     $upload = UploadModel::find($imgId);
-            //     if ($upload) {
-            //         // Extract only the relative file path
-            //         $filePath = str_replace(asset('storage/'), '', $upload->file_url);
+            foreach ($oldImageIds as $imgId) {
+                $upload = UploadModel::find($imgId);
+                if ($upload) {
+                    // Extract only the relative file path
+                    $filePath = str_replace(asset('storage/'), '', $upload->file_url);
 
-            //         // Delete from server
-            //         if (Storage::disk('public')->exists($filePath)) {
-            //             Storage::disk('public')->delete($filePath);
-            //         }
-            //         // Delete from DB
-            //         $upload->delete();
-            //     }
-            // }
+                    // Delete from server
+                    if (Storage::disk('public')->exists($filePath)) {
+                        Storage::disk('public')->delete($filePath);
+                    }
+                    // Delete from DB
+                    $upload->delete();
+                }
+            }
 
             // Get old image IDs
             $oldImageIds = $product->image ? explode(',', $product->image) : [];
+
+            foreach ($oldImageIds as $imgId) {
+                $upload = UploadModel::find($imgId);
+                if ($upload) {
+                    // Extract only the relative file path
+                    $filePath = str_replace(asset('storage/'), '', $upload->file_url);
+
+                    // Delete from server
+                    if (Storage::disk('public')->exists($filePath)) {
+                        Storage::disk('public')->delete($filePath);
+                    }
+                    // Delete from DB
+                    $upload->delete();
+                }
+            }
 
             $uploadIds = [];
             // Handle new files
@@ -520,8 +536,8 @@ class ProductController extends Controller
                 }
             }
 
-            // Merge old and new image IDs
-            $product->image = implode(',', array_merge($oldImageIds, $uploadIds));
+            // Update product image column with new comma separated IDs
+            $product->image = implode(',', $uploadIds);
             $product->save();
 
             return response()->json([
@@ -539,6 +555,93 @@ class ProductController extends Controller
             ], 500);
         }
     }
+
+    // append the new images
+    // public function uploadProductImages(Request $request, $id)
+    // {
+    //     try {
+    //         $product = ProductModel::find($id);
+    //         if (!$product) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'message' => 'Product not found!',
+    //             ], 404);
+    //         }
+
+    //         // Validate new files
+    //         $validator = Validator::make($request->all(), [
+    //             'files.*' => 'required|mimes:jpg,jpeg,png,heif|max:2048',
+    //         ]);
+
+    //         if ($validator->fails()) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'message' => $validator->errors()->first(),
+    //             ], 422);
+    //         }
+
+    //         // Delete old images from DB + server
+    //         // $oldImageIds = $product->image ? explode(',', $product->image) : [];
+
+    //         // foreach ($oldImageIds as $imgId) {
+    //         //     $upload = UploadModel::find($imgId);
+    //         //     if ($upload) {
+    //         //         // Extract only the relative file path
+    //         //         $filePath = str_replace(asset('storage/'), '', $upload->file_url);
+
+    //         //         // Delete from server
+    //         //         if (Storage::disk('public')->exists($filePath)) {
+    //         //             Storage::disk('public')->delete($filePath);
+    //         //         }
+    //         //         // Delete from DB
+    //         //         $upload->delete();
+    //         //     }
+    //         // }
+
+    //         // Get old image IDs
+    //         $oldImageIds = $product->image ? explode(',', $product->image) : [];
+
+    //         $uploadIds = [];
+    //         // Handle new files
+    //         if ($request->hasFile('files')) {
+    //             foreach ($request->file('files') as $file) {
+    //                 // 1. Store file in "uploads/products" folder on the "public" disk
+    //                 $path = $file->store('uploads/products/product_images', 'public');
+
+    //                 // 2. Extract file details
+    //                 $originalName = $file->getClientOriginalName(); // e.g. "photo.jpg"
+    //                 $extension = $file->extension();                // e.g. "jpg"
+    //                 $size = $file->getSize();                       // e.g. 123456 (bytes)
+
+    //                 $upload = UploadModel::create([
+    //                     'file_name' => $originalName,
+    //                     'file_ext' => $extension,
+    //                     'file_url' => asset("storage/$path"),
+    //                     'file_size' => $size,
+    //                 ]);
+    //                 $uploadIds[] = $upload->id;
+    //             }
+    //         }
+
+    //         // Merge old and new image IDs
+    //         $product->image = implode(',', array_merge($oldImageIds, $uploadIds));
+    //         $product->save();
+
+    //         return response()->json([
+    //             'success' => true,
+    //             'message' => 'Product images updated successfully!',
+    //             'data' => $product->makeHidden(['id', 'created_at', 'updated_at']),
+    //             // 'data_product' => $product->makeHidden(['id', 'created_at', 'updated_at']),
+    //             // 'data_upload' => $upload->makeHidden(['id', 'created_at', 'updated_at'])
+    //         ], 200);
+
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Something went wrong: ' . $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
 
     // delete
     public function deleteProduct($id)
@@ -593,69 +696,69 @@ class ProductController extends Controller
     }
 
     // delete product image
-    public function deleteProductImages(Request $request, $id)
-    {
-        try {
-            // Find the product
-            $product = ProductModel::find($id);
-            if (!$product) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Product not found!',
-                ], 404);
-            }
+    // public function deleteProductImages(Request $request, $id)
+    // {
+    //     try {
+    //         // Find the product
+    //         $product = ProductModel::find($id);
+    //         if (!$product) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'message' => 'Product not found!',
+    //             ], 404);
+    //         }
 
-            // Validate input
-            $validator = Validator::make($request->all(), [
-                'image_ids' => 'required|array',
-                'image_ids.*' => 'integer|exists:t_uploads,id',
-            ]);
+    //         // Validate input
+    //         $validator = Validator::make($request->all(), [
+    //             'image_ids' => 'required|array',
+    //             'image_ids.*' => 'integer|exists:t_uploads,id',
+    //         ]);
 
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $validator->errors()->first(),
-                ], 422);
-            }
+    //         if ($validator->fails()) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'message' => $validator->errors()->first(),
+    //             ], 422);
+    //         }
 
-            $imageIdsToDelete = $request->image_ids;
+    //         $imageIdsToDelete = $request->image_ids;
 
-            // Fetch current images
-            $existingImageIds = $product->image ? explode(',', $product->image) : [];
+    //         // Fetch current images
+    //         $existingImageIds = $product->image ? explode(',', $product->image) : [];
 
-            // Find and delete the images from storage and database
-            foreach ($imageIdsToDelete as $imgId) {
-                $upload = UploadModel::find($imgId);
-                if ($upload) {
-                    // Remove file from storage
-                    $filePath = str_replace(asset('storage/'), '', $upload->file_url);
-                    if (Storage::disk('public')->exists($filePath)) {
-                        Storage::disk('public')->delete($filePath);
-                    }
+    //         // Find and delete the images from storage and database
+    //         foreach ($imageIdsToDelete as $imgId) {
+    //             $upload = UploadModel::find($imgId);
+    //             if ($upload) {
+    //                 // Remove file from storage
+    //                 $filePath = str_replace(asset('storage/'), '', $upload->file_url);
+    //                 if (Storage::disk('public')->exists($filePath)) {
+    //                     Storage::disk('public')->delete($filePath);
+    //                 }
 
-                    // Delete from uploads table
-                    $upload->delete();
-                }
-            }
+    //                 // Delete from uploads table
+    //                 $upload->delete();
+    //             }
+    //         }
 
-            // Remove deleted IDs from product images
-            $updatedImageIds = array_diff($existingImageIds, $imageIdsToDelete);
-            $product->image = implode(',', $updatedImageIds);
-            $product->save();
+    //         // Remove deleted IDs from product images
+    //         $updatedImageIds = array_diff($existingImageIds, $imageIdsToDelete);
+    //         $product->image = implode(',', $updatedImageIds);
+    //         $product->save();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Selected product images deleted successfully!',
-                'remaining_images' => $product->image,
-            ], 200);
+    //         return response()->json([
+    //             'success' => true,
+    //             'message' => 'Selected product images deleted successfully!',
+    //             'remaining_images' => $product->image,
+    //         ], 200);
 
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Something went wrong: ' . $e->getMessage(),
-            ], 500);
-        }
-    }
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Something went wrong: ' . $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
 
     // import images
     public function importProductImagesFromCSV()
