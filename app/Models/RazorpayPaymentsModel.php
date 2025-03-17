@@ -16,7 +16,7 @@ class RazorpayPaymentsModel extends Model
         'status',
         'date',
         'user',
-        'razorpay_payment_id ',
+        'razorpay_payment_id',
         'mode_of_payment',
     ];
 }
