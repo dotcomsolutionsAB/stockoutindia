@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 use App\Models\RazorpayOrdersModel;
+use App\Models\RazorpayPaymentsModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Razorpay\Api\Api;
@@ -138,6 +139,46 @@ class RazorpayController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error fetching payments: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Store Razorpay Payment Details
+     */
+    public function storePayment(Request $request)
+    {
+        try {
+            // ✅ Validate Input Data
+            $request->validate([
+                'order_id' => 'required|integer|exists:t_orders,id', // Ensure order exists
+                'status' => 'required|string|max:255',
+                'razorpay_payment_id' => 'required|string|max:255',
+                'mode_of_payment' => 'required|string|max:255',
+            ]);
+
+            // ✅ Insert data column-wise
+            $payment = new Payment();
+            $payment->order_id = $request->order_id; // Order ID from frontend
+            $payment->status = $request->status; // Status from frontend
+            $payment->date = now()->toDateString(); // Current date
+            $payment->user_id = Auth::user()->id; // Logged-in user
+            $payment->razorpay_payment_id = $request->razorpay_payment_id; // Payment ID from Razorpay
+            $payment->mode_of_payment = $request->mode_of_payment; // Payment method from frontend
+            $payment->save();
+
+            // ✅ Return success response
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment stored successfully!',
+                'data' => $payment,
+            ], 201);
+
+        } catch (\Exception $e) {
+            // ✅ Handle exceptions
+            return response()->json([
+                'success' => false,
+                'message' => 'Error storing payment: ' . $e->getMessage(),
             ], 500);
         }
     }

@@ -77,6 +77,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::post('/make_payment', [RazorpayController::class, 'processPayment']);
     Route::post('/fetch_payment', [RazorpayController::class, 'fetchPayments']);
+
+    Route::post('/store_payment', [RazorpayController::class, 'storePayment']);
 });
 
     Route::get('/get_products/{id?}', [ProductController::class, 'fetchOnlyProducts']); // Retrieve product (all or specific)
