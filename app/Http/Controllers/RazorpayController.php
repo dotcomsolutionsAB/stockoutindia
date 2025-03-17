@@ -159,7 +159,7 @@ class RazorpayController extends Controller
 
             // ✅ Insert data column-wise
             $upload = RazorpayPaymentsModel::create([
-                $payment->order = $request->order_id, // Order ID from frontend
+                $payment->order = $request->order, // Order ID from frontend
                 $payment->status = $request->status, // Status from frontend
                 $payment->date = now()->toDateString(), // Current date
                 $payment->user = Auth::user()->id, // Logged-in user
