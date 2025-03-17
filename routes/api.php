@@ -10,6 +10,7 @@ use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SubIndustryController;
 use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\RazorpayController;
 
 // Route::get('/user', function (Request $request) {
 //     return $request->user();
@@ -73,6 +74,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/fetch', [WishlistController::class, 'fetchWishlist']); // Retrieve products
         Route::delete('/{id}', [WishlistController::class, 'deleteProduct']); // Update a specific user
     });
+
+    Route::post('/make_payment', [RazorpayController::class, 'processPayment']);
+    Route::post('/fetch_payment', [RazorpayController::class, 'fetchPayments']);
 });
 
     Route::get('/get_products/{id?}', [ProductController::class, 'fetchOnlyProducts']); // Retrieve product (all or specific)
