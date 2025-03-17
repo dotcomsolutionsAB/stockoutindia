@@ -171,10 +171,10 @@ class RazorpayController extends Controller
 
             // ✅ Insert data column-wise
             $store_payment = RazorpayPaymentsModel::create([
-                'order_id' => $order->id, // Link payment to order
+                'order' => $order->id, // Link payment to order
                 'status' => $paymentDetails['status'], // Status from Razorpay
                 'date' => now()->toDateString(), // Auto-fill current date
-                'user_id' => Auth::user()->id, // Authenticated user ID
+                'user' => Auth::user()->id, // Authenticated user ID
                 'razorpay_payment_id' => $razorpayPaymentId, // Payment ID from Razorpay
                 'mode_of_payment' => $paymentDetails['method'], // Payment method (UPI, Card, NetBanking)
             ]);
