@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 use App\Models\RazorpayOrdersModel;
 use App\Models\RazorpayPaymentsModel;
+use App\Models\ProductModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Razorpay\Api\Api;
@@ -24,10 +25,10 @@ class RazorpayController extends Controller
     public function createOrder($amount)
     {
         try {
-             // ✅ Ensure $amount is numeric (Fix the error)
+             // Ensure $amount is numeric (Fix the error)
             $amount = (float) $amount; 
 
-            // ✅ Prepare order data
+            // Prepare order data
             $orderData = [
                 'amount' => $amount * 100, // Convert to paise
                 'currency' => 'INR',
@@ -35,7 +36,7 @@ class RazorpayController extends Controller
                 'payment_capture' => 1, // Auto capture payment
             ];
 
-            // ✅ Create Order in Razorpay
+            // Create Order in Razorpay
             $order = $this->razorpay->order->create($orderData);
             $orderId = $order['id'];
 
@@ -59,24 +60,24 @@ class RazorpayController extends Controller
     public function processPayment(Request $request)
     {
         try {
-            // ✅ Validate the incoming request
+            // Validate the incoming request
             $request->validate([
                 'payment_amount' => 'required|numeric|min:1',
                 'product' => 'required|integer|exists:t_products,id',
                 'comments' => 'nullable|string',
             ]);
 
-            // ✅ Get authenticated user
+            // Get authenticated user
             $user = Auth::user();
             if (!$user) {
                 return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
             }
 
-            // ✅ Pass the payment amount directly to createOrder
+            // Pass the payment amount directly to createOrder
             $razorpayResponse = $this->createOrder($request->payment_amount); // Pass amount directly
 
 
-            // ✅ Store payment details in database
+            // Store payment details in database
             $payment = RazorpayOrdersModel::create([
                 'user' => $user->id,
                 'product' => $request->product,
@@ -149,17 +150,18 @@ class RazorpayController extends Controller
     public function storePayment(Request $request)
     {
         try {
-            // ✅ Validate Input Data (Only `razorpay_payment_id` is required from frontend)
+            // Validate Input Data (Only `razorpay_payment_id` is required from frontend)
             $request->validate([
                 'razorpay_payment_id' => 'required|string|max:255|unique:t_razorpay_payments,razorpay_payment_id',
+                'product' => 'required|integer|exists:t_products,id'
             ]);
 
-            // ✅ Fetch payment details from Razorpay
+            // Fetch payment details from Razorpay
             $razorpayPaymentId = $request->razorpay_payment_id;
             $payment = $this->razorpay->payment->fetch($razorpayPaymentId);
             $paymentDetails = $payment->toArray(); // Convert response to array
 
-            // ✅ Ensure the `order_id` exists in the database
+            // Ensure the `order_id` exists in the database
             $order = RazorpayOrdersModel::where('razorpay_order_id', $paymentDetails['order_id'])->first();
 
             if (!$order) {
@@ -169,7 +171,7 @@ class RazorpayController extends Controller
                 ], 404);
             }
 
-            // ✅ Insert data column-wise
+            // Insert data column-wise
             $store_payment = RazorpayPaymentsModel::create([
                 'order' => $order->id, // Link payment to order
                 'status' => $paymentDetails['status'], // Status from Razorpay
@@ -179,15 +181,25 @@ class RazorpayController extends Controller
                 'mode_of_payment' => $paymentDetails['method'], // Payment method (UPI, Card, NetBanking)
             ]);
 
-            // ✅ Return success response
+            // Calculate Validity (30 days from today)
+            $validityDate = now()->addDays(30)->toDateString();
+
+            // Update product validity and status to "active"
+            ProductModel::where('id', $request->product)->update([
+                'validity' => $validityDate,
+                'status' => 'active'
+            ]);
+
+            // Return success response
             return response()->json([
                 'success' => true,
                 'message' => 'Payment stored successfully!',
                 'data' => $store_payment->makeHidden(['updated_at', 'created_at']),
+                'validity' => $validityDate,
             ], 201);
 
         } catch (\Exception $e) {
-            // ✅ Handle exceptions
+            // Handle exceptions
             return response()->json([
                 'success' => false,
                 'message' => 'Error storing payment: ' . $e->getMessage(),
