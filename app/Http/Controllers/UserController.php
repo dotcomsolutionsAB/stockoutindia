@@ -31,6 +31,8 @@ class UserController extends Controller
                 'pincode' => 'required_without:gstin|string|max:10',
                 'city' => 'required_without:gstin|string',
                 'state' => 'required_without:gstin|integer|exists:t_states,id',
+                'industry' => 'nullable|string',
+                'sub_industry' => 'nullable|string',
             ]);
 
             if ($validator->fails()) {
@@ -54,6 +56,8 @@ class UserController extends Controller
                 'city' => $request->city,
                 'state' => $request->state,
                 'gstin' => $request->gstin,
+                'industry' => $request->industry,
+                'sub_industry' => $request->sub_industry,
             ]);
 
             return response()->json([
@@ -116,7 +120,7 @@ class UserController extends Controller
                 ], 404);
             }
 
-            $validator = Validator::make($request->all(), [
+            $validatedData = Validator::make($request->all(), [
                 'name' => 'sometimes|string|max:255',
                 'email' => ['sometimes', 'email', Rule::unique('users')->ignore($user->id)],
                 'password' => 'sometimes|string|min:6',
@@ -128,6 +132,8 @@ class UserController extends Controller
                 'city' => 'sometimes|integer',
                 'state' => 'sometimes|integer',
                 'gstin' => ['sometimes', 'string', Rule::unique('users')->ignore($user->id)],
+                'industry' => 'nullable|string',
+                'sub_industry' => 'nullable|string',
             ]);
 
             if ($validator->fails()) {
@@ -142,10 +148,12 @@ class UserController extends Controller
                 $user->username = $request->phone;
             }
 
-            $user->update($request->only([
-                'name', 'email', 'password', 'role', 'phone', 
-                'company_name', 'address', 'pincode', 'city', 'state', 'gstin'
-            ]));
+            // $user->update($request->only([
+            //     'name', 'email', 'password', 'role', 'phone', 
+            //     'company_name', 'address', 'pincode', 'city', 'state', 'gstin'
+            // ]));
+
+            $user->update($validatedData);
 
             return response()->json([
                 'success' => true,
