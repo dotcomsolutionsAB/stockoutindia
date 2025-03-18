@@ -120,7 +120,7 @@ class UserController extends Controller
                 ], 404);
             }
 
-            $validatedData = Validator::make($request->all(), [
+            $validatedData =  $request->validate([
                 'name' => 'sometimes|string|max:255',
                 'email' => ['sometimes', 'email', Rule::unique('users')->ignore($user->id)],
                 'password' => 'sometimes|string|min:6',
