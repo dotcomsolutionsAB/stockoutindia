@@ -882,7 +882,7 @@ class ProductController extends Controller
                 'message' => 'Product status updated successfully!',
                 'product' => [
                     'id' => $product->id,
-                    'name' => $product->name,
+                    'name' => $product->product_name,
                     'status' => $product->status
                 ]
             ], 200);
