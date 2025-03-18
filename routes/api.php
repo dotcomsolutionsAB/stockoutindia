@@ -48,6 +48,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::delete('/{id}', [ProductController::class, 'deleteProduct']); // Delete a specific product
         //Route::delete('/images/{id}', [ProductController::class, 'deleteProductImages']); // Delete specific product image
 
+        Route::post('/update_status', [ProductController::class, 'updateProductStatus']); // Update product status
+
         Route::get('/migration', [ProductController::class, 'importProductImagesFromCSV']); // Import migration files
     });
 

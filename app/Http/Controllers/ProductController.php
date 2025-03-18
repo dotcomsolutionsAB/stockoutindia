@@ -75,7 +75,6 @@ class ProductController extends Controller
 
     // view
     // for logged-in user
-
     public function fetchProducts(Request $request, $id = null)
     {
         try {
@@ -849,6 +848,51 @@ class ProductController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Update Product Status
+     */
+    public function updateProductStatus(Request $request)
+    {
+        try {
+            // ✅ Validate Input
+            $request->validate([
+                'product_id' => 'required|integer|exists:t_products,id', // Ensure product exists
+                'status' => 'required|string|in:active,in-active,sold' // Ensure valid status
+            ]);
+
+            // ✅ Find Product
+            $product = ProductModel::find($request->product_id);
+            if (!$product) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Product not found.'
+                ], 404);
+            }
+
+            // ✅ Update Product Status
+            $product->status = $request->status;
+            $product->save();
+
+            // ✅ Return Success Response
+            return response()->json([
+                'success' => true,
+                'message' => 'Product status updated successfully!',
+                'product' => [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'status' => $product->status
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            // ✅ Handle Errors
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating product status: ' . $e->getMessage(),
+            ], 500);
         }
     }
 
