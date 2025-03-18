@@ -136,11 +136,9 @@ class UserController extends Controller
                 'sub_industry' => 'nullable|string',
             ]);
 
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $validator->errors()->first(),
-                ], 422);
+            // Check if password needs to be hashed
+            if ($request->filled('password')) {
+                $validatedData['password'] = Hash::make($request->password);
             }
 
             // Ensure phone update also updates username
