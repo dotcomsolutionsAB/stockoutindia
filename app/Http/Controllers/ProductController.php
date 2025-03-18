@@ -859,12 +859,12 @@ class ProductController extends Controller
         try {
             // ✅ Validate Input
             $request->validate([
-                'product_id' => 'required|integer|exists:t_products,id', // Ensure product exists
+                'product' => 'required|integer|exists:t_products,id', // Ensure product exists
                 'status' => 'required|string|in:active,in-active,sold' // Ensure valid status
             ]);
 
             // ✅ Find Product
-            $product = ProductModel::find($request->product_id);
+            $product = ProductModel::find($request->product);
             if (!$product) {
                 return response()->json([
                     'success' => false,
