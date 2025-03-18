@@ -22,23 +22,23 @@ Route::post('/login/{otp?}', [AuthController::class, 'login']);
 
 Route::post('/get_otp', [AuthController::class, 'generate_otp']);
 
+Route::prefix('industry')->group(function () {
+    Route::post('/', [IndustryController::class, 'createIndustry']); // Create a new industry record
+    Route::get('/{id?}', [IndustryController::class, 'getIndustries']); // Retrieve industry record (all or specific)
+    Route::post('/{id}', [IndustryController::class, 'updateIndustry']); // Update a specific industry record
+    Route::delete('/{id}', [IndustryController::class, 'deleteIndustry']); // delete a specific industry record
+});
+
+Route::prefix('sub_industry')->group(function () {
+    Route::post('/', [SubIndustryController::class, 'createSubIndustry']); // Create a new review record
+    Route::get('/{id?}', [SubIndustryController::class, 'getSubIndustries']); // Retrieve review record (all or specific)
+    Route::post('/{id}', [SubIndustryController::class, 'updateSubIndustry']); // Update a specific review record
+    Route::delete('/{id}', [SubIndustryController::class, 'deleteSubIndustry']); // Delete a specific review record
+});
+
 Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::post('/logout', [AuthController::class, 'logout']);
-
-    Route::prefix('industry')->group(function () {
-        Route::post('/', [IndustryController::class, 'createIndustry']); // Create a new industry record
-        Route::get('/{id?}', [IndustryController::class, 'getIndustries']); // Retrieve industry record (all or specific)
-        Route::post('/{id}', [IndustryController::class, 'updateIndustry']); // Update a specific industry record
-        Route::delete('/{id}', [IndustryController::class, 'deleteIndustry']); // delete a specific industry record
-    });
-
-    Route::prefix('sub_industry')->group(function () {
-        Route::post('/', [SubIndustryController::class, 'createSubIndustry']); // Create a new review record
-        Route::get('/{id?}', [SubIndustryController::class, 'getSubIndustries']); // Retrieve review record (all or specific)
-        Route::post('/{id}', [SubIndustryController::class, 'updateSubIndustry']); // Update a specific review record
-        Route::delete('/{id}', [SubIndustryController::class, 'deleteSubIndustry']); // Delete a specific review record
-    });
 
     Route::prefix('product')->group(function () {
         Route::post('/', [ProductController::class, 'createProduct']); // Create a new product
