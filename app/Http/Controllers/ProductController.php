@@ -517,11 +517,10 @@ class ProductController extends Controller
             // Handle new files
             if ($request->hasFile('files')) {
                 foreach ($request->file('files') as $file) {
-                    // 1. Store file in "uploads/products" folder on the "public" disk
-                    $path = $file->store('uploads/products/product_images', 'public');
-
-                    // 2. Extract file details
+                    
                     $originalName = $file->getClientOriginalName(); // e.g. "photo.jpg"
+
+                    $path = $file->store('public/uploads/products/product_images', $originalName);
                     $extension = $file->extension();                // e.g. "jpg"
                     $size = $file->getSize();                       // e.g. 123456 (bytes)
 
