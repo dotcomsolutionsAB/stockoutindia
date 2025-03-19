@@ -528,7 +528,8 @@ class ProductController extends Controller
                     $upload = UploadModel::create([
                         'file_name' => $originalName,
                         'file_ext' => $extension,
-                        'file_url' => asset("storage/$path"),
+                        // 'file_url' => asset("storage/$path"),
+                        'file_url' => $path,
                         'file_size' => $size,
                     ]);
                     $uploadIds[] = $upload->id;
