@@ -520,7 +520,11 @@ class ProductController extends Controller
                     
                     $originalName = $file->getClientOriginalName(); // e.g. "photo.jpg"
 
-                    $path = $file->store('public/uploads/products/product_images', $originalName);
+                    $path = $file->storeAs('public/uploads/products/product_images', $originalName);
+
+                    // Modify stored file path to match "storage/app/public" structure
+                    $storedPath = str_replace('public/', 'storage/', $path);
+
                     $extension = $file->extension();                // e.g. "jpg"
                     $size = $file->getSize();                       // e.g. 123456 (bytes)
 
@@ -528,7 +532,7 @@ class ProductController extends Controller
                         'file_name' => $originalName,
                         'file_ext' => $extension,
                         // 'file_url' => asset("storage/$path"),
-                        'file_url' => $path,
+                        'file_url' => $storedPath ,
                         'file_size' => $size,
                     ]);
                     $uploadIds[] = $upload->id;
@@ -857,13 +861,13 @@ class ProductController extends Controller
     public function updateProductStatus(Request $request)
     {
         try {
-            // ✅ Validate Input
+            // Validate Input
             $request->validate([
                 'product' => 'required|integer|exists:t_products,id', // Ensure product exists
                 'status' => 'required|string|in:active,in-active,sold' // Ensure valid status
             ]);
 
-            // ✅ Find Product
+            // Find Product
             $product = ProductModel::find($request->product);
             if (!$product) {
                 return response()->json([
@@ -872,11 +876,11 @@ class ProductController extends Controller
                 ], 404);
             }
 
-            // ✅ Update Product Status
+            // Update Product Status
             $product->status = $request->status;
             $product->save();
 
-            // ✅ Return Success Response
+            // Return Success Response
             return response()->json([
                 'success' => true,
                 'message' => 'Product status updated successfully!',
@@ -888,7 +892,7 @@ class ProductController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            // ✅ Handle Errors
+            // Handle Errors
             return response()->json([
                 'success' => false,
                 'message' => 'Error updating product status: ' . $e->getMessage(),
