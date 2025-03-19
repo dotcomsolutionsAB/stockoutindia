@@ -53,7 +53,7 @@ class ProductController extends Controller
                 'sub_industry' => $request->sub_industry,
                 'city' => $request->city,
                 'state_id' => $request->state_id,
-                'status' => $request->status ?? 'active',
+                'status' => $request->status ?? 'in-active',
                 'description' => $request->description,
                 'dimensions' => $request->dimensions,
                 // 'image' => will be empty or null initially; handled in separate method
