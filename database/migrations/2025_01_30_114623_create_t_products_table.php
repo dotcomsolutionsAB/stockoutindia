@@ -24,7 +24,7 @@ return new class extends Migration
             $table->integer('sub_industry');
             $table->string('city', 256)->nullable();
             $table->unsignedBigInteger('state_id')->nullable();
-            $table->enum('status', ['active', 'in-active', 'sold'])->default('active');
+            $table->enum('status', ['active', 'in-active', 'sold'])->default('in-active');
             $table->string('image')->nullable();
             $table->longText('description')->nullable();
             $table->string('dimensions', 256)->nullable();
