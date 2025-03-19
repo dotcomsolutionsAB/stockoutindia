@@ -8,7 +8,7 @@ class WishlistModel extends Model
 {
     //
     // Table name
-    protected $table = 't_wishlist';
+    protected $table = 't_wishlists';
 
     // Fillable columns
     protected $fillable = [

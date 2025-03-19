@@ -484,7 +484,8 @@ class ProductController extends Controller
                 $upload = UploadModel::find($imgId);
                 if ($upload) {
                     // Extract only the relative file path
-                    $filePath = str_replace(asset('storage/'), '', $upload->file_url);
+                    // $filePath = str_replace(asset('storage/'), '', $upload->file_url);
+                    $filePath = str_replace('storage/', '', $upload->file_url); // Fix: Remove storage/ prefix
 
                     // Delete from server
                     if (Storage::disk('public')->exists($filePath)) {
@@ -520,10 +521,11 @@ class ProductController extends Controller
                     
                     $originalName = $file->getClientOriginalName(); // e.g. "photo.jpg"
 
-                    $path = $file->storeAs('public/uploads/products/product_images', $originalName);
+                    // This will actually save the file to storage/app/public/uploads/products/product_images
+                    $path = $file->storeAs('uploads/products/product_images', $originalName, 'public');
 
-                    // Modify stored file path to match "storage/app/public" structure
-                    $storedPath = str_replace('public/', 'storage/', $path);
+                    // Generate the correct relative URL, e.g. "storage/uploads/products/product_images/filename.jpg"
+                    $storedPath = Storage::url($path);
 
                     $extension = $file->extension();                // e.g. "jpg"
                     $size = $file->getSize();                       // e.g. 123456 (bytes)
