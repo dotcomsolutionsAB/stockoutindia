@@ -41,6 +41,10 @@ Route::prefix('sub_industry')->group(function () {
 
 Route::post('/get_products/{id?}', [ProductController::class, 'fetchOnlyProducts']); // Retrieve product (all or specific)
 
+Route::get('/countries', [MasterController::class, 'fetchAllCountries']);
+    Route::get('/states', [MasterController::class, 'fetchAllStates']);
+    Route::get('/cities/{id?}', [MasterController::class, 'fetchAllCities']);
+
 Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -72,9 +76,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::delete('/{id}', [UserController::class, 'deleteUser']); // Update a specific user
     });
 
-    Route::get('/countries', [MasterController::class, 'fetchAllCountries']);
-    Route::get('/states', [MasterController::class, 'fetchAllStates']);
-    Route::get('/cities/{id?}', [MasterController::class, 'fetchAllCities']);
+    
 
     Route::prefix('wishlist')->group(function () {
         Route::post('/add', [WishlistController::class, 'addProduct']); // Create Products
