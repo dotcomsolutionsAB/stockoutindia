@@ -194,4 +194,22 @@ class UserController extends Controller
         }
     }
 
+    // Show Privacy Policy
+    public function privacyPolicy()
+    {
+        return view('static.privacy_policy');
+    }
+
+    // Show Terms & Conditions
+    public function termsConditions()
+    {
+        return view('static.terms_conditions');
+    }
+
+    // Show Refund Policy
+    public function refundPolicy()
+    {
+        return view('static.refund_policy');
+    }
+
 }
