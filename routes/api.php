@@ -19,13 +19,10 @@ use App\Http\Controllers\RazorpayController;
 Route::get('/privacy-policy', [UserController::class, 'privacyPolicy'])->name('privacy.policy');
 Route::get('/terms-and-conditions', [UserController::class, 'termsConditions'])->name('terms.conditions');
 Route::get('/refund-policy', [UserController::class, 'refundPolicy'])->name('refund.policy');
-
 Route::get('/faqs', [UserController::class, 'getFaqsJson']);
 
 Route::post('/register', [UserController::class, 'register']);
-
 Route::post('/login/{otp?}', [AuthController::class, 'login']);
-
 Route::post('/get_otp', [AuthController::class, 'generate_otp']);
 
 Route::prefix('industry')->group(function () {
@@ -41,6 +38,8 @@ Route::prefix('sub_industry')->group(function () {
     Route::post('/{id}', [SubIndustryController::class, 'updateSubIndustry']); // Update a specific review record
     Route::delete('/{id}', [SubIndustryController::class, 'deleteSubIndustry']); // Delete a specific review record
 });
+
+Route::post('/get_products/{id?}', [ProductController::class, 'fetchOnlyProducts']); // Retrieve product (all or specific)
 
 Route::middleware(['auth:sanctum'])->group(function () {
 
@@ -89,5 +88,4 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/store_payment', [RazorpayController::class, 'storePayment']);
 });
 
-    Route::get('/get_products/{id?}', [ProductController::class, 'fetchOnlyProducts']); // Retrieve product (all or specific)
 
