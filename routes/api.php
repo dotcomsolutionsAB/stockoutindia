@@ -20,6 +20,8 @@ Route::get('/privacy-policy', [UserController::class, 'privacyPolicy'])->name('p
 Route::get('/terms-and-conditions', [UserController::class, 'termsConditions'])->name('terms.conditions');
 Route::get('/refund-policy', [UserController::class, 'refundPolicy'])->name('refund.policy');
 
+Route::get('/faqs', [UserController::class, 'getFaqsJson']);
+
 Route::post('/register', [UserController::class, 'register']);
 
 Route::post('/login/{otp?}', [AuthController::class, 'login']);

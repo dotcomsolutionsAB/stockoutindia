@@ -212,4 +212,40 @@ class UserController extends Controller
         return view('static.refund_policy');
     }
 
+    public function getFaqsJson()
+    {
+        $faqs = [
+            [
+                'question' => 'What is Stockout?',
+                'answer' => 'Stockout is a platform that connects buyers and sellers for seamless product listing, discovery, and purchasing.'
+            ],
+            [
+                'question' => 'How do I list a product for sale?',
+                'answer' => 'You can list a product by signing into your seller account, clicking "Add Product", and filling out the required details along with images and price.'
+            ],
+            [
+                'question' => 'Are listing fees refundable?',
+                'answer' => 'No, listing fees are non-refundable as per our Refund Policy.'
+            ],
+            [
+                'question' => 'Does Stockout offer buyer protection?',
+                'answer' => 'Stockout does not take responsibility for disputes between buyers and sellers. Please review the product and seller details carefully before purchasing.'
+            ],
+            [
+                'question' => 'How long is my data stored?',
+                'answer' => 'User data is securely stored for one year and can be deleted upon request by contacting our support team.'
+            ],
+            [
+                'question' => 'Can I advertise my product on social media through Stockout?',
+                'answer' => 'Yes, you can opt-in for premium marketing services like Instagram and Facebook ads while listing your product.'
+            ],
+        ];
+
+        return response()->json([
+            'status' => true,
+            'data' => $faqs
+        ]);
+    }
+
+
 }
