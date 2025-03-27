@@ -51,6 +51,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/update_status', [ProductController::class, 'updateProductStatus']); // Update product status
 
         Route::get('/migration', [ProductController::class, 'importProductImagesFromCSV']); // Import migration files
+
+        Route::get('get_units', [ProductController::class, 'getUnits']);
     });
 
     Route::prefix('review')->group(function () {
