@@ -905,7 +905,6 @@ class ProductController extends Controller
     public function getUnits()
     {
         return response()->json([
-            'code' => 200,
             'success' => true,
             'message' => 'Units fetched successfully!',
             'data' => [
@@ -914,7 +913,7 @@ class ProductController extends Controller
                 'KG',
                 'MTRS'
             ]
-        ]);
+        ], 200);
     }
 
 
