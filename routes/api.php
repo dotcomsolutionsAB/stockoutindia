@@ -16,10 +16,13 @@ use App\Http\Controllers\RazorpayController;
 //     return $request->user();
 // })->middleware('auth:sanctum');
 
+Route::get('/privacy-policy', [UserController::class, 'privacyPolicy'])->name('privacy.policy');
+Route::get('/terms-and-conditions', [UserController::class, 'termsConditions'])->name('terms.conditions');
+Route::get('/refund-policy', [UserController::class, 'refundPolicy'])->name('refund.policy');
+Route::get('/faqs', [UserController::class, 'getFaqsJson']);
+
 Route::post('/register', [UserController::class, 'register']);
-
 Route::post('/login/{otp?}', [AuthController::class, 'login']);
-
 Route::post('/get_otp', [AuthController::class, 'generate_otp']);
 
 Route::prefix('industry')->group(function () {
@@ -35,6 +38,12 @@ Route::prefix('sub_industry')->group(function () {
     Route::post('/{id}', [SubIndustryController::class, 'updateSubIndustry']); // Update a specific review record
     Route::delete('/{id}', [SubIndustryController::class, 'deleteSubIndustry']); // Delete a specific review record
 });
+
+Route::post('/get_products/{id?}', [ProductController::class, 'fetchOnlyProducts']); // Retrieve product (all or specific)
+
+Route::get('/countries', [MasterController::class, 'fetchAllCountries']);
+    Route::get('/states', [MasterController::class, 'fetchAllStates']);
+    Route::get('/cities/{id?}', [MasterController::class, 'fetchAllCities']);
 
 Route::middleware(['auth:sanctum'])->group(function () {
 
@@ -69,9 +78,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::delete('/{id}', [UserController::class, 'deleteUser']); // Update a specific user
     });
 
-    Route::get('/countries', [MasterController::class, 'fetchAllCountries']);
-    Route::get('/states', [MasterController::class, 'fetchAllStates']);
-    Route::get('/cities/{id?}', [MasterController::class, 'fetchAllCities']);
+    
 
     Route::prefix('wishlist')->group(function () {
         Route::post('/add', [WishlistController::class, 'addProduct']); // Create Products
@@ -85,5 +92,4 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/store_payment', [RazorpayController::class, 'storePayment']);
 });
 
-    Route::get('/get_products/{id?}', [ProductController::class, 'fetchOnlyProducts']); // Retrieve product (all or specific)
 

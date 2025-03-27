@@ -20,4 +20,10 @@ class RazorpayOrdersModel extends Model
         'comments',
         'date',
     ];
+
+    public function productDetails()
+    {
+        return $this->belongsTo(ProductModel::class, 'product', 'id');
+    }
+
 }
