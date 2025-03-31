@@ -40,6 +40,10 @@ class SendNewPassword extends Mailable
     {
         return new Content(
             view: 'emails.new_password',
+            with: [
+                'name' => $this->name,
+                'password' => $this->password,
+            ]
         );
     }
 
