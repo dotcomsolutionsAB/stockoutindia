@@ -83,7 +83,9 @@ class AuthController extends Controller
             ],
         ]);
 
-        if(Auth::attempt(['username' => $request->username, 'password' => $request->password]))
+        $loginField = filter_var($request->username, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
+
+        if(Auth::attempt([$loginField => $request->username, 'password' => $request->password]))
         {
             $user = Auth::user();
 
@@ -208,5 +210,62 @@ class AuthController extends Controller
                 'message' => 'User has not registered!',
             ], 404);
         }
+    }
+
+    // forget password
+    public function forgotPassword(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email|exists:users,email',
+        ]);
+
+        try {
+            $user = User::where('email', $request->email)->firstOrFail();
+
+            // Generate strong password
+            $newPassword = $this->generateStrongPassword();
+
+            // Update DB
+            $user->password = Hash::make($newPassword);
+            $user->save();
+
+            // Invalidate old tokens (if any)
+            $user->tokens()->delete();
+
+            // Send password to user's email
+            Mail::to($user->email)->send(new SendNewPassword($user->name, $newPassword));
+
+            return response()->json([
+                'code' => 200,
+                'success' => true,
+                'message' => 'New password has been sent to your email address.',
+                'password' => $newPassword,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'code' => 500,
+                'success' => false,
+                'message' => 'Something went wrong.',
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    // helper function for generate a strong password
+    private function generateStrongPassword($length = 12)
+    {
+        $upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $lower = 'abcdefghijklmnopqrstuvwxyz';
+        $numbers = '0123456789';
+        $special = '@$!%*?&#';
+        $all = $upper . $lower . $numbers . $special;
+
+        return substr(str_shuffle(
+            str_shuffle($upper)[0] .
+            str_shuffle($lower)[0] .
+            str_shuffle($numbers)[0] .
+            str_shuffle($special)[0] .
+            str_shuffle($all)
+        ), 0, $length);
     }
 }
