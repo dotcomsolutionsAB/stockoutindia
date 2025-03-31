@@ -24,6 +24,7 @@ Route::get('/faqs', [UserController::class, 'getFaqsJson']);
 Route::post('/register', [UserController::class, 'register']);
 Route::post('/login/{otp?}', [AuthController::class, 'login']);
 Route::post('/get_otp', [AuthController::class, 'generate_otp']);
+Route::post('/forget_password', [AuthController::class, 'forgotPassword']);
 
 Route::prefix('industry')->group(function () {
     Route::post('/', [IndustryController::class, 'createIndustry']); // Create a new industry record
