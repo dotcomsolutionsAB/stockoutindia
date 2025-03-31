@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Hash;
+use App\Mail\SendNewPassword;
 use App\Models\User;
 use Auth;
-use Hash;
 
 class AuthController extends Controller
 {
