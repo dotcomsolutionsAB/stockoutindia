@@ -29,7 +29,7 @@ class SendNewPassword extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Send New Password',
+            subject: 'Password Reset',
         );
     }
 
