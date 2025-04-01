@@ -250,12 +250,12 @@ class UserController extends Controller
     public function fetchGstDetails(Request $request)
     {
         $request->validate([
-            'gstin' => 'required|string|size:15'
+            'gstin' => 'required|string'
         ]);
 
         try {
             $gstin = $request->gstin;
-            $apiKey = env('APPYFLOW_API_KEY'); // Store this in .env
+            $apiKey = env('APPYFLOW_API_KEY');
 
             $response = Http::withHeaders([
                 'auth-token' => $apiKey
@@ -266,32 +266,41 @@ class UserController extends Controller
             if ($response->successful()) {
                 $data = $response->json();
 
-                return response()->json([
-                    'success' => true,
-                    'data' => [
-                        'company_name' => $data['tradeNam'] ?? null,
-                        'name'         => $data['tradeNam'] ?? null,
-                        'address'      => $data['pradr']['addr'] ?? null,
-                        'pincode'      => $data['pradr']['addr']['pncd'] ?? null,
-                        'city'         => $data['pradr']['addr']['city'] ?? null,
-                        'state'        => $data['pradr']['addr']['st'] ?? null,
-                    ]
-                ]);
+                // Ensure the response is valid and contains expected data
+                if (isset($data['tradeNam']) && isset($data['pradr']['addr'])) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Valid GSTIN.',
+                        'data' => [
+                            'company_name' => $data['tradeNam'],
+                            'name'         => $data['tradeNam'],
+                            'address'      => $data['pradr']['addr'],
+                            'pincode'      => $data['pradr']['addr']['pncd'] ?? null,
+                            'city'         => $data['pradr']['addr']['city'] ?? null,
+                            'state'        => $data['pradr']['addr']['st'] ?? null,
+                        ]
+                    ]);
+                } else {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'GSTIN verified but response is incomplete.',
+                        'data' => $data
+                    ], 422);
+                }
             } else {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Invalid GST or error from API',
+                    'message' => 'Invalid GSTIN or AppyFlow API error.',
                     'error' => $response->body()
-                ], 400);
+                ], $response->status());
             }
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Something went wrong.',
+                'message' => 'Something went wrong while verifying GSTIN.',
                 'error' => $e->getMessage()
             ], 500);
         }
     }
-
 }
