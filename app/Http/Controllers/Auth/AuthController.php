@@ -83,7 +83,6 @@ class AuthController extends Controller
                     'password' => [
                         'required',
                         'string',
-                        'min:8', // Minimum 8 characters
                     ],
                 ]);
 
