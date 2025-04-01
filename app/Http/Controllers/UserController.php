@@ -257,11 +257,10 @@ class UserController extends Controller
             $gstin = $request->gstin;
             $apiKey = env('APPYFLOW_API_KEY');
 
-            $response = Http::withHeaders([
-                'auth-token' => $apiKey
-            ])->get("https://appyflow.in/api/verifyGST", [
-                'gstNo' => $gstin
-            ]);
+            $response = Http::get("https://appyflow.in/api/verifyGST", [
+                'gstNo' => $gstin,
+                'key_secret' => $apiKey,
+            ]);            
 
             if ($response->successful()) {
                 $data = $response->json();
