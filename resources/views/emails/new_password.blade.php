@@ -12,6 +12,6 @@
 
     <p>Please use this password to log in and consider changing it after login for better security.</p>
 
-    <p>Regards,<br/>Support Team</p>
+    <p>Regards,<br/>Team Stock-out India</p>
 </body>
 </html>
