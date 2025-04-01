@@ -247,5 +247,51 @@ class UserController extends Controller
         ]);
     }
 
+    public function fetchGstDetails(Request $request)
+    {
+        $request->validate([
+            'gstin' => 'required|string|size:15'
+        ]);
+
+        try {
+            $gstin = $request->gstin;
+            $apiKey = env('APPYFLOW_API_KEY'); // Store this in .env
+
+            $response = Http::withHeaders([
+                'auth-token' => $apiKey
+            ])->get("https://appyflow.in/api/verifyGST", [
+                'gstNo' => $gstin
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+
+                return response()->json([
+                    'success' => true,
+                    'data' => [
+                        'company_name' => $data['tradeNam'] ?? null,
+                        'name'         => $data['tradeNam'] ?? null,
+                        'address'      => $data['pradr']['addr'] ?? null,
+                        'pincode'      => $data['pradr']['addr']['pncd'] ?? null,
+                        'city'         => $data['pradr']['addr']['city'] ?? null,
+                        'state'        => $data['pradr']['addr']['st'] ?? null,
+                    ]
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid GST or error from API',
+                    'error' => $response->body()
+                ], 400);
+            }
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 
 }
