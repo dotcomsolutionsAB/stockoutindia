@@ -267,18 +267,32 @@ class UserController extends Controller
 
                 // Ensure the response is valid and contains expected data
                 if (isset($data['tradeNam']) && isset($data['pradr']['addr'])) {
+                    
+                    $addr = $data['pradr']['addr'];
+
+                    // Create a full address string
+                    $fullAddress = implode(', ', array_filter([
+                        $addr['flno'] ?? null,
+                        $addr['bno'] ?? null,
+                        $addr['bnm'] ?? null,
+                        $addr['landMark'] ?? null,
+                        $addr['loc'] ?? null,
+                        $addr['st'] ?? null,
+                    ]));
+
                     return response()->json([
                         'success' => true,
                         'message' => 'Valid GSTIN.',
                         'data' => [
                             'company_name' => $data['tradeNam'],
                             'name'         => $data['tradeNam'],
-                            'address'      => $data['pradr']['addr'],
-                            'pincode'      => $data['pradr']['addr']['pncd'] ?? null,
-                            'city'         => $data['pradr']['addr']['city'] ?? null,
-                            'state'        => $data['pradr']['addr']['st'] ?? null,
+                            'address'      => $fullAddress,
+                            'city'         => $addr['dst'] ?? null,
+                            'state'        => $addr['stcd'] ?? null,
+                            'pincode'      => $addr['pncd'] ?? null,
                         ]
                     ]);
+
                 } else {
                     return response()->json([
                         'success' => false,
