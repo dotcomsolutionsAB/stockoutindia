@@ -265,12 +265,12 @@ class UserController extends Controller
             if ($response->successful()) {
                 $data = $response->json();
 
-                // Ensure the response is valid and contains expected data
-                if (isset($data['tradeNam']) && isset($data['pradr']['addr'])) {
-                    
-                    $addr = $data['pradr']['addr'];
+                $info = $data['taxpayerInfo'] ?? null;
 
-                    // Create a full address string
+                if ($info && isset($info['tradeNam'], $info['pradr']['addr'])) {
+                    $addr = $info['pradr']['addr'];
+    
+                    // Build formatted address
                     $fullAddress = implode(', ', array_filter([
                         $addr['flno'] ?? null,
                         $addr['bno'] ?? null,
@@ -278,7 +278,7 @@ class UserController extends Controller
                         $addr['landMark'] ?? null,
                         $addr['loc'] ?? null,
                         $addr['st'] ?? null,
-                    ]));
+                    ]));    
 
                     return response()->json([
                         'success' => true,
@@ -296,7 +296,7 @@ class UserController extends Controller
                 } else {
                     return response()->json([
                         'success' => false,
-                        'message' => 'GSTIN verified but response is incomplete.',
+                        'message' => 'GSTIN verified but primary address is missing.',
                         'data' => $data
                     ], 422);
                 }
