@@ -36,6 +36,11 @@ class MasterController extends Controller
     {
         try {
             
+            $state = StateModel::with('get_country:id,name')
+            ->whereHas('get_country', function ($query) {
+                $query->where('id', 101);
+            })
+            ->get();
 
             // Transform response to replace nested "country" with "country_name"
             $states->transform(function ($state) {
