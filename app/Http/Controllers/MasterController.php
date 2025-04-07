@@ -36,7 +36,7 @@ class MasterController extends Controller
     {
         try {
             
-            $state = StateModel::with('get_country:id,name')
+            $states = StateModel::with('get_country:id,name')
             ->whereHas('get_country', function ($query) {
                 $query->where('id', 101);
             })
