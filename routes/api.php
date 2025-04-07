@@ -49,6 +49,7 @@ Route::get('/countries', [MasterController::class, 'fetchAllCountries']);
 
 Route::middleware(['auth:sanctum'])->group(function () {
 
+    Route::post('/reset_password', [AuthController::class, 'resetPassword']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
     Route::prefix('product')->group(function () {

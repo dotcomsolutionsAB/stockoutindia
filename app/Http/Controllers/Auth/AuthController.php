@@ -279,4 +279,46 @@ class AuthController extends Controller
             str_shuffle($all)
         ), 0, $length);
     }
+
+    // Reset Password Function
+    public function resetPassword(Request $request)
+    {
+        // Validate the input fields
+        $request->validate([
+            'password' => 'required|string|confirmed', // Ensure password and password_confirmation fields
+        ]);
+
+        try {
+            // Retrieve the currently authenticated user from the Bearer token
+            $user = auth()->user();
+
+            if (!$user) {
+                return response()->json([
+                    'code' => 401,
+                    'success' => false,
+                    'message' => 'Unauthorized, please provide a valid token.',
+                ], 401);
+            }
+
+            // Update the user's password
+            $user->password = Hash::make($request->password);
+            $user->save();
+
+            // Invalidate all existing tokens (optional, for added security)
+            $user->tokens()->delete();
+
+            return response()->json([
+                'code' => 200,
+                'success' => true,
+                'message' => 'Password has been reset successfully.',
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'code' => 500,
+                'success' => false,
+                'message' => 'Something went wrong.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }
