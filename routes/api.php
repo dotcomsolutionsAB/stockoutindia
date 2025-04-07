@@ -24,6 +24,8 @@ Route::get('/faqs', [UserController::class, 'getFaqsJson']);
 Route::post('/register', [UserController::class, 'register']);
 Route::post('/login/{otp?}', [AuthController::class, 'login']);
 Route::post('/get_otp', [AuthController::class, 'generate_otp']);
+Route::post('/forget_password', [AuthController::class, 'forgotPassword']);
+Route::post('/gst_details', [UserController::class, 'fetchGstDetails']);
 
 Route::prefix('industry')->group(function () {
     Route::post('/', [IndustryController::class, 'createIndustry']); // Create a new industry record
@@ -60,6 +62,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/update_status', [ProductController::class, 'updateProductStatus']); // Update product status
 
         Route::get('/migration', [ProductController::class, 'importProductImagesFromCSV']); // Import migration files
+
+        Route::get('get_units', [ProductController::class, 'getUnits']);
     });
 
     Route::prefix('review')->group(function () {

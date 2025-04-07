@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
@@ -16,7 +16,7 @@ class UserController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'email' => 'required|email|unique:users,email',
-                'password' => 'required|string|min:6',
+                'password' => 'required|string|min:8',
                 // 'role' => ['required', Rule::in(['admin', 'user'])],
                 'phone' => 'required|string|unique:users,phone',
 
@@ -247,5 +247,83 @@ class UserController extends Controller
         ]);
     }
 
+    public function fetchGstDetails(Request $request)
+    {
+        $request->validate([
+            'gstin' => 'required|string'
+        ]);
 
+        try {
+            $gstin = $request->gstin;
+            $apiKey = env('APPYFLOW_API_KEY');
+
+            $response = Http::get("https://appyflow.in/api/verifyGST", [
+                'gstNo'     => $gstin,
+                'key_secret'=> $apiKey,
+            ]);
+
+            // If the HTTP request is successful...
+            if ($response->successful()) {
+                $data = $response->json();
+
+                // Check if taxpayerInfo exists (valid GSTIN response)
+                if (isset($data['taxpayerInfo'])) {
+                    $info = $data['taxpayerInfo'];
+
+                    // Ensure we have the tradeNam and primary address data
+                    if (isset($info['tradeNam'], $info['pradr']['addr'])) {
+                        $addr = $info['pradr']['addr'];
+
+                        // Build a formatted address string using available address parts
+                        $fullAddress = implode(', ', array_filter([
+                            $addr['flno']    ?? null,
+                            $addr['bno']     ?? null,
+                            $addr['bnm']     ?? null,
+                            $addr['landMark']?? null,
+                            $addr['loc']     ?? null,
+                            $addr['st']      ?? null,
+                        ]));
+
+                        return response()->json([
+                            'success' => true,
+                            'message' => 'Valid GSTIN.',
+                            'data' => [
+                                'company_name' => $info['tradeNam'],
+                                'name'         => $info['tradeNam'],
+                                'address'      => $fullAddress,
+                                'city'         => $addr['dst']  ?? null,
+                                'state'        => $addr['stcd'] ?? null,
+                                'pincode'      => $addr['pncd'] ?? null,
+                            ]
+                        ]);
+                    } else {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'GSTIN verified but primary address is missing.',
+                            'data'    => $data
+                        ], 422);
+                    }
+                } else {
+                    // If taxpayerInfo is not set, assume it's an error response (e.g., invalid GSTIN)
+                    return response()->json([
+                        'success' => false,
+                        'message' => $data['message'] ?? 'GSTIN verification failed.',
+                        'data'    => $data
+                    ], 422);
+                }
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid GSTIN or AppyFlow API error.',
+                    'error'   => $response->body()
+                ], $response->status());
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong while verifying GSTIN.',
+                'error'   => $e->getMessage()
+            ], 500);
+        }
+    }
 }

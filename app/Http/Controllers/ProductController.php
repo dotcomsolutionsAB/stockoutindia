@@ -902,4 +902,17 @@ class ProductController extends Controller
         }
     }
 
+    public function getUnits()
+    {
+        return response()->json([
+            'success' => true,
+            'message' => 'Units fetched successfully!',
+            'data' => [
+                'PCS',
+                'NOS',
+                'KG',
+                'MTRS'
+            ]
+        ], 200);
+    }
 }
