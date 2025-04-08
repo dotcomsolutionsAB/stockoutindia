@@ -908,11 +908,31 @@ class ProductController extends Controller
             'success' => true,
             'message' => 'Units fetched successfully!',
             'data' => [
-                'PCS',
-                'NOS',
+                'LTS',
+                'UNIT',
+                'MM',
                 'KG',
-                'MTRS'
+                'CM',
+                'M',
+                'QUINTAL',
+                'POUNDS',
+                'TON',
+                'BOX',
+                'PALLETS',
+                'GRAM',
+                'FEET',
+                'YARD',
+                'ACRE',
+                'HECTARE',
+                'CONTAINER',
+                'PIECES',
+                'CUBIC CENTIMETER',
+                'SQUARE METER',
+                'SQUARE FEET',
+                'SQUARE YARDS',
+                'BUNDLE'
             ]
+            
         ], 200);
     }
 }
