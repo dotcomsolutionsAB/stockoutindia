@@ -304,9 +304,6 @@ class AuthController extends Controller
             $user->password = Hash::make($request->password);
             $user->save();
 
-            // Invalidate all existing tokens (optional, for added security)
-            $user->tokens()->delete();
-
             return response()->json([
                 'code' => 200,
                 'success' => true,
