@@ -54,8 +54,8 @@ class AuthController extends Controller
             else {
                 return response()->json([
                     'success' => false,
-                    'message' => 'User not register.',
-                ], 404);
+                    'message' => 'Invalid Username or Password.',
+                ], 200);
             }
         } catch (\Exception $e) {
             return response()->json([
@@ -232,10 +232,10 @@ class AuthController extends Controller
 
             if (!$user) {
                 return response()->json([
-                    'code' => 401,
+                    'code' => 200,
                     'success' => false,
                     'message' => 'Unauthorized, please provide a valid token.',
-                ], 401);
+                ], 200);
             }
 
             // Update the user's password

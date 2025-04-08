@@ -38,7 +38,7 @@ class ProductController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => $validator->errors()->first(),
-                ], 422);
+                ], 200);
             }
 
             $product = ProductModel::create([
@@ -90,7 +90,7 @@ class ProductController extends Controller
                     return response()->json([
                         'success' => false,
                         'message' => 'Product not found!',
-                    ], 404);
+                    ], 200);
                 }
 
                 // Parse images
@@ -390,7 +390,7 @@ class ProductController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Product not found!',
-                ], 404);
+                ], 200);
             }
 
             $validator = Validator::make($request->all(), [
@@ -413,7 +413,7 @@ class ProductController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => $validator->errors()->first(),
-                ], 422);
+                ], 200);
             }
 
             // Column-wise update
@@ -462,7 +462,7 @@ class ProductController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Product not found!',
-                ], 404);
+                ], 200);
             }
 
             // Validate new files
@@ -474,7 +474,7 @@ class ProductController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => $validator->errors()->first(),
-                ], 422);
+                ], 200);
             }
 
             // Delete old images from DB + server
@@ -657,7 +657,7 @@ class ProductController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Product not found!',
-                ], 404);
+                ], 200);
             }
 
             // Delete existing images
@@ -875,7 +875,7 @@ class ProductController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Product not found.'
-                ], 404);
+                ], 200);
             }
 
             // Update Product Status

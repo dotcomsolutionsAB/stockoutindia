@@ -37,7 +37,7 @@ class WishlistController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Product already exists in wishlist.'
-                    ], 409); // 409 Conflict
+                    ], 200); // 409 Conflict
             }
 
             // Create the wishlist item record.
@@ -144,7 +144,7 @@ class WishlistController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Wishlist item not found or you are not authorized to delete this item.',
-                ], 404);
+                ], 200);
             }
 
             $wishlistItem->delete();

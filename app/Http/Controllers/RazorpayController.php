@@ -171,7 +171,7 @@ class RazorpayController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Order not found in the database!',
-                ], 404);
+                ], 200);
             }
 
             // Insert data column-wise

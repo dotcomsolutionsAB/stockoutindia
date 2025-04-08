@@ -39,7 +39,7 @@ class UserController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => $validator->errors()->first(),
-                ], 422);
+                ], 200);
             }
 
             $user = User::create([
@@ -84,7 +84,7 @@ class UserController extends Controller
                     return response()->json([
                         'success' => false,
                         'message' => 'User not found!',
-                    ], 404);
+                    ], 200);
                 }
 
                 return response()->json([
@@ -117,7 +117,7 @@ class UserController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'User not found!',
-                ], 404);
+                ], 200);
             }
 
             $validatedData =  $request->validate([
@@ -176,7 +176,7 @@ class UserController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'User not found!',
-                ], 404);
+                ], 200);
             }
 
             $user->delete();
@@ -301,7 +301,7 @@ class UserController extends Controller
                             'success' => false,
                             'message' => 'GSTIN verified but primary address is missing.',
                             'data'    => $data
-                        ], 422);
+                        ], 200);
                     }
                 } else {
                     // If taxpayerInfo is not set, assume it's an error response (e.g., invalid GSTIN)
@@ -309,7 +309,7 @@ class UserController extends Controller
                         'success' => false,
                         'message' => $data['message'] ?? 'GSTIN verification failed.',
                         'data'    => $data
-                    ], 422);
+                    ], 200);
                 }
             } else {
                 return response()->json([
