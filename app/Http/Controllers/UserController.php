@@ -326,4 +326,17 @@ class UserController extends Controller
             ], 500);
         }
     }
+
+    public function fetchBanners()
+    {
+        return response()->json([
+            'success' => true,
+            'message' => 'Units fetched successfully!',
+            'data' => [
+                'http://api.stockoutindia.com/storage/uploads/banners/banner_1.jpg',
+                'http://api.stockoutindia.com/storage/uploads/banners/banner_2.jpg'
+            ]
+            
+        ], 200);
+    }
 }
