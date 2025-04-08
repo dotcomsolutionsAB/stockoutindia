@@ -44,8 +44,12 @@ Route::prefix('sub_industry')->group(function () {
 Route::post('/get_products/{id?}', [ProductController::class, 'fetchOnlyProducts']); // Retrieve product (all or specific)
 
 Route::get('/countries', [MasterController::class, 'fetchAllCountries']);
-    Route::get('/states', [MasterController::class, 'fetchAllStates']);
-    Route::get('/cities/{id?}', [MasterController::class, 'fetchAllCities']);
+Route::get('/states', [MasterController::class, 'fetchAllStates']);
+Route::get('/cities/{id?}', [MasterController::class, 'fetchAllCities']);
+
+Route::prefix('product')->group(function () {
+    Route::get('get_units', [ProductController::class, 'getUnits']);
+});
 
 Route::middleware(['auth:sanctum'])->group(function () {
 
@@ -63,8 +67,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/update_status', [ProductController::class, 'updateProductStatus']); // Update product status
 
         Route::get('/migration', [ProductController::class, 'importProductImagesFromCSV']); // Import migration files
-
-        Route::get('get_units', [ProductController::class, 'getUnits']);
     });
 
     Route::prefix('review')->group(function () {
