@@ -43,6 +43,9 @@ class ImportController extends Controller
             
                 // If the user exists by email, update it. Otherwise, create a new record
                 if ($existingUserByEmail) {
+                    // Handle "gstin" being a space, set it to NULL
+                    $gstin = $user['gst_no'] === " " ? null : $user['gst_no'];
+
                     $existingUserByEmail->update([
                         'user_id' => $user['id'],
                         'name' => $user['fullname'],
@@ -55,11 +58,14 @@ class ImportController extends Controller
                         'city' => $cityName, // Storing the city name here
                         'state' => $user['state_id'],
                         'company_name' => $user['company_name'],
-                        'gstin' => $user['gst_no'],
+                        'gstin' => $gstin,
                         'industry' => $user['industries'],
                         'sub_industry' => NULL,
                     ]);
                 } else {
+                    // Handle "gstin" being a space, set it to NULL
+                    $gstin = $user['gst_no'] === " " ? null : $user['gst_no'];
+
                     // If user doesn't exist by email, create a new user
                     User::create([
                         'user_id' => $user['id'],
@@ -73,7 +79,7 @@ class ImportController extends Controller
                         'city' => $cityName, // Storing the city name here
                         'state' => $user['state_id'],
                         'company_name' => $user['company_name'],
-                        'gstin' => $user['gst_no'],
+                        'gstin' => $gstin,
                         'industry' => $user['industries'],
                         'sub_industry' => NULL,
                     ]);
