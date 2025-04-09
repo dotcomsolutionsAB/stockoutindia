@@ -116,12 +116,13 @@ class ImportController extends Controller
                 }
 
                 // Check if the product already exists based on product name (uniqueness)
-                $existingProduct = ProductModel::where('product_name', $product['name'])
+                $existingProduct = ProductModel::where('product_id', $product['id'])
                     ->where('user_id', $user->id) // Ensure it belongs to the correct user
                     ->first();
 
                 // Prepare product data
                 $productData = [
+                    'product_id' => $product['id'], // Use the mapped user_id from the User model
                     'user_id' => $user->id, // Use the mapped user_id from the User model
                     'product_name' => $product['name'],
                     'original_price' => $product['original_price'] ?? 1,

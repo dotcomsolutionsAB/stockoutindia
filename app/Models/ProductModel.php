@@ -12,6 +12,7 @@ class ProductModel extends Model
 
     // Fillable columns
     protected $fillable = [
+        'product_id',
         'user_id',
         'product_name',
         'original_price',
