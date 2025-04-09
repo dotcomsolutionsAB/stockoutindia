@@ -28,6 +28,9 @@ Route::post('/forget_password', [AuthController::class, 'forgotPassword']);
 Route::post('/gst_details', [UserController::class, 'fetchGstDetails']);
 Route::get('/banners', [UserController::class, 'fetchBanners']);
 
+// Add a route in web.php
+Route::get('import_users', [ImportController::class, 'importUsers']);
+
 Route::prefix('industry')->group(function () {
     Route::post('/', [IndustryController::class, 'createIndustry']); // Create a new industry record
     Route::get('/{id?}', [IndustryController::class, 'getIndustries']); // Retrieve industry record (all or specific)
