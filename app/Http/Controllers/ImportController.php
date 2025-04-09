@@ -164,8 +164,13 @@ class ImportController extends Controller
                             }
                         }
 
-                        // If the image doesn't exist, download it
-                        $imageContents = file_get_contents($imageUrl);
+                        // If the image doesn't exist, download it using cURL
+                        $imageContents = $this->downloadImageUsingCurl($imageUrl);
+
+                        if ($imageContents === false) {
+                            // Handle the error if the image download fails
+                            continue; // Skip the image if the download failed
+                        }
 
                         // Save the image to public storage
                         Storage::disk('public')->put($imagePath, $imageContents);
@@ -196,4 +201,33 @@ class ImportController extends Controller
 
         return response()->json(['status' => false, 'message' => 'Failed to fetch products from API']);
     }
+
+    private function downloadImageUsingCurl($url)
+    {
+        // Initialize cURL session
+        $ch = curl_init();
+
+        // Set cURL options
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true); // Follow redirects if needed
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Disable SSL verification (if necessary)
+
+        // Execute cURL request
+        $data = curl_exec($ch);
+
+        // Check for errors
+        if (curl_errno($ch)) {
+            // If there's an error, return false
+            curl_close($ch);
+            return false;
+        }
+
+        // Close cURL session
+        curl_close($ch);
+
+        return $data; // Return the image contents
+    }
 }
+
+
