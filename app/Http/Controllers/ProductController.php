@@ -177,7 +177,7 @@ class ProductController extends Controller
 
             // Apply pagination
             $totalRecords = $query->count();
-            $products = $query->offset($offset)->limit($limit)->get();
+            $products = $query->orderBy('id', 'desc')->offset($offset)->limit($limit)->get();
 
             // Handle Empty Results
             if ($products->isEmpty()) {
