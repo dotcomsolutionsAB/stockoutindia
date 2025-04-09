@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\ProductModel;
+use App\Models\UploadModel; // Assuming you have a model for file uploads
 use App\Models\CityModel; // Add the CityModel import
 use Illuminate\Support\Facades\Http; // To make API requests
 use Illuminate\Http\Request;
@@ -92,5 +94,105 @@ class ImportController extends Controller
 
         // If API call fails
         return response()->json(['status' => false, 'message' => 'Failed to fetch users from API']);
+    }
+
+    // Method to import products from external API
+    public function importProducts()
+    {
+        // Fetch the products from the external API
+        $response = Http::get('http://sync.stockoutindia.com/get_products.php');
+
+        // Check if the response is successful
+        if ($response->successful()) {
+            $products = $response->json()['data']; // Adjust according to the response format
+
+            foreach ($products as $product) {
+                // Map the user_id from the old table (API user_id) to the new user_id from the 'users' table
+                $user = User::where('user_id', $product['user_id'])->first(); // Mapping old user_id to new user_id
+                
+                if (!$user) {
+                    continue; // Skip if the user does not exist in the new users table
+                }
+
+                // Check if the product already exists based on product name (uniqueness)
+                $existingProduct = ProductModel::where('product_name', $product['name'])
+                    ->where('user_id', $user->id) // Ensure it belongs to the correct user
+                    ->first();
+
+                // Prepare product data
+                $productData = [
+                    'user_id' => $user->id, // Use the mapped user_id from the User model
+                    'product_name' => $product['name'],
+                    'original_price' => $product['original_price'] ?? null,
+                    'selling_price' => $product['price'],
+                    'offer_quantity' => $product['offer_qty'] ?? null,
+                    'minimum_quantity' => $product['min_qty'],
+                    'unit' => $product['units'],
+                    'industry' => $product['industry'],
+                    'sub_industry' => $product['sub_industry'],
+                    'status' => $product['is_active'], // Assuming status is 1 for active
+                    'description' => $product['description'],
+                    'image' => null, // We will handle images separately
+                ];
+
+                // If the product exists, update it. Otherwise, create a new record
+                if ($existingProduct) {
+                    $existingProduct->update($productData);
+                    $productModel = $existingProduct;
+                } else {
+                    $productModel = ProductModel::create($productData);
+                }
+
+                // Now handle the product images
+                if (isset($product['images']) && count($product['images']) > 0) {
+                    $uploadIds = [];
+
+                    foreach ($product['images'] as $imageUrl) {
+                        // Get the image name from the URL
+                        $imageName = basename($imageUrl);
+                        $imagePath = 'uploads/products/product_images/' . $imageName;
+
+                        // Check if the file already exists in public storage
+                        if (Storage::disk('public')->exists($imagePath)) {
+                            // If the file exists, skip downloading and saving it
+                            // Get the existing upload record and add its ID
+                            $existingUpload = UploadModel::where('file_url', Storage::url($imagePath))->first();
+                            if ($existingUpload) {
+                                $uploadIds[] = $existingUpload->id;
+                                continue; // Skip the current image if it already exists
+                            }
+                        }
+
+                        // If the image doesn't exist, download it
+                        $imageContents = file_get_contents($imageUrl);
+
+                        // Save the image to public storage
+                        Storage::disk('public')->put($imagePath, $imageContents);
+
+                        // Generate the image URL (for saving in DB)
+                        $storedPath = Storage::url($imagePath);
+
+                        // Create an upload record in the UploadModel (if you have one)
+                        $upload = UploadModel::create([
+                            'file_name' => $imageName,
+                            'file_url' => $storedPath,
+                            'file_size' => strlen($imageContents), // Image size in bytes
+                        ]);
+
+                        // Add the upload ID to the list of image IDs for this product
+                        $uploadIds[] = $upload->id;
+                    }
+
+                    // Update the product's image column with the new comma-separated upload IDs
+                    $productModel->image = implode(',', $uploadIds);
+                    $productModel->save();
+                }
+
+            }
+
+            return response()->json(['status' => true, 'message' => 'Products imported successfully']);
+        }
+
+        return response()->json(['status' => false, 'message' => 'Failed to fetch products from API']);
     }
 }

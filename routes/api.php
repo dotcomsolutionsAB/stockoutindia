@@ -31,6 +31,7 @@ Route::get('/banners', [UserController::class, 'fetchBanners']);
 
 // Add a route in web.php
 Route::get('import_users', [ImportController::class, 'importUsers']);
+Route::get('import_products', [ImportController::class, 'importProducts']);
 
 Route::prefix('industry')->group(function () {
     Route::post('/', [IndustryController::class, 'createIndustry']); // Create a new industry record
