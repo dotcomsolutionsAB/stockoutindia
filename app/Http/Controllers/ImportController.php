@@ -25,16 +25,25 @@ class ImportController extends Controller
                 
                 // Set username to be the same as phone with +91 prefix
                 $username = $phoneWithPrefix;
-
-                // Check if the user already exists based on unique email or other unique field
-                $existingUser = User::where('email', $user['email'])->first();
-
+            
+                // Check if the email already exists in the database
+                $existingUserByEmail = User::where('email', $user['email'])->first();
+                
+                // Check if the mobile already exists in the database
+                $existingUserByMobile = User::where('phone', $phoneWithPrefix)->first();
+            
                 // Get the city name using CityModel (assuming city_id is the city_id in the API)
                 $cityName = CityModel::where('id', $user['city_id'])->first()->name ?? null;
-
-                // If the user exists, update it. Otherwise, create a new record
-                if ($existingUser) {
-                    $existingUser->update([
+            
+                // Skip if mobile number is duplicate, and email is not duplicate
+                if ($existingUserByMobile && !$existingUserByEmail) {
+                    // Skip the current iteration (do not insert or update)
+                    continue;
+                }
+            
+                // If the user exists by email, update it. Otherwise, create a new record
+                if ($existingUserByEmail) {
+                    $existingUserByEmail->update([
                         'name' => $user['fullname'],
                         'email' => $user['email'],
                         'password' => bcrypt($user['password']),
@@ -50,7 +59,7 @@ class ImportController extends Controller
                         'sub_industry' => NULL,
                     ]);
                 } else {
-                    // If user doesn't exist, create a new user
+                    // If user doesn't exist by email, create a new user
                     User::create([
                         'name' => $user['fullname'],
                         'email' => $user['email'],
@@ -68,6 +77,7 @@ class ImportController extends Controller
                     ]);
                 }
             }
+            
 
             return response()->json(['status' => true, 'message' => 'Users imported successfully']);
         }
