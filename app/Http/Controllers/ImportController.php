@@ -44,6 +44,7 @@ class ImportController extends Controller
                 // If the user exists by email, update it. Otherwise, create a new record
                 if ($existingUserByEmail) {
                     $existingUserByEmail->update([
+                        'user_id' => $user['id'],
                         'name' => $user['fullname'],
                         'email' => $user['email'],
                         'password' => bcrypt($user['password']),
@@ -61,6 +62,7 @@ class ImportController extends Controller
                 } else {
                     // If user doesn't exist by email, create a new user
                     User::create([
+                        'user_id' => $user['id'],
                         'name' => $user['fullname'],
                         'email' => $user['email'],
                         'password' => bcrypt($user['password']),
