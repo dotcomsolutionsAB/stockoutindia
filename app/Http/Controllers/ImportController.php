@@ -165,7 +165,7 @@ class ImportController extends Controller
                         }
 
                         // If the image doesn't exist, download it
-                        $imageContents = file_get_contents($imageUrl);
+                        $imageContents = file_get_contents(urlencode($imageUrl));
 
                         // Save the image to public storage
                         Storage::disk('public')->put($imagePath, $imageContents);
