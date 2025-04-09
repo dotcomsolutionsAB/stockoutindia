@@ -7,6 +7,7 @@ use App\Models\ProductModel;
 use App\Models\UploadModel; // Assuming you have a model for file uploads
 use App\Models\CityModel; // Add the CityModel import
 use Illuminate\Support\Facades\Http; // To make API requests
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 
 class ImportController extends Controller
