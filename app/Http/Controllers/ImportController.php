@@ -123,10 +123,10 @@ class ImportController extends Controller
                 $productData = [
                     'user_id' => $user->id, // Use the mapped user_id from the User model
                     'product_name' => $product['name'],
-                    'original_price' => $product['original_price'] ?? null,
+                    'original_price' => $product['original_price'] ?? 1,
                     'selling_price' => $product['price'],
-                    'offer_quantity' => $product['offer_qty'] ?? null,
-                    'minimum_quantity' => $product['min_qty'],
+                    'offer_quantity' => $product['offer_qty'] ?? 1,
+                    'minimum_quantity' => $product['min_qty'] ?? 1,
                     'unit' => $product['units'],
                     'industry' => $product['industry'],
                     'sub_industry' => $product['sub_industry'],
