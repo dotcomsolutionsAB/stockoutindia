@@ -47,7 +47,7 @@ class ImportController extends Controller
                         'company_name' => $user['company_name'],
                         'gstin' => $user['gst_no'],
                         'industry' => $user['industries'],
-                        'sub_industry' => $user['sub_industry'],
+                        'sub_industry' => NULL,
                     ]);
                 } else {
                     // If user doesn't exist, create a new user
@@ -64,7 +64,7 @@ class ImportController extends Controller
                         'company_name' => $user['company_name'],
                         'gstin' => $user['gst_no'],
                         'industry' => $user['industries'],
-                        'sub_industry' => $user['sub_industry'],
+                        'sub_industry' => NULL,
                     ]);
                 }
             }
