@@ -175,6 +175,8 @@ class ProductController extends Controller
                 $query->whereIn('state_id', $stateIds);
             }
 
+            $query->where('status', 'active');
+
             // Apply pagination
             $totalRecords = $query->count();
             $products = $query->orderBy('id', 'desc')->offset($offset)->limit($limit)->get();
