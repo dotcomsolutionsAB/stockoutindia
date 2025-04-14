@@ -333,8 +333,8 @@ class UserController extends Controller
             'success' => true,
             'message' => 'Units fetched successfully!',
             'data' => [
-                'http://api.stockoutindia.com/storage/uploads/banners/banner_1.jpg',
-                'http://api.stockoutindia.com/storage/uploads/banners/banner_2.jpg'
+                'https://api.stockoutindia.com/storage/uploads/banners/banner_1.jpg',
+                'https://api.stockoutindia.com/storage/uploads/banners/banner_2.jpg'
             ]
             
         ], 200);
