@@ -17,6 +17,7 @@ class UserController extends Controller
             $validator = Validator::make($request->all(), [
                 'email' => 'required|email|unique:users,email',
                 'password' => 'required|string|min:8',
+                'google_id' => 'required|string',
                 // 'role' => ['required', Rule::in(['admin', 'user'])],
                 'phone' => 'required|string|unique:users,phone',
 
@@ -46,6 +47,7 @@ class UserController extends Controller
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => bcrypt($request->password),
+                'google_id' => $request->google_id,
                 // 'role' => $request->role,
                 'role' => "user",
                 'username' => $request->phone, // Store phone in username
