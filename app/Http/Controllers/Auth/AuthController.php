@@ -17,6 +17,49 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         try {
+
+            // Step 1: Check if logging in via Google
+        if ($request->has('google_id')) 
+        {
+            $request->validate([
+                'email'     => 'required|email',
+                'google_id' => 'required|string',
+            ]);
+            // Try to find user with email
+            $user = User::where('email', $request->email)->first();
+
+            if ($user) 
+            {
+                // Update google_id if changed
+                if ($user->google_id !== $request->google_id) {
+                    $user->google_id = $request->google_id;
+                    $user->save();
+                }
+
+                // Generate Sanctum token
+                $generated_token = $user->createToken('API TOKEN')->plainTextToken;
+
+                return response()->json([
+                    'success' => true,
+                    'data' => [
+                        'token' => $generated_token,
+                        'user_id' => $user->id,
+                        'name' => $user->name,
+                        'role' => $user->role,
+                        'username' => $user->username,
+                    ],
+                    'message' => 'Google login successful!',
+                ], 200);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No user found with this email.',
+                ], 200);
+            }
+        }
+
+        // Step 2: Fallback to standard username/password login
+
             $request->validate([
                 'username' => 'required|string',
                 'password' => [
