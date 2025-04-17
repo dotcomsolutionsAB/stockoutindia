@@ -385,7 +385,7 @@ class UserController extends Controller
 
             // If user_id is provided, filter by user_id
             if ($userId) {
-                $query->where('user_id', $userId);
+                $query->where('user', $userId);
             }
 
             // Get total count without limit/offset
@@ -394,7 +394,7 @@ class UserController extends Controller
             // Build the query to fetch orders, with pagination
             $orders = $query->offset($offset)->limit($limit)->get();
 
-            $grouped = $orders->groupBy('user_id')->map(function ($orders) {
+            $grouped = $orders->groupBy('user')->map(function ($orders) {
                 return [
                     'user' => $orders->first()->user,
                     'orders' => $orders->map(function ($order) {
