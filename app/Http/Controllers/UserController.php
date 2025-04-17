@@ -400,7 +400,11 @@ class UserController extends Controller
                     'orders' => $orders->map(function ($order) {
                         return [
                             'order_id' => $order->id,
-                            'product' => $order->product,
+                            'product' => [
+                                'id' => $order->product->id,
+                                'name' => $order->product->name,
+                                // Add other product details as needed
+                            ],
                             'amount' => $order->payment_amount,
                             'status' => $order->status,
                         ];
