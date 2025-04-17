@@ -30,6 +30,15 @@ class AuthController extends Controller
 
             if ($user) 
             {
+
+                // Check if the user is inactive
+                if ($user->is_active) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Your account is inactive. Please contact support.',
+                    ], 403);
+                }
+
                 // Update google_id if changed
                 if ($user->google_id !== $request->google_id) {
                     $user->google_id = $request->google_id;
@@ -73,6 +82,14 @@ class AuthController extends Controller
             if(Auth::attempt([$loginField => $request->username, 'password' => $request->password]))
             {
                 $user = Auth::user();
+
+                 // Check if the user is inactive
+                if ($user->is_active) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Your account is inactive. Please contact support.',
+                    ], 403);
+                }
 
                 if ($user->role == "user") {
                     // Revoke previous tokens

@@ -28,6 +28,7 @@ class User extends Authenticatable
         'username',
         'phone',
         'otp',
+        'is_active',
         'expires_at',
         'company_name',
         'address',
@@ -60,5 +61,10 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function products()
+    {
+        return $this->hasMany(ProductModel::class, 'user_id', 'id');
     }
 }

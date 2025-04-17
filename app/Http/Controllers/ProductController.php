@@ -935,4 +935,45 @@ class ProductController extends Controller
             
         ], 200);
     }
+
+    public function admin_fetchProducts(Request $request)
+    {
+        try {
+            $query = ProductModel::query();
+
+            if ($request->filled('product_name')) {
+                $query->where('product_name', 'LIKE', '%' . $request->product_name . '%');
+            }
+
+            if ($request->filled('industry')) {
+                $industries = explode(',', $request->industry);
+                $query->whereIn('industry', $industries);
+            }
+
+            if ($request->filled('sub_industry')) {
+                $subIndustries = explode(',', $request->sub_industry);
+                $query->whereIn('sub_industry', $subIndustries);
+            }
+
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            }
+
+            $min = $request->input('min_amount', 0);
+            $max = $request->input('max_amount', ProductModel::max('selling_price'));
+
+            $query->whereBetween('selling_price', [$min, $max]);
+
+            $products = $query->get();
+
+            return response()->json([
+                'code' => 200,
+                'success' => true,
+                'data' => $products,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['code' => 500, 'success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
 }

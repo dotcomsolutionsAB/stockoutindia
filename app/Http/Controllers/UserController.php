@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\RazorpayOrdersModel;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
@@ -52,6 +53,7 @@ class UserController extends Controller
                 'role' => "user",
                 'username' => $request->phone, // Store phone in username
                 'phone' => $request->phone,
+                'is_active' => "1",
                 'company_name' => $request->company_name,
                 'address' => $request->address,
                 'pincode' => $request->pincode,
@@ -341,4 +343,75 @@ class UserController extends Controller
             
         ], 200);
     }
+
+    public function usersWithProducts()
+    {
+        try {
+            $users = User::with(['products' => function ($q) {
+                $q->where('status', 'active');
+            }])->get();
+
+            return response()->json([
+                'code' => 200,
+                'success' => true,
+                'data' => $users,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['code' => 500, 'success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function userOrders()
+    {
+        try {
+            $orders = RazorpayOrdersModel::with(['user', 'product'])->get();
+
+            $grouped = $orders->groupBy('user_id')->map(function ($orders) {
+                return [
+                    'user' => $orders->first()->user,
+                    'orders' => $orders->map(function ($order) {
+                        return [
+                            'order_id' => $order->id,
+                            'product' => $order->product,
+                            'amount' => $order->amount,
+                            'status' => $order->status,
+                        ];
+                    }),
+                ];
+            })->values();
+
+            return response()->json([
+                'code' => 200,
+                'success' => true,
+                'data' => $grouped,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['code' => 500, 'success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function toggleUserStatus(Request $request)
+    {
+        try {
+            $request->validate([
+                'user_id' => 'required|exists:users,id',
+                'is_active' => 'required|boolean',
+            ]);
+
+            $user = User::find($request->user_id);
+            $user->is_active = $request->is_active;
+            $user->save();
+
+            return response()->json([
+                'code' => 200,
+                'success' => true,
+                'message' => 'User status updated successfully.',
+                'data' => $user,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['code' => 500, 'success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+
 }
