@@ -19,7 +19,7 @@ class UserController extends Controller
                 'email' => 'required|email|unique:users,email',
                 'password' => 'required|string|min:8',
                 'google_id' => 'required|string',
-                // 'role' => ['required', Rule::in(['admin', 'user'])],
+                'role' => ['required', Rule::in(['admin', 'user'])],
                 'phone' => 'required|string|unique:users,phone',
 
                 // Make `gstin` optional; if present, must be unique
@@ -49,8 +49,7 @@ class UserController extends Controller
                 'email' => $request->email,
                 'password' => bcrypt($request->password),
                 'google_id' => $request->google_id,
-                // 'role' => $request->role,
-                'role' => "user",
+                'role' => $request->role,
                 'username' => $request->phone, // Store phone in username
                 'phone' => $request->phone,
                 'is_active' => "1",
