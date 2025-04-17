@@ -436,12 +436,12 @@ class UserController extends Controller
             $offset = $request->input('offset', 0); // Default offset is 0
             $userId = $request->input('user_id'); // User ID filter (optional)
 
-            // Build the query to fetch orders with eager loading
-            $query  = RazorpayOrdersModel::with(['get_user', 'get_product']); 
+            // Build the query to fetch orders
+            $query = RazorpayOrdersModel::query();
 
             // If user_id is provided, filter by user_id
             if ($userId) {
-                $query->where('user', $userId); 
+                $query->where('user', $userId);
             }
 
             // Get total count without limit/offset
@@ -450,41 +450,38 @@ class UserController extends Controller
             // Get the orders with pagination
             $orders = $query->offset($offset)->limit($limit)->get();
 
-            // Group orders by user_id
-            $grouped = $orders->groupBy('user')->map(function ($orders) {
-                // Safely access the first order's user
-                $user = $orders->first()->get_user;
+            // Manually fetch related user and product data
+            $grouped = $orders->map(function ($order) {
+                // Manually fetching user and product
+                $user = User::find($order->user);  // Find user by ID
+                $product = ProductModel::find($order->product);  // Find product by ID
 
                 return [
                     'user' => $user ? [
                         'id' => $user->id,
                         'name' => $user->name,
-                        'email' => $user->email, // You can add any other user details here
-                    ] : null, 
-                    'orders' => $orders->map(function ($order) {
-                        // Access product relation safely
-                        $product = $order->get_product;
-                        return [
-                            'order_id' => $order->id,
-                            'product' => $product ? [
-                                'id' => $product->id,
-                                'name' => $product->name,
-                                'price' => $product->selling_price, // You can add any other product details here
-                            ] : null, 
-                            'amount' => $order->payment_amount,
-                            'status' => $order->status,
-                            'razorpay_order_id' => $order->razorpay_order_id,
-                            'date' => $order->date,
-                        ];
-                    }),
+                        'email' => $user->email,  // Add other user details as needed
+                    ] : null,  // If user is null, return null
+                    'orders' => [
+                        'order_id' => $order->id,
+                        'razorpay_order_id' => $order->razorpay_order_id,
+                        'amount' => $order->payment_amount,
+                        'status' => $order->status,
+                        'date' => $order->date,
+                        'product' => $product ? [
+                            'id' => $product->id,
+                            'name' => $product->name,
+                            'price' => $product->selling_price,  // Add other product details as needed
+                        ] : null,  // If product is null, return null
+                    ],
                 ];
-            })->values();
+            });
 
             return response()->json([
                 'code' => 200,
                 'success' => true,
                 'data' => $grouped,
-                'total_count' => $totalCount, 
+                'total_count' => $totalCount,
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -494,9 +491,6 @@ class UserController extends Controller
             ], 500);
         }
     }
-
-
-
 
     public function toggleUserStatus(Request $request)
     {
