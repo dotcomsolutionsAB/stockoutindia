@@ -372,6 +372,62 @@ class UserController extends Controller
         }
     }
 
+    // public function userOrders(Request $request)
+    // {
+    //     try {
+    //         // Get limit and offset from the request
+    //         $limit = $request->input('limit', 10); // Default limit is 10
+    //         $offset = $request->input('offset', 0); // Default offset is 0
+    //         $userId = $request->input('user_id'); // User ID filter (optional)
+
+    //         // Build the query to fetch orders, with pagination
+    //         $query  = RazorpayOrdersModel::with('get_user', 'get_product');
+
+    //         // If user_id is provided, filter by user_id
+    //         if ($userId) {
+    //             $query->where('user', $userId);
+    //         }
+
+    //         // Get total count without limit/offset
+    //         $totalCount = $query->count();
+            
+    //         // Build the query to fetch orders, with pagination
+    //         $orders = $query->offset($offset)->limit($limit)->get();
+
+    //         $grouped = $orders->groupBy(function ($order) {
+    //             return $order->get_user->id;
+    //         })->map(function ($orders) {
+    //             return [
+    //                 'user' => [
+    //                     'id' => $orders->first()->get_user->id,
+    //                     'name' => $orders->first()->get_user->name,
+    //                 ],
+    //                 'orders' => $orders->map(function ($order) {
+    //                     return [
+    //                         'order_id' => $order->id,
+    //                         'product' => [
+    //                             'id' => $order->get_product->id,
+    //                             'name' => $order->get_product->name,
+    //                             // Add other product details as needed
+    //                         ],
+    //                         'amount' => $order->payment_amount,
+    //                         'status' => $order->status,
+    //                     ];
+    //                 }),
+    //             ];
+    //         })->values();
+
+    //         return response()->json([
+    //             'code' => 200,
+    //             'success' => true,
+    //             'data' => $grouped,
+    //             'total_count' => $totalCount,
+    //         ]);
+    //     } catch (\Exception $e) {
+    //         return response()->json(['code' => 500, 'success' => false, 'error' => $e->getMessage()], 500);
+    //     }
+    // }
+
     public function userOrders(Request $request)
     {
         try {
@@ -381,11 +437,11 @@ class UserController extends Controller
             $userId = $request->input('user_id'); // User ID filter (optional)
 
             // Build the query to fetch orders, with pagination
-            $query  = RazorpayOrdersModel::with(['get_user', 'get_product']);
+            $query  = RazorpayOrdersModel::with('get_user', 'get_product'); // Correct eager loading
 
             // If user_id is provided, filter by user_id
             if ($userId) {
-                $query->where('user', $userId);
+                $query->where('user', $userId); // Filter by 'user' column (foreign key)
             }
 
             // Get total count without limit/offset
@@ -394,22 +450,23 @@ class UserController extends Controller
             // Build the query to fetch orders, with pagination
             $orders = $query->offset($offset)->limit($limit)->get();
 
-            $grouped = $orders->groupBy(function ($order) {
-                return $order->get_user->id;
-            })->map(function ($orders) {
+            // Group orders by user_id and handle missing relationships
+            $grouped = $orders->groupBy('user')->map(function ($orders) {
+                $user = $orders->first()->get_user; // Safely access the first order's user
+
                 return [
-                    'user' => [
-                        'id' => $orders->first()->get_user->id,
-                        'name' => $orders->first()->get_user->name,
-                    ],
+                    'user' => $user ? [ // Check if user is not null
+                        'id' => $user->id,
+                        'name' => $user->name,
+                    ] : null, // If user is null, return null or an empty object
                     'orders' => $orders->map(function ($order) {
+                        $product = $order->get_product; // Access product relation safely
                         return [
                             'order_id' => $order->id,
-                            'product' => [
-                                'id' => $order->get_product->id,
-                                'name' => $order->get_product->name,
-                                // Add other product details as needed
-                            ],
+                            'product' => $product ? [ // Check if product exists
+                                'id' => $product->id,
+                                'name' => $product->name,
+                            ] : null, // If product is null, return null or empty object
                             'amount' => $order->payment_amount,
                             'status' => $order->status,
                         ];
@@ -421,12 +478,17 @@ class UserController extends Controller
                 'code' => 200,
                 'success' => true,
                 'data' => $grouped,
-                'total_count' => $totalCount,
+                'total_count' => $totalCount, // Return the total count of orders
             ]);
         } catch (\Exception $e) {
-            return response()->json(['code' => 500, 'success' => false, 'error' => $e->getMessage()], 500);
+            return response()->json([
+                'code' => 500,
+                'success' => false,
+                'error' => $e->getMessage(),
+            ], 500);
         }
     }
+
 
     public function toggleUserStatus(Request $request)
     {
