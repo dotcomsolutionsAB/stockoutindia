@@ -102,7 +102,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::post('/store_payment', [RazorpayController::class, 'storePayment']);
 
-    Route::middleware(['auth:sanctum', 'admin'])->group(function () {
+    Route::middleware(['auth:sanctum', 'allowAdminOrUser'])->group(function () {
 
         Route::prefix('admin')->group(function () {
             Route::post('/products', [ProductController::class, 'admin_fetchProducts']);
