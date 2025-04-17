@@ -394,9 +394,14 @@ class UserController extends Controller
             // Build the query to fetch orders, with pagination
             $orders = $query->offset($offset)->limit($limit)->get();
 
-            $grouped = $orders->groupBy('user')->map(function ($orders) {
+            $grouped = $orders->groupBy(function ($order) {
+                return $order->get_user->id;
+            })->map(function ($orders) {
                 return [
-                    'user' =>$orders->get_user->name,
+                    'user' => [
+                        'id' => $orders->first()->get_user->id,
+                        'name' => $orders->first()->get_user->name,
+                    ],
                     'orders' => $orders->map(function ($order) {
                         return [
                             'order_id' => $order->id,
