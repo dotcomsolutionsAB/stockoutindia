@@ -106,7 +106,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
         Route::prefix('admin')->group(function () {
             Route::post('/products', [ProductController::class, 'admin_fetchProducts']);
-            Route::post('/users_with_products', [UserController::class, 'usersWithProducts']);
+            Route::get('/users_with_products', [UserController::class, 'usersWithProducts']);
             Route::get('/user_orders', [UserController::class, 'userOrders']);
             Route::post('/user_toggle_status', [UserController::class, 'toggleUserStatus']);
         });
