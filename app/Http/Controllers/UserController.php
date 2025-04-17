@@ -395,7 +395,7 @@ class UserController extends Controller
                         return [
                             'order_id' => $order->id,
                             'product' => $order->product,
-                            'amount' => $order->amount,
+                            'amount' => $order->payment_amount,
                             'status' => $order->status,
                         ];
                     }),
