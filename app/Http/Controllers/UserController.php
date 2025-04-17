@@ -378,9 +378,15 @@ class UserController extends Controller
             // Get limit and offset from the request
             $limit = $request->input('limit', 10); // Default limit is 10
             $offset = $request->input('offset', 0); // Default offset is 0
+            $userId = $request->input('user_id'); // User ID filter (optional)
 
             // Build the query to fetch orders, with pagination
             $query  = RazorpayOrdersModel::with(['user', 'product']);
+
+            // If user_id is provided, filter by user_id
+            if ($userId) {
+                $query->where('user_id', $userId);
+            }
 
             // Get total count without limit/offset
             $totalCount = $query->count();
