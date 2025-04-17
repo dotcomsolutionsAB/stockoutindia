@@ -343,7 +343,7 @@ class UserController extends Controller
         ], 200);
     }
 
-    public function usersWithProducts()
+    public function usersWithProducts(Request $request)
     {
         try {
             // Get limit and offset from the request
@@ -372,7 +372,7 @@ class UserController extends Controller
         }
     }
 
-    public function userOrders()
+    public function userOrders(Request $request)
     {
         try {
             // Get limit and offset from the request
