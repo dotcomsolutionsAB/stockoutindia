@@ -356,7 +356,7 @@ class UserController extends Controller
             $userIds = $request->input('user_ids'); // Optional filter for user IDs
 
             // Build the query to fetch users with their active products, applying limit and offset
-            $users = User::with(['products' => function ($q) {
+            $query = User::with(['products' => function ($q) {
                 $q->where('status', 'active');
             }])
             ->offset($offset)
@@ -384,62 +384,6 @@ class UserController extends Controller
             return response()->json(['code' => 500, 'success' => false, 'error' => $e->getMessage()], 500);
         }
     }
-
-    // public function userOrders(Request $request)
-    // {
-    //     try {
-    //         // Get limit and offset from the request
-    //         $limit = $request->input('limit', 10); // Default limit is 10
-    //         $offset = $request->input('offset', 0); // Default offset is 0
-    //         $userId = $request->input('user_id'); // User ID filter (optional)
-
-    //         // Build the query to fetch orders, with pagination
-    //         $query  = RazorpayOrdersModel::with('get_user', 'get_product');
-
-    //         // If user_id is provided, filter by user_id
-    //         if ($userId) {
-    //             $query->where('user', $userId);
-    //         }
-
-    //         // Get total count without limit/offset
-    //         $totalCount = $query->count();
-            
-    //         // Build the query to fetch orders, with pagination
-    //         $orders = $query->offset($offset)->limit($limit)->get();
-
-    //         $grouped = $orders->groupBy(function ($order) {
-    //             return $order->get_user->id;
-    //         })->map(function ($orders) {
-    //             return [
-    //                 'user' => [
-    //                     'id' => $orders->first()->get_user->id,
-    //                     'name' => $orders->first()->get_user->name,
-    //                 ],
-    //                 'orders' => $orders->map(function ($order) {
-    //                     return [
-    //                         'order_id' => $order->id,
-    //                         'product' => [
-    //                             'id' => $order->get_product->id,
-    //                             'name' => $order->get_product->name,
-    //                             // Add other product details as needed
-    //                         ],
-    //                         'amount' => $order->payment_amount,
-    //                         'status' => $order->status,
-    //                     ];
-    //                 }),
-    //             ];
-    //         })->values();
-
-    //         return response()->json([
-    //             'code' => 200,
-    //             'success' => true,
-    //             'data' => $grouped,
-    //             'total_count' => $totalCount,
-    //         ]);
-    //     } catch (\Exception $e) {
-    //         return response()->json(['code' => 500, 'success' => false, 'error' => $e->getMessage()], 500);
-    //     }
-    // }
 
     public function userOrders(Request $request)
     {
