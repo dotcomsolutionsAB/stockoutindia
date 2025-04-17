@@ -346,14 +346,26 @@ class UserController extends Controller
     public function usersWithProducts()
     {
         try {
+            // Get limit and offset from the request
+            $limit = $request->input('limit', 10); // Default limit is 10
+            $offset = $request->input('offset', 0); // Default offset is 0
+
+            // Build the query to fetch users with their active products, applying limit and offset
             $users = User::with(['products' => function ($q) {
                 $q->where('status', 'active');
-            }])->get();
+            }])
+            ->offset($offset)
+            ->limit($limit)
+            ->get();
+
+            // Get total count of users (without pagination) to return the total count
+            $totalCount = User::count();
 
             return response()->json([
                 'code' => 200,
                 'success' => true,
                 'data' => $users,
+                'total_count' => $totalCount,
             ]);
         } catch (\Exception $e) {
             return response()->json(['code' => 500, 'success' => false, 'error' => $e->getMessage()], 500);
@@ -363,7 +375,18 @@ class UserController extends Controller
     public function userOrders()
     {
         try {
-            $orders = RazorpayOrdersModel::with(['user', 'product'])->get();
+            // Get limit and offset from the request
+            $limit = $request->input('limit', 10); // Default limit is 10
+            $offset = $request->input('offset', 0); // Default offset is 0
+
+            // Build the query to fetch orders, with pagination
+            $query  = RazorpayOrdersModel::with(['user', 'product'])->get();
+            
+            // Build the query to fetch orders, with pagination
+            $orders = $query->offset($offset)->limit($limit)->get();
+
+            // Get total count without limit/offset
+            $totalCount = $query->count();
 
             $grouped = $orders->groupBy('user_id')->map(function ($orders) {
                 return [
@@ -383,6 +406,7 @@ class UserController extends Controller
                 'code' => 200,
                 'success' => true,
                 'data' => $grouped,
+                'total_count' => $totalCount,
             ]);
         } catch (\Exception $e) {
             return response()->json(['code' => 500, 'success' => false, 'error' => $e->getMessage()], 500);

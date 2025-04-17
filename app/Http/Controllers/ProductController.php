@@ -964,12 +964,21 @@ class ProductController extends Controller
 
             $query->whereBetween('selling_price', [$min, $max]);
 
-            $products = $query->get();
+            // Apply limit and offset if provided
+            $limit = $request->input('limit', 10); // default limit is 10
+            $offset = $request->input('offset', 0); // default offset is 0
+
+            // Get products with pagination
+            $products = $query->offset($offset)->limit($limit)->get();
+
+            // Get total count without limit/offset
+            $totalCount = $query->count();
 
             return response()->json([
                 'code' => 200,
                 'success' => true,
                 'data' => $products,
+                'total_count' => $totalCount,
             ]);
         } catch (\Exception $e) {
             return response()->json(['code' => 500, 'success' => false, 'error' => $e->getMessage()], 500);
