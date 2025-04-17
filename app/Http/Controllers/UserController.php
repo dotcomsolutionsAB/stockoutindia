@@ -435,6 +435,4 @@ class UserController extends Controller
             return response()->json(['code' => 500, 'success' => false, 'error' => $e->getMessage()], 500);
         }
     }
-
-
 }
