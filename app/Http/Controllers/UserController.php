@@ -381,7 +381,7 @@ class UserController extends Controller
             $userId = $request->input('user_id'); // User ID filter (optional)
 
             // Build the query to fetch orders, with pagination
-            $query  = RazorpayOrdersModel::with(['user', 'product']);
+            $query  = RazorpayOrdersModel::with(['user', 'get_product']);
 
             // If user_id is provided, filter by user_id
             if ($userId) {
@@ -394,15 +394,15 @@ class UserController extends Controller
             // Build the query to fetch orders, with pagination
             $orders = $query->offset($offset)->limit($limit)->get();
 
-            $grouped = $orders->groupBy('user')->map(function ($orders) {
+            $grouped = $orders->groupBy('get_user')->map(function ($orders) {
                 return [
                     'user' => $orders->first()->user,
                     'orders' => $orders->map(function ($order) {
                         return [
                             'order_id' => $order->id,
                             'product' => [
-                                'id' => $order->product->id,
-                                'name' => $order->product->name,
+                                'id' => $order->get_product->id,
+                                'name' => $order->get_product->name,
                                 // Add other product details as needed
                             ],
                             'amount' => $order->payment_amount,
