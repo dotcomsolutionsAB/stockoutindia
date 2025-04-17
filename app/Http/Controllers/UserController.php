@@ -5,6 +5,8 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\RazorpayOrdersModel;
+use App\Models\Users;
+use App\Models\ProductModel;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
