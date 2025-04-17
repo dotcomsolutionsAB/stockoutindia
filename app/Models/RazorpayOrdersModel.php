@@ -28,12 +28,11 @@ class RazorpayOrdersModel extends Model
 
     public function get_user()
     {
-        return $this->belongsTo(User::class, 'user');
+        return $this->belongsTo(User::class, 'user', 'id');
     }
-
+    
     public function get_product()
     {
-        return $this->belongsTo(ProductModel::class, 'product');
-    }
-
+        return $this->belongsTo(ProductModel::class, 'product', 'id');
+    }    
 }
