@@ -32,7 +32,7 @@ class AuthController extends Controller
             {
 
                 // Check if the user is inactive
-                if ($user->is_active) {
+                if ($user->is_active == 0) {
                     return response()->json([
                         'success' => false,
                         'message' => 'Your account is inactive. Please contact support.',
@@ -84,7 +84,7 @@ class AuthController extends Controller
                 $user = Auth::user();
 
                  // Check if the user is inactive
-                if ($user->is_active) {
+                if ($user->is_active == 0) {
                     return response()->json([
                         'success' => false,
                         'message' => 'Your account is inactive. Please contact support.',
