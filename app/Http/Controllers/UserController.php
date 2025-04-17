@@ -352,13 +352,24 @@ class UserController extends Controller
             $limit = $request->input('limit', 10); // Default limit is 10
             $offset = $request->input('offset', 0); // Default offset is 0
 
+             // Get user filter (comma-separated list of user IDs)
+            $userIds = $request->input('user_ids'); // Optional filter for user IDs
+
             // Build the query to fetch users with their active products, applying limit and offset
             $users = User::with(['products' => function ($q) {
                 $q->where('status', 'active');
             }])
             ->offset($offset)
-            ->limit($limit)
-            ->get();
+            ->limit($limit);
+
+            // If user_ids are provided, filter the users by user_ids
+            if ($userIds) {
+                $userIdsArray = explode(',', $userIds); // Convert the comma-separated string into an array
+                $query->whereIn('id', $userIdsArray); // Filter by the user_ids
+            }
+
+            // Get the users along with their active products
+            $users = $query->get();
 
             // Get total count of users (without pagination) to return the total count
             $totalCount = User::count();

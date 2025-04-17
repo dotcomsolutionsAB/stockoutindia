@@ -985,4 +985,26 @@ class ProductController extends Controller
         }
     }
 
+    public function toggleProductStatus(Request $request)
+    {
+        try {
+            $request->validate([
+                'product_id' => 'required|exists:users,id',
+                'is_active' => 'required|in:active,in-active,sold',
+            ]);
+
+            $product = User::find($request->product_id);
+            $product->status = $request->is_active;
+            $product->save();
+
+            return response()->json([
+                'code' => 200,
+                'success' => true,
+                'message' => 'Product status updated successfully.',
+                'data' => $product,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['code' => 500, 'success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
 }

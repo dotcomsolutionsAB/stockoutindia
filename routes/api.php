@@ -109,6 +109,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
             Route::post('/users_with_products', [UserController::class, 'usersWithProducts']);
             Route::post('/user_orders', [UserController::class, 'userOrders']);
             Route::post('/user_toggle_status', [UserController::class, 'toggleUserStatus']);
+            Route::post('/product_toggle_status', [UserController::class, 'toggleUserStatus']);
         });
     });
 });
