@@ -380,13 +380,13 @@ class UserController extends Controller
             $offset = $request->input('offset', 0); // Default offset is 0
 
             // Build the query to fetch orders, with pagination
-            $query  = RazorpayOrdersModel::with(['user', 'product'])->get();
-            
-            // Build the query to fetch orders, with pagination
-            $orders = $query->offset($offset)->limit($limit)->get();
+            $query  = RazorpayOrdersModel::with(['user', 'product']);
 
             // Get total count without limit/offset
             $totalCount = $query->count();
+            
+            // Build the query to fetch orders, with pagination
+            $orders = $query->offset($offset)->limit($limit)->get();
 
             $grouped = $orders->groupBy('user_id')->map(function ($orders) {
                 return [
