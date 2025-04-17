@@ -396,7 +396,7 @@ class UserController extends Controller
 
             $grouped = $orders->groupBy('user')->map(function ($orders) {
                 return [
-                    'user' =>$order->get_user->name,
+                    'user' =>$orders->get_user->name,
                     'orders' => $orders->map(function ($order) {
                         return [
                             'order_id' => $order->id,
