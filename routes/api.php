@@ -28,6 +28,7 @@ Route::post('/get_otp', [AuthController::class, 'generate_otp']);
 Route::post('/forget_password', [AuthController::class, 'forgotPassword']);
 Route::post('/gst_details', [UserController::class, 'fetchGstDetails']);
 Route::get('/banners', [UserController::class, 'fetchBanners']);
+Route::post('/upload_banners', [UserController::class, 'uploadBanner']);
 
 // Add a route in web.php
 Route::get('import_users', [ImportController::class, 'importUsers']);

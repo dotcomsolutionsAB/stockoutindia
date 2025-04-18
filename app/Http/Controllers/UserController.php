@@ -333,18 +333,86 @@ class UserController extends Controller
         }
     }
 
+    // public function fetchBanners()
+    // {
+    //     return response()->json([
+    //         'success' => true,
+    //         'message' => 'Units fetched successfully!',
+    //         'data' => [
+    //             'https://api.stockoutindia.com/storage/uploads/banners/banner_1.jpg',
+    //             'https://api.stockoutindia.com/storage/uploads/banners/banner_2.jpg'
+    //         ]
+            
+    //     ], 200);
+    // }
+
+    public function uploadBanner(Request $request)
+    {
+        try {
+            $files = $request->file('banners');
+
+            if (!$files || !is_array($files)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No files provided for upload.',
+                ], 400);
+            }
+
+            $uploadedFiles = [];
+            $i = 1;
+
+            foreach ($files as $file) {
+                $extension = $file->getClientOriginalExtension();
+                $size = $file->getSize();
+                $newName = 'banner_file' . $i . '.' . $extension;
+                $filePath = 'uploads/banners/' . $newName;
+
+                // Store the file
+                $file->storeAs('public/uploads/banners', $newName);
+
+                // Save record to UploadModel
+                UploadModel::create([
+                    'file_name' => $newName,
+                    'file_ext'  => $extension,
+                    'file_url'  => $filePath,
+                    'file_size' => $size,
+                ]);
+
+                $uploadedFiles[] = url('storage/' . $filePath);
+                $i++;
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Banners uploaded successfully.',
+                'data' => $uploadedFiles,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Upload failed.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function fetchBanners()
     {
+        $banners = UploadModel::where('file_name', 'LIKE', 'banner_file%')
+            ->orderBy('file_name')
+            ->pluck('file_url')
+            ->map(function ($url) {
+                return url('storage/' . $url);
+            });
+
         return response()->json([
             'success' => true,
-            'message' => 'Units fetched successfully!',
-            'data' => [
-                'https://api.stockoutindia.com/storage/uploads/banners/banner_1.jpg',
-                'https://api.stockoutindia.com/storage/uploads/banners/banner_2.jpg'
-            ]
-            
+            'message' => 'Banners fetched successfully!',
+            'data' => $banners,
         ], 200);
     }
+
+
 
     public function usersWithProducts(Request $request)
     {
