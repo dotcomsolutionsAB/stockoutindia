@@ -939,7 +939,11 @@ class ProductController extends Controller
     public function admin_fetchProducts(Request $request)
     {
         try {
-            $query = ProductModel::query();
+            $query = ProductModel::with([
+                'industryDetails:id,name',
+                'subIndustryDetails:id,name',
+                'user:id,name'
+            ]);
 
             if ($request->filled('product_name')) {
                 $query->where('product_name', 'LIKE', '%' . $request->product_name . '%');
@@ -961,23 +965,59 @@ class ProductController extends Controller
 
             $min = $request->input('min_amount', 0);
             $max = $request->input('max_amount', ProductModel::max('selling_price'));
-
             $query->whereBetween('selling_price', [$min, $max]);
 
-            // Apply limit and offset if provided
-            $limit = $request->input('limit', 10); // default limit is 10
-            $offset = $request->input('offset', 0); // default offset is 0
+            $limit = $request->input('limit', 10);
+            $offset = $request->input('offset', 0);
 
-            // Get products with pagination
+            // Clone query for accurate count before pagination
+            $totalCount = (clone $query)->count();
+
             $products = $query->offset($offset)->limit($limit)->get();
 
-            // Get total count without limit/offset
-            $totalCount = $query->count();
+            // Map image ids to URLs and format final response
+            $formatted = $products->map(function ($product) {
+                // Resolve image URLs
+                $imageUrls = [];
+                if (!empty($product->image)) {
+                    $imageIds = explode(',', $product->image);
+                    $imageUrls = UploadModel::whereIn('id', $imageIds)
+                        ->pluck('file_url')
+                        ->map(fn($path) => url($path))
+                        ->values()
+                        ->toArray();
+                }
+
+                return [
+                    'id'              => $product->id,
+                    'product_id'      => $product->product_id,
+                    'product_name'    => $product->product_name,
+                    'original_price'  => $product->original_price,
+                    'selling_price'   => $product->selling_price,
+                    'offer_quantity'  => $product->offer_quantity,
+                    'minimum_quantity'=> $product->minimum_quantity,
+                    'unit'            => $product->unit,
+                    'description'     => $product->description,
+                    'dimensions'      => $product->dimensions,
+                    'validity'        => $product->validity,
+                    'status'          => $product->status,
+                    'image'           => $imageUrls,
+                    'industry'        => $product->industryDetails 
+                        ? ['id' => $product->industryDetails->id, 'name' => $product->industryDetails->name] 
+                        : null,
+                    'sub_industry'    => $product->subIndustryDetails 
+                        ? ['id' => $product->subIndustryDetails->id, 'name' => $product->subIndustryDetails->name] 
+                        : null,
+                    'user'            => $product->user 
+                        ? ['id' => $product->user->id, 'name' => $product->user->name] 
+                        : null,
+                ];
+            });
 
             return response()->json([
-                'code' => 200,
-                'success' => true,
-                'data' => $products,
+                'code'        => 200,
+                'success'     => true,
+                'data'        => $formatted,
                 'total_count' => $totalCount,
             ]);
         } catch (\Exception $e) {
