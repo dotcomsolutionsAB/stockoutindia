@@ -374,7 +374,9 @@ class UserController extends Controller
                 $newFileName = 'banner_file' . ($index + 1) . '.' . $originalExt;
                 $relativePath = 'uploads/banners/' . $newFileName;
 
-                // Store the file in public path
+                $fileSize = $file->getSize(); // Get size before move
+
+                // Move the file to storage
                 $file->move(public_path('storage/uploads/banners'), $newFileName);
 
                 // Save to DB
@@ -382,7 +384,7 @@ class UserController extends Controller
                     'file_name' => $newFileName,
                     'file_ext' => $originalExt,
                     'file_url' => $relativePath,
-                    'file_size' => $file->getSize(),
+                    'file_size' => $fileSize, // Use the captured size
                 ]);
 
                 $uploadedUrls[] = url('storage/' . $relativePath);
@@ -401,6 +403,7 @@ class UserController extends Controller
             ], 500);
         }
     }
+
 
 
     public function fetchBanners()
