@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\RazorpayOrdersModel;
 use App\Models\Users;
 use App\Models\ProductModel;
+use App\Models\UploadModel;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
