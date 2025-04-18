@@ -377,7 +377,7 @@ class UserController extends Controller
                         $imageIds = explode(',', $product->image);
                         foreach ($imageIds as $id) {
                             if (isset($allUploads[$id])) {
-                                $imageUrls[] = $allUploads[$id];
+                                $imageUrls[] = url($allUploads[$id]);
                             }
                         }
                     }
