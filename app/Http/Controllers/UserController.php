@@ -348,42 +348,80 @@ class UserController extends Controller
     public function usersWithProducts(Request $request)
     {
         try {
-            // Get limit and offset from the request
-            $limit = $request->input('limit', 10); // Default limit is 10
-            $offset = $request->input('offset', 0); // Default offset is 0
+            $limit = $request->input('limit', 10);
+            $offset = $request->input('offset', 0);
+            $userIds = $request->input('user_ids');
 
-             // Get user filter (comma-separated list of user IDs)
-            $userIds = $request->input('user_ids'); // Optional filter for user IDs
-
-            // Build the query to fetch users with their active products, applying limit and offset
             $query = User::with(['products' => function ($q) {
-                $q->where('status', 'active');
-            }])
-            ->offset($offset)
-            ->limit($limit);
+                $q->where('status', 'active')
+                ->with(['industryDetails:id,name', 'subIndustryDetails:id,name']);
+            }]);
 
-            // If user_ids are provided, filter the users by user_ids
             if ($userIds) {
-                $userIdsArray = explode(',', $userIds); // Convert the comma-separated string into an array
-                $query->whereIn('id', $userIdsArray); // Filter by the user_ids
+                $userIdsArray = explode(',', $userIds);
+                $query->whereIn('id', $userIdsArray);
             }
 
-            // Get the users along with their active products
-            $users = $query->get();
+            $users = $query->offset($offset)->limit($limit)->get();
 
-            // Get total count of users (without pagination) to return the total count
+            // Fetch all upload records in one go to map image ids
+            $allUploads = UploadModel::pluck('file_url', 'id')->toArray();
+
+            // Transform the data
+            $data = $users->map(function ($user) use ($allUploads) {
+                $products = $user->products->map(function ($product) use ($allUploads) {
+                    // Convert image field from string to URLs
+                    $imageUrls = [];
+                    if (!empty($product->image)) {
+                        $imageIds = explode(',', $product->image);
+                        foreach ($imageIds as $id) {
+                            if (isset($allUploads[$id])) {
+                                $imageUrls[] = $allUploads[$id];
+                            }
+                        }
+                    }
+
+                    return [
+                        'id' => $product->id,
+                        'name' => $product->name,
+                        'selling_price' => $product->selling_price,
+                        'image_urls' => $imageUrls,
+                        'industry' => [
+                            'id' => $product->industryDetails->id ?? null,
+                            'name' => $product->industryDetails->name ?? null,
+                        ],
+                        'sub_industry' => [
+                            'id' => $product->subIndustryDetails->id ?? null,
+                            'name' => $product->subIndustryDetails->name ?? null,
+                        ],
+                    ];
+                });
+
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'products' => $products,
+                ];
+            });
+
             $totalCount = User::count();
 
             return response()->json([
                 'code' => 200,
                 'success' => true,
-                'data' => $users,
+                'data' => $data,
                 'total_count' => $totalCount,
             ]);
         } catch (\Exception $e) {
-            return response()->json(['code' => 500, 'success' => false, 'error' => $e->getMessage()], 500);
+            return response()->json([
+                'code' => 500,
+                'success' => false,
+                'error' => $e->getMessage(),
+            ], 500);
         }
     }
+
 
     public function userOrders(Request $request)
     {
