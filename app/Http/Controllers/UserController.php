@@ -349,52 +349,59 @@ class UserController extends Controller
     public function uploadBanner(Request $request)
     {
         try {
-            $files = $request->file('banners');
-
-            if (!$files || !is_array($files)) {
+            if (!$request->hasFile('banners')) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'No files provided for upload.',
+                    'message' => 'No banner files provided.',
                 ], 400);
             }
 
-            $uploadedFiles = [];
-            $i = 1;
+            $files = $request->file('banners');
 
-            foreach ($files as $file) {
-                $extension = $file->getClientOriginalExtension();
-                $size = $file->getSize();
-                $newName = 'banner_file' . $i . '.' . $extension;
-                $filePath = 'uploads/banners/' . $newName;
+            // Delete old banners from DB and server
+            $oldBanners = UploadModel::where('file_url', 'like', '%uploads/banners/%')->get();
+            foreach ($oldBanners as $file) {
+                $filePath = public_path('storage/uploads/banners/' . $file->file_name);
+                if (file_exists($filePath)) {
+                    unlink($filePath);
+                }
+                $file->delete();
+            }
 
-                // Store the file
-                $file->storeAs('public/uploads/banners', $newName);
+            $uploadedUrls = [];
+            foreach ($files as $index => $file) {
+                $originalExt = $file->getClientOriginalExtension();
+                $newFileName = 'banner_file' . ($index + 1) . '.' . $originalExt;
+                $relativePath = 'uploads/banners/' . $newFileName;
 
-                // Save record to UploadModel
+                // Store the file in public path
+                $file->move(public_path('storage/uploads/banners'), $newFileName);
+
+                // Save to DB
                 UploadModel::create([
-                    'file_name' => $newName,
-                    'file_ext'  => $extension,
-                    'file_url'  => $filePath,
-                    'file_size' => $size,
+                    'file_name' => $newFileName,
+                    'file_ext' => $originalExt,
+                    'file_url' => $relativePath,
+                    'file_size' => $file->getSize(),
                 ]);
 
-                $uploadedFiles[] = url('storage/' . $filePath);
-                $i++;
+                $uploadedUrls[] = url('storage/' . $relativePath);
             }
 
             return response()->json([
                 'success' => true,
                 'message' => 'Banners uploaded successfully.',
-                'data' => $uploadedFiles,
+                'data' => $uploadedUrls,
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Upload failed.',
-                'error' => $e->getMessage(),
+                'error' => $e->getMessage()
             ], 500);
         }
     }
+
 
     public function fetchBanners()
     {
