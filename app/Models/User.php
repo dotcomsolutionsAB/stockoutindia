@@ -67,4 +67,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(ProductModel::class, 'user_id', 'id');
     }
+
+    public function industryDetails()
+    {
+        return $this->belongsTo(IndustryModel::class, 'industry', 'id');
+    }
+
+    public function subIndustryDetails()
+    {
+        return $this->belongsTo(SubIndustryModel::class, 'sub_industry', 'id');
+    }
 }
