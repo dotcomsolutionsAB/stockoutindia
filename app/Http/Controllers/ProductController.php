@@ -1029,12 +1029,12 @@ class ProductController extends Controller
     {
         try {
             $request->validate([
-                'product_id' => 'required|exists:users,id',
-                'is_active' => 'required|in:active,in-active,sold',
+                'product_id' => 'required|exists:t_products,id',
+                'product_status' => 'required|in:active,in-active,sold',
             ]);
 
-            $product = User::find($request->product_id);
-            $product->status = $request->is_active;
+            $product = ProductModel::find($request->product_id);
+            $product->status = $request->product_status;
             $product->save();
 
             return response()->json([
