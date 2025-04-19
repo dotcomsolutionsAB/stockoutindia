@@ -5,7 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Illuminate\Support\Facades\Auth;
+// use Illuminate\Support\Facades\Auth;
 
 class AllowAdminOrUser
 {
@@ -17,17 +17,12 @@ class AllowAdminOrUser
     public function handle(Request $request, Closure $next): Response
     {
         // return $next($request);
-        $user = Auth::user();
+        $user = $request->user();
 
-        // Allow if role is either 'admin' or 'user'
-        if ($user && in_array($user->role, ['admin', 'user'])) {
-            return $next($request);
+        if (!$user || $user->role !== $role) {
+            return response()->json(['error' => 'Unauthorized', 'status' => 403], 403);
         }
 
-        return response()->json([
-            'code' => 403,
-            'success' => false,
-            'message' => 'Access denied. Only admin or user can access this route.',
-        ], 403);
+        return $next($request);
     }
 }

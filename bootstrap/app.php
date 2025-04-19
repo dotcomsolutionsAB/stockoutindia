@@ -13,10 +13,10 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         //
-        $middleware->alias([
-            'allowAdminOrUser' => \App\Http\Middleware\AllowAdminOrUser::class,
-            'adminOnly' => \App\Http\Middleware\AdminOnly::class,
-        ]);
+        // $middleware->alias([
+        //     'allowAdminOrUser' => \App\Http\Middleware\AllowAdminOrUser::class,
+        //     'adminOnly' => \App\Http\Middleware\AdminOnly::class,
+        // ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
