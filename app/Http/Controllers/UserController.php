@@ -404,8 +404,6 @@ class UserController extends Controller
         }
     }
 
-
-
     public function fetchBanners()
     {
         $banners = UploadModel::where('file_name', 'LIKE', 'banner_file%')
@@ -421,8 +419,6 @@ class UserController extends Controller
             'data' => $banners,
         ], 200);
     }
-
-
 
     public function usersWithProducts(Request $request)
     {
