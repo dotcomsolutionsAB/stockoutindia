@@ -420,6 +420,83 @@ class UserController extends Controller
         ], 200);
     }
 
+    // public function usersWithProducts(Request $request)
+    // {
+    //     try {
+    //         $limit = $request->input('limit', 10);
+    //         $offset = $request->input('offset', 0);
+    //         $userIds = $request->input('user_ids');
+
+    //         $query = User::with(['products' => function ($q) {
+    //             $q->where('status', 'active')
+    //             ->with(['industryDetails:id,name', 'subIndustryDetails:id,name']);
+    //         }]);
+
+    //         if ($userIds) {
+    //             $userIdsArray = explode(',', $userIds);
+    //             $query->whereIn('id', $userIdsArray);
+    //         }
+
+    //         $users = $query->offset($offset)->limit($limit)->get();
+
+    //         // Fetch all upload records in one go to map image ids
+    //         $allUploads = UploadModel::pluck('file_url', 'id')->toArray();
+
+    //         // Transform the data
+    //         $data = $users->map(function ($user) use ($allUploads) {
+    //             $products = $user->products->map(function ($product) use ($allUploads) {
+    //                 // Convert image field from string to URLs
+    //                 $imageUrls = [];
+    //                 if (!empty($product->image)) {
+    //                     $imageIds = explode(',', $product->image);
+    //                     foreach ($imageIds as $id) {
+    //                         if (isset($allUploads[$id])) {
+    //                             $imageUrls[] = url($allUploads[$id]);
+    //                         }
+    //                     }
+    //                 }
+
+    //                 return [
+    //                     'id' => $product->id,
+    //                     'name' => $product->name,
+    //                     'selling_price' => $product->selling_price,
+    //                     'image_urls' => $imageUrls,
+    //                     'industry' => [
+    //                         'id' => $product->industryDetails->id ?? null,
+    //                         'name' => $product->industryDetails->name ?? null,
+    //                     ],
+    //                     'sub_industry' => [
+    //                         'id' => $product->subIndustryDetails->id ?? null,
+    //                         'name' => $product->subIndustryDetails->name ?? null,
+    //                     ],
+    //                 ];
+    //             });
+
+    //             return [
+    //                 'id' => $user->id,
+    //                 'name' => $user->name,
+    //                 'email' => $user->email,
+    //                 'products' => $products,
+    //             ];
+    //         });
+
+    //         $totalCount = User::count();
+
+    //         return response()->json([
+    //             'code' => 200,
+    //             'success' => true,
+    //             'data' => $data,
+    //             'total_count' => $totalCount,
+    //         ]);
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'code' => 500,
+    //             'success' => false,
+    //             'error' => $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
+
     public function usersWithProducts(Request $request)
     {
         try {
@@ -427,10 +504,14 @@ class UserController extends Controller
             $offset = $request->input('offset', 0);
             $userIds = $request->input('user_ids');
 
-            $query = User::with(['products' => function ($q) {
-                $q->where('status', 'active')
-                ->with(['industryDetails:id,name', 'subIndustryDetails:id,name']);
-            }]);
+            $query = User::with([
+                'products' => function ($q) {
+                    $q->where('status', 'active')
+                        ->with(['industryDetails:id,name', 'subIndustryDetails:id,name']);
+                },
+                'industryDetails:id,name',
+                'subIndustryDetails:id,name',
+            ]);
 
             if ($userIds) {
                 $userIdsArray = explode(',', $userIds);
@@ -438,14 +519,13 @@ class UserController extends Controller
             }
 
             $users = $query->offset($offset)->limit($limit)->get();
+            $totalCount = User::count();
 
-            // Fetch all upload records in one go to map image ids
+            // Fetch all upload records in one go
             $allUploads = UploadModel::pluck('file_url', 'id')->toArray();
 
-            // Transform the data
             $data = $users->map(function ($user) use ($allUploads) {
                 $products = $user->products->map(function ($product) use ($allUploads) {
-                    // Convert image field from string to URLs
                     $imageUrls = [];
                     if (!empty($product->image)) {
                         $imageIds = explode(',', $product->image);
@@ -473,14 +553,34 @@ class UserController extends Controller
                 });
 
                 return [
-                    'id' => $user->id,
+                    'user_id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
+                    'google_id' => $user->google_id,
+                    'role' => $user->role,
+                    'username' => $user->username,
+                    'phone' => $user->phone,
+                    'otp' => $user->otp,
+                    'status' => $user->is_active ? 'active' : 'in-active',
+                    'expires_at' => $user->expires_at,
+                    'company_name' => $user->company_name,
+                    'address' => $user->address,
+                    'pincode' => $user->pincode,
+                    'city' => $user->city,
+                    'state' => $user->state,
+                    'gstin' => $user->gstin,
+                    'industry' => [
+                        'id' => $user->industryDetails->id ?? null,
+                        'name' => $user->industryDetails->name ?? null,
+                    ],
+                    'sub_industry' => [
+                        'id' => $user->subIndustryDetails->id ?? null,
+                        'name' => $user->subIndustryDetails->name ?? null,
+                    ],
+                    'active_product_count' => $products->count(),
                     'products' => $products,
                 ];
             });
-
-            $totalCount = User::count();
 
             return response()->json([
                 'code' => 200,
@@ -496,6 +596,7 @@ class UserController extends Controller
             ], 500);
         }
     }
+
 
 
     public function userOrders(Request $request)
