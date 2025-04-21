@@ -20,7 +20,7 @@ class UserController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'email' => 'required|email|unique:users,email',
-                'google_id' => 'required|string',
+                'google_id' => 'nullable|string',
                 'password' => 'required_without:google_id|string|min:8',
                 'role' => ['required', Rule::in(['admin', 'user'])],
                 'phone' => 'required|string|unique:users,phone',
