@@ -58,6 +58,25 @@ class CouponController extends Controller
                 return response()->json(['code' => 404, 'success' => false, 'message' => 'Coupon not found'], 404);
             }
 
+            // ✅ Validation including unique check excluding current ID
+            $request->validate([
+                'name' => [
+                        'sometimes', 'string',
+                        function ($attribute, $value, $fail) use ($id) {
+                            $exists = CouponModel::whereRaw('LOWER(name) = ?', [strtolower($value)])
+                                ->where('id', '!=', $id)
+                                ->exists();
+
+                            if ($exists) {
+                                $fail("The $attribute has already been taken.");
+                            }
+                        }
+                    ],
+                'value' => 'sometimes|required|numeric',
+                'value_type' => 'sometimes|required|string',
+                'is_active' => 'sometimes|required|in:0,1',
+            ]);
+
             if ($request->has('name')) $coupon->name = $request->name;
             if ($request->has('value')) $coupon->value = $request->value;
             if ($request->has('value_type')) $coupon->value_type = $request->value_type;
