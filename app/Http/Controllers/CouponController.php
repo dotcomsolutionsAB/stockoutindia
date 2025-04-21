@@ -19,7 +19,7 @@ class CouponController extends Controller
                 return response()->json(['success' => true, 'data' => $coupon->makeHidden(['created_at', 'updated_at'])], 200);
             }
 
-            $coupons = Coupon::all();
+            $coupons = CouponModel::all();
             return response()->json(['success' => true, 'data' => $coupons->makeHidden(['created_at', 'updated_at'])], 200);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
