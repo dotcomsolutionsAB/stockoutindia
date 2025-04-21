@@ -62,7 +62,7 @@ class AuthController extends Controller
             } else {
                 return response()->json([
                     'success' => false,
-                    'message' => 'No user found with this email.',
+                    'message' => 'No account created!',
                 ], 200);
             }
         }
