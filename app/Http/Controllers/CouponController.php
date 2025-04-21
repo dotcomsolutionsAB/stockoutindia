@@ -39,7 +39,6 @@ class CouponController extends Controller
             $coupon = new CouponModel();
             $coupon->name = $request->name;
             $coupon->value = $request->value;
-            $coupon->value_type = $request->value_type;
             $coupon->is_active = $request->is_active;
             $coupon->save();
 
