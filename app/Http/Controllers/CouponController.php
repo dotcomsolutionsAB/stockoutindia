@@ -16,11 +16,11 @@ class CouponController extends Controller
                 if (!$coupon) {
                     return response()->json(['success' => false, 'message' => 'Coupon not found'], 404);
                 }
-                return response()->json(['success' => true, 'data' => $coupon], 200);
+                return response()->json(['success' => true, 'data' => $coupon->makeHidden(['created_at', 'updated_at'])], 200);
             }
 
             $coupons = Coupon::all();
-            return response()->json(['success' => true, 'data' => $coupons], 200);
+            return response()->json(['success' => true, 'data' => $coupons->makeHidden(['created_at', 'updated_at'])], 200);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
@@ -42,7 +42,7 @@ class CouponController extends Controller
             $coupon->is_active = $request->is_active;
             $coupon->save();
 
-            return response()->json(['success' => true, 'message' => 'Coupon created successfully', 'data' => $coupon], 200);
+            return response()->json(['success' => true, 'message' => 'Coupon created successfully', 'data' => $coupon->makeHidden(['created_at', 'updated_at'])], 200);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
@@ -83,7 +83,7 @@ class CouponController extends Controller
 
             $coupon->save();
 
-            return response()->json(['success' => true, 'message' => 'Coupon updated successfully', 'data' => $coupon], 200);
+            return response()->json(['success' => true, 'message' => 'Coupon updated successfully', 'data' => $coupon->makeHidden(['created_at', 'updated_at'])], 200);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
