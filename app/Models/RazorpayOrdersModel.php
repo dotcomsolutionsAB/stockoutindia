@@ -15,6 +15,7 @@ class RazorpayOrdersModel extends Model
         'user',
         'product',
         'payment_amount',
+        'coupon',
         'razorpay_order_id',
         'status',
         'comments',
