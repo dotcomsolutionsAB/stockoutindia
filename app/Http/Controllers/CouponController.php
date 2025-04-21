@@ -11,18 +11,29 @@ class CouponController extends Controller
     public function index(Request $request, $id = null)
     {
         try {
-            if ($request->has('id')) {
-                $coupon = CouponModel::find($request->id);
+            if ($id) {
+                $coupon = CouponModel::find($id);
                 if (!$coupon) {
                     return response()->json(['success' => false, 'message' => 'Coupon not found'], 404);
                 }
-                return response()->json(['success' => true, 'data' => $coupon->makeHidden(['created_at', 'updated_at'])], 200);
+
+                return response()->json([
+                    'success' => true,
+                    'data' => $coupon->makeHidden(['created_at', 'updated_at']),
+                ], 200);
             }
 
             $coupons = CouponModel::all();
-            return response()->json(['success' => true, 'data' => $coupons->makeHidden(['created_at', 'updated_at'])], 200);
+            return response()->json([
+                'success' => true,
+                'data' => $coupons->makeHidden(['created_at', 'updated_at']),
+            ], 200);
+
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 
