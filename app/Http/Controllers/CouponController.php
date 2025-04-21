@@ -14,15 +14,15 @@ class CouponController extends Controller
             if ($request->has('id')) {
                 $coupon = CouponModel::find($request->id);
                 if (!$coupon) {
-                    return response()->json(['code' => 404, 'success' => false, 'message' => 'Coupon not found'], 404);
+                    return response()->json(['success' => false, 'message' => 'Coupon not found'], 404);
                 }
-                return response()->json(['code' => 200, 'success' => true, 'data' => $coupon]);
+                return response()->json(['success' => true, 'data' => $coupon], 200);
             }
 
             $coupons = Coupon::all();
-            return response()->json(['code' => 200, 'success' => true, 'data' => $coupons]);
+            return response()->json(['success' => true, 'data' => $coupons], 200);
         } catch (\Exception $e) {
-            return response()->json(['code' => 500, 'success' => false, 'error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }
 
@@ -42,9 +42,9 @@ class CouponController extends Controller
             $coupon->is_active = $request->is_active;
             $coupon->save();
 
-            return response()->json(['code' => 200, 'success' => true, 'message' => 'Coupon created successfully', 'data' => $coupon]);
+            return response()->json(['success' => true, 'message' => 'Coupon created successfully', 'data' => $coupon], 200);
         } catch (\Exception $e) {
-            return response()->json(['code' => 500, 'success' => false, 'error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }
 
@@ -54,7 +54,7 @@ class CouponController extends Controller
         try {
             $coupon = CouponModel::find($id);
             if (!$coupon) {
-                return response()->json(['code' => 404, 'success' => false, 'message' => 'Coupon not found'], 404);
+                return response()->json(['success' => false, 'message' => 'Coupon not found'], 404);
             }
 
             // ✅ Validation including unique check excluding current ID
@@ -83,9 +83,9 @@ class CouponController extends Controller
 
             $coupon->save();
 
-            return response()->json(['code' => 200, 'success' => true, 'message' => 'Coupon updated successfully', 'data' => $coupon]);
+            return response()->json(['success' => true, 'message' => 'Coupon updated successfully', 'data' => $coupon], 200);
         } catch (\Exception $e) {
-            return response()->json(['code' => 500, 'success' => false, 'error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }
 
@@ -95,14 +95,14 @@ class CouponController extends Controller
         try {
             $coupon = CouponModel::find($id);
             if (!$coupon) {
-                return response()->json(['code' => 404, 'success' => false, 'message' => 'Coupon not found'], 404);
+                return response()->json(['success' => false, 'message' => 'Coupon not found'], 404);
             }
 
             $coupon->delete();
 
-            return response()->json(['code' => 200, 'success' => true, 'message' => 'Coupon deleted successfully']);
+            return response()->json(['success' => true, 'message' => 'Coupon deleted successfully'], 204);
         } catch (\Exception $e) {
-            return response()->json(['code' => 500, 'success' => false, 'error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }
 }
