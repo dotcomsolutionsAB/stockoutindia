@@ -12,6 +12,7 @@ use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\RazorpayController;
+use App\Http\Controllers\CouponController;
 
 // Route::get('/user', function (Request $request) {
 //     return $request->user();
@@ -96,6 +97,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/add', [WishlistController::class, 'addProduct']); // Create Products
         Route::post('/fetch', [WishlistController::class, 'fetchWishlist']); // Retrieve products
         Route::delete('/{id}', [WishlistController::class, 'deleteProduct']); // Update a specific user
+    });
+
+    Route::prefix('coupon')->group(function () {
+        Route::post('/add', [CouponController::class, 'store']); // Create Products
+        Route::get('/index/{id?}', [CouponController::class, 'index']); // Retrieve products
+        Route::post('/edit/{id}', [CouponController::class, 'update']); // Update a specific user
+        Route::delete('/{id}', [CouponController::class, 'destroy']); // Update a specific user
     });
 
     Route::post('/make_payment', [RazorpayController::class, 'processPayment']);

@@ -8,7 +8,7 @@ class CouponController extends Controller
 {
     //
     // 🔍 Fetch all or by ID
-    public function index(Request $request)
+    public function index(Request $request, $id = null)
     {
         try {
             if ($request->has('id')) {
