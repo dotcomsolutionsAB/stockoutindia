@@ -57,12 +57,13 @@ class AuthController extends Controller
                         'role' => $user->role,
                         'username' => $user->username,
                     ],
+                    'account_created' => true,
                     'message' => 'Google login successful!',
                 ], 200);
             } else {
                 return response()->json([
-                    'success' => false,
-                    'message' => 'No account created!',
+                    'success' => true,
+                    'account_created' => false,
                 ], 200);
             }
         }
