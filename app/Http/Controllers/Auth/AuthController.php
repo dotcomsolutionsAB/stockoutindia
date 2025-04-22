@@ -14,6 +14,13 @@ use Auth;
 class AuthController extends Controller
 {
     //
+    protected $googleAuth;
+
+    public function __construct(GoogleAuthService $googleAuth)
+    {
+        $this->googleAuth = $googleAuth;
+    }
+
     // user `login`
     public function login(Request $request)
     {
@@ -26,7 +33,10 @@ class AuthController extends Controller
             ]);
 
         // ✅ Call the reusable function
-        $payload = $this->verifyGoogleToken($request->idToken);
+        $payload = $this->googleAuth->verifyGoogleToken(
+            $request->idToken,
+            env('GOOGLE_CLIENT_ID')
+        );
 
         if (!$payload) {
             return response()->json([
@@ -39,13 +49,6 @@ class AuthController extends Controller
         $email = $payload['email'] ?? null;
         $googleId = $payload['sub'] ?? null;
 
-        if (!$email || !$googleId) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Missing Google user info.',
-            ], 422);
-        }
-        
         $user = User::where('email', $email)->first();
 
         if ($user) {
@@ -56,7 +59,6 @@ class AuthController extends Controller
                 ], 403);
             }
 
-            // Update google_id if missing or different
             if ($user->google_id !== $googleId) {
                 $user->google_id = $googleId;
                 $user->save();
@@ -143,26 +145,6 @@ class AuthController extends Controller
             ], 500);
         }
         
-    }
-
-    protected function verifyGoogleToken(string $idToken): ?array
-    {
-        $response = Http::get("https://oauth2.googleapis.com/tokeninfo", [
-            'id_token' => $idToken,
-        ]);
-
-        if ($response->failed()) {
-            return null;
-        }
-
-        $payload = $response->json();
-
-        // Validate audience (client ID)
-        if (!isset($payload['aud']) || $payload['aud'] !== env('GOOGLE_CLIENT_ID')) {
-            return null;
-        }
-
-        return $payload;
     }
 
     // user `logout`
