@@ -18,52 +18,68 @@ class AuthController extends Controller
     {
         try {
 
-            // Step 1: Check if logging in via Google
-        if ($request->has('google_id')) 
-        {
+        // Step 1: Check if logging in via Google
+        if ($request->has('idToken')) {
             $request->validate([
-                'email'     => 'required|email',
-                'google_id' => 'required|string',
+                'idToken' => 'required|string',
             ]);
-            // Try to find user with email
-            $user = User::where('email', $request->email)->first();
 
-            if ($user) 
-            {
+        // ✅ Call the reusable function
+        $payload = $this->verifyGoogleToken($request->idToken);
 
-                // Check if the user is inactive
-                if ($user->is_active == 0) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Your account is inactive. Please contact support.',
-                    ], 403);
-                }
+        if (!$payload) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid or expired Google ID token.',
+            ], 401);
+        }
 
-                // Update google_id if changed
-                if ($user->google_id !== $request->google_id) {
-                    $user->google_id = $request->google_id;
-                    $user->save();
-                }
+        // Extract user info from payload
+        $email = $payload['email'] ?? null;
+        $googleId = $payload['sub'] ?? null;
 
-                // Generate Sanctum token
-                $generated_token = $user->createToken('API TOKEN')->plainTextToken;
+        if (!$email || !$googleId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Missing Google user info.',
+            ], 422);
+        }
+        
+        $user = User::where('email', $email)->first();
 
+        if ($user) {
+            if ($user->is_active == 0) {
                 return response()->json([
-                    'success' => true,
-                    'data' => [
-                        'token' => $generated_token,
-                        'user_id' => $user->id,
-                        'name' => $user->name,
-                        'role' => $user->role,
-                        'username' => $user->username,
-                    ],
-                    'account_created' => true,
-                    'message' => 'Google login successful!',
-                ], 200);
+                    'success' => false,
+                    'message' => 'Your account is inactive. Please contact support.',
+                ], 403);
+            }
+
+            // Update google_id if missing or different
+            if ($user->google_id !== $googleId) {
+                $user->google_id = $googleId;
+                $user->save();
+            }
+
+            $token = $user->createToken('API TOKEN')->plainTextToken;
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Google login successful.',
+                'account_created' => true,
+                'data' => [
+                    'token' => $token,
+                    'user_id' => $user->id,
+                    'name' => $user->name,
+                    'role' => $user->role,
+                    'username' => $user->username,
+                ]
+            ], 200);
             } else {
                 return response()->json([
                     'success' => true,
                     'account_created' => false,
+                    'message' => 'User not found. Proceed to registration.',
                 ], 200);
             }
         }
@@ -128,6 +144,26 @@ class AuthController extends Controller
         
     }
 
+    protected function verifyGoogleToken(string $idToken): ?array
+    {
+        $response = Http::get("https://oauth2.googleapis.com/tokeninfo", [
+            'id_token' => $idToken,
+        ]);
+
+        if ($response->failed()) {
+            return null;
+        }
+
+        $payload = $response->json();
+
+        // Validate audience (client ID)
+        if (!isset($payload['aud']) || $payload['aud'] !== env('GOOGLE_CLIENT_ID')) {
+            return null;
+        }
+
+        return $payload;
+    }
+
     // user `logout`
     public function logout(Request $request)
     {
@@ -152,11 +188,14 @@ class AuthController extends Controller
     public function forgotPassword(Request $request)
     {
         $request->validate([
-            'email' => 'required|email|exists:users,email',
+            'username' => 'required|string',
         ]);
 
         try {
-            $user = User::where('email', $request->email)->firstOrFail();
+            $loginField = filter_var($request->username, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
+
+            // Fetch user by email or username
+            $user = User::where($loginField, $request->username)->firstOrFail();
 
             // Generate strong password
             $newPassword = $this->generateStrongPassword();
