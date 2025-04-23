@@ -965,7 +965,7 @@ class ProductController extends Controller
 
             if ($request->filled('user')) {
                 $userIds = explode(',', $request->user);
-                $query->whereIn('user', $userIds);
+                $query->whereIn('user_id', $userIds);
             }
 
             $min = $request->input('min_amount', 0);
