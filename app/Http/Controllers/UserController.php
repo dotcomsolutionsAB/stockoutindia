@@ -14,22 +14,37 @@ use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
+    protected $googleAuth;
+
+    public function __construct(GoogleAuthService $googleAuth)
+    {
+        $this->googleAuth = $googleAuth;
+    }
     // create
     public function register(Request $request)
     {
         try {
-            $validator = Validator::make($request->all(), [
-                'email' => 'required|email|unique:users,email',
-                'google_id' => 'nullable|string',
-                'password' => 'required_without:google_id|string|min:8',
+
+            $google_id_token = $request->input('idToken'); // idToken from Google
+
+            $googleEmail = null;
+            $googleId = null;
+    
+            // 🔍 Step 1: If idToken is provided, verify it
+            if ($google_id_token) {
+                $audience = config('services.google.client_id'); // Set this in config/services.php
+                $payload = $this->googleAuth->verifyGoogleToken($google_id_token, $audience);
+    
+                $googleEmail = $payload['email'] ?? null;
+                $googleId = $payload['sub'] ?? null;
+            }
+
+            // Step 2: Dynamically set validation rules
+            $rules = [
+                'email' => ['required', 'email', 'unique:users,email'],
                 'role' => ['required', Rule::in(['admin', 'user'])],
                 'phone' => 'required|string|unique:users,phone',
-
-                // Make `gstin` optional; if present, must be unique
                 'gstin' => 'nullable|string|unique:users,gstin',
-
-                // If `gstin` is present => these are optional,
-                // otherwise they are required.
                 'name' => 'required_without:gstin|string|max:255',
                 'company_name' => 'required_without:gstin|string|max:255',
                 'address' => 'required_without:gstin|string|max:255',
@@ -38,7 +53,14 @@ class UserController extends Controller
                 'state' => 'required_without:gstin|integer|exists:t_states,id',
                 'industry' => 'nullable|string',
                 'sub_industry' => 'nullable|string',
-            ]);
+            ];
+
+            // Only validate password if googleId is NOT available
+            if (!$googleId) {
+                $rules['password'] = 'required|string|min:8';
+            }
+
+            $validator = Validator::make($request->all(), $rules);
 
             if ($validator->fails()) {
                 return response()->json([
