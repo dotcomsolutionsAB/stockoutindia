@@ -963,6 +963,11 @@ class ProductController extends Controller
                 $query->where('status', $request->status);
             }
 
+            if ($request->filled('user')) {
+                $userIds = explode(',', $request->user);
+                $query->whereIn('user', $userIds);
+            }
+
             $min = $request->input('min_amount', 0);
             $max = $request->input('max_amount', ProductModel::max('selling_price'));
             $query->whereBetween('selling_price', [$min, $max]);
