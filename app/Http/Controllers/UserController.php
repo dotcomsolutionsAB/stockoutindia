@@ -10,6 +10,7 @@ use App\Models\ProductModel;
 use App\Models\UploadModel;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use App\Services\GoogleAuthService;
 use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
