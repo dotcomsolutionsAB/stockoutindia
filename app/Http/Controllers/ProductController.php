@@ -234,7 +234,6 @@ class ProductController extends Controller
         }
     }
 
-
     // for guest-user
     public function fetchOnlyProducts(Request $request, $id = null)
     {
@@ -383,7 +382,6 @@ class ProductController extends Controller
             ], 500);
         }
     }
-
 
     // update
     public function updateProduct(Request $request, $id)
@@ -732,7 +730,6 @@ class ProductController extends Controller
             ], 500);
         }
     }
-
 
     // delete product image
     // public function deleteProductImages(Request $request, $id)
