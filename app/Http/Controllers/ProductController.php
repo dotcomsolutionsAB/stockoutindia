@@ -56,6 +56,7 @@ class ProductController extends Controller
                 'status' => $request->status ?? 'in-active',
                 'description' => $request->description,
                 'dimensions' => $request->dimensions,
+                'is_delete' => '0',
                 // 'image' => will be empty or null initially; handled in separate method
             ]);
 
@@ -404,10 +405,10 @@ class ProductController extends Controller
                 'sub_industry' => 'sometimes|integer|exists:t_sub_industries,id',
                 'city' => 'sometimes|nullable|string|max:255', // Added city field
                 'state_id' => 'sometimes|nullable|integer|exists:t_states,id', // Added state_id validation
-                'status' => 'sometimes|in:active,in-active',
+                'status' => 'sometimes|in:active,in-active,sold',
                 'description' => 'sometimes|nullable|string',
                 'dimensions' => 'sometimes|nullable|string|max:256', // Added dimensions field
-                        ]);
+            ]);
 
             if ($validator->fails()) {
                 return response()->json([
@@ -699,6 +700,36 @@ class ProductController extends Controller
             ], 500);
         }
     }
+
+    public function tempdeleteProduct($id)
+    {
+        try {
+            $product = ProductModel::find($id);
+
+            if (!$product) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Product not found!',
+                ], 200);
+            }
+
+            // Mark product as deleted (custom soft delete)
+            $product->is_deleted = 1;
+            $product->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Product temporarily deleted successfully!',
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
 
     // delete product image
     // public function deleteProductImages(Request $request, $id)

@@ -28,7 +28,8 @@ class ProductModel extends Model
         'image',
         'description',
         'dimensions',
-        'validity'
+        'validity',
+        'is_delete',
     ];
 
     public function user()

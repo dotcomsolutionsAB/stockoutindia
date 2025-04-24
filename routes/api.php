@@ -71,6 +71,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/images/{id}', [ProductController::class, 'uploadProductImages']); // Upload image for a specific product
         Route::delete('/{id}', [ProductController::class, 'deleteProduct']); // Delete a specific product
         //Route::delete('/images/{id}', [ProductController::class, 'deleteProductImages']); // Delete specific product image
+        Route::patch('/temp_delete/{id}', [ProductController::class, 'tempdeleteProduct']);
 
         Route::post('/update_status', [ProductController::class, 'updateProductStatus']); // Update product status
 

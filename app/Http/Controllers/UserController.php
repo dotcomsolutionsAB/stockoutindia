@@ -52,8 +52,8 @@ class UserController extends Controller
                 'pincode' => 'required_without:gstin|string|max:10',
                 'city' => 'required_without:gstin|string',
                 'state' => 'required_without:gstin|integer|exists:t_states,id',
-                'industry' => 'nullable|string',
-                'sub_industry' => 'nullable|string',
+                'industry' => 'nullable|integer|exists:t_industries,id',
+                'sub_industry' => 'nullable|integer|exists:t_sub_industries,id',
             ];
 
             // Only validate password if googleId is NOT available
