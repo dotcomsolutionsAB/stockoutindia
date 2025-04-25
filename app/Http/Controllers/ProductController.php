@@ -85,7 +85,7 @@ class ProductController extends Controller
                     'user:id,name,phone,city',
                     'industryDetails:id,name',
                     'subIndustryDetails:id,name'
-                ])->where('is_delete', 0)
+                ])->where('is_delete', '0')
                 ->find($id);
 
                 if (!$product) {
@@ -140,7 +140,7 @@ class ProductController extends Controller
                 'user:id,name,phone,city',
                 'industryDetails:id,name',
                 'subIndustryDetails:id,name'
-            ])->where('is_delete', 0);
+            ])->where('is_delete', '0');
 
             // 🔹 **Fix: Search in product_name, user->name, and user->city**
             if (!empty($search)) {
@@ -245,7 +245,7 @@ class ProductController extends Controller
                     'industryDetails:id,name',
                     'subIndustryDetails:id,name'
                 ])
-                ->where('is_delete', 0)
+                ->where('is_delete', '0')
                 ->find($id);
 
                 if (!$product) {
@@ -299,7 +299,7 @@ class ProductController extends Controller
                 'user:id,name,city', // Removed phone number
                 'industryDetails:id,name',
                 'subIndustryDetails:id,name'
-            ])->where('is_delete', 0);
+            ])->where('is_delete', '0');
 
             // 🔹 **Search in Product Name & User's City**
             if (!empty($search)) {
