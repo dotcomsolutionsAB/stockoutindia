@@ -33,8 +33,10 @@ class UserController extends Controller
     
             // 🔍 Step 1: If idToken is provided, verify it
             if ($google_id_token) {
-                $audience = config('services.google.client_id'); // Set this in config/services.php
-                $payload = $this->googleAuth->verifyGoogleToken($google_id_token, $audience);
+                $payload = $this->googleAuth->verifyGoogleToken(
+                    $request->idToken,
+                    env('GOOGLE_CLIENT_ID')
+                );
     
                 $googleEmail = $payload['email'] ?? null;
                 $googleId = $payload['sub'] ?? null;
