@@ -42,7 +42,7 @@ class UserController extends Controller
 
             // Step 2: Dynamically set validation rules
             $rules = [
-                'email' => ['required', 'email', 'unique:users,email'],
+                // 'email' => ['required', 'email', 'unique:users,email'],
                 'role' => ['required', Rule::in(['admin', 'user'])],
                 'phone' => 'required|string|unique:users,phone',
                 'gstin' => 'nullable|string|unique:users,gstin',
@@ -56,11 +56,12 @@ class UserController extends Controller
                 'sub_industry' => 'nullable|integer|exists:t_sub_industries,id',
             ];
 
-            // Only validate password if googleId is NOT available
+            // If googleId is not available, validate email
             if (!$googleId) {
-                $rules['password'] = 'required|string|min:8';
+                $rules['email'] = ['required', 'email', 'unique:users,email'];
             }
 
+            // Validate the data
             $validator = Validator::make($request->all(), $rules);
 
             if ($validator->fails()) {
@@ -70,11 +71,20 @@ class UserController extends Controller
                 ], 200);
             }
 
+            // If googleEmail exists, ensure it is unique
+            if ($googleEmail && User::where('email', $googleEmail)->exists()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'The email associated with the Google account is already in use.',
+                ], 200);
+            }
+
+            // Create User
             $user = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
-                'password' => bcrypt($request->password),
-                'google_id' => $request->google_id,
+                'password' => $googleId ? null : bcrypt($request->password), // No password if using google login
+                'google_id' => $googleId,
                 'role' => $request->role,
                 'username' => $request->phone, // Store phone in username
                 'phone' => $request->phone,
