@@ -84,7 +84,7 @@ class UserController extends Controller
             // Create User
             $user = User::create([
                 'name' => $request->name,
-                'email' => $request->email,
+                'email' => $googleEmail ?? $request->email,
                 'password' => $googleId ? null : bcrypt($request->password), // No password if using google login
                 'google_id' => $googleId,
                 'role' => $request->role,
