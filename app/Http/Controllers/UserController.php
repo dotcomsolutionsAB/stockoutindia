@@ -34,7 +34,7 @@ class UserController extends Controller
             // 🔍 Step 1: If idToken is provided, verify it
             if ($google_id_token) {
                 $payload = $this->googleAuth->verifyGoogleToken(
-                    $request->idToken,
+                    $google_id_token,
                     env('GOOGLE_CLIENT_ID')
                 );
     
