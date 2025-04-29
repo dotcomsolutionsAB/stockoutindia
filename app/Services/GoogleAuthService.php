@@ -22,6 +22,7 @@ class GoogleAuthService
         try {
             $payload = $client->verifyIdToken($idToken);
 
+            dd($payload);
             if ($payload) {
                 return $payload;
             }
