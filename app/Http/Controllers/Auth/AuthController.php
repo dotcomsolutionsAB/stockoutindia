@@ -32,7 +32,7 @@ class AuthController extends Controller
                 'idToken' => 'required|string',
             ]);
 
-        // ✅ Call the reusable function
+        // Call the reusable function
         $payload = $this->googleAuth->verifyGoogleToken(
             $request->idToken,
             env('GOOGLE_CLIENT_ID')

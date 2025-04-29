@@ -31,7 +31,7 @@ class UserController extends Controller
             $googleEmail = null;
             $googleId = null;
     
-            // 🔍 Step 1: If idToken is provided, verify it
+            // Step 1: If idToken is provided, verify it
             if ($google_id_token) {
                 $payload = $this->googleAuth->verifyGoogleToken(
                     $google_id_token,
