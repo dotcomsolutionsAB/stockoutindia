@@ -23,7 +23,7 @@ Route::get('/terms-and-conditions', [UserController::class, 'termsConditions'])-
 Route::get('/refund-policy', [UserController::class, 'refundPolicy'])->name('refund.policy');
 Route::get('/faqs', [UserController::class, 'getFaqsJson']);
 
-Route::post('/register', [AuthController::class, 'register']);
+Route::post('/register', [UserController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/get_otp', [AuthController::class, 'generate_otp']);
 Route::post('/forget_password', [AuthController::class, 'forgotPassword']);
