@@ -38,12 +38,15 @@ class ImportController extends Controller
                 // Get the city name using CityModel (assuming city_id is the city_id in the API)
                 $cityName = CityModel::where('id', $user['city_id'])->first()->name ?? null;
             
-                // If mobile or email already exists, update it
+                // Check if the mobile or email exists, update the user
                 if ($existingUserByEmail || $existingUserByMobile) {
+                    // If the username is the same as the existing username, don't update it
+                    $username = $existingUserByEmail ? $existingUserByEmail->username : $phoneWithPrefix;
+
                     // Handle "gstin" being a space, set it to NULL
                     $gstin = ($user['gst_no'] === " " || $user['gst_no'] === "test") ? null : $user['gst_no'];
 
-                    // Update the existing user (mobile or email)
+                    // Update the existing user
                     $existingUser = $existingUserByEmail ?? $existingUserByMobile;
                     $existingUser->update([
                         'user_id' => $user['id'],
@@ -51,7 +54,7 @@ class ImportController extends Controller
                         'email' => $user['email'],
                         'password' => bcrypt($user['password']),
                         'role' => 'user', // You can modify this based on your logic
-                        'username' => $username, // Set username as phone with +91
+                        'username' => $username, // Set username as phone with +91, or keep existing one if it already exists
                         'phone' => $phoneWithPrefix, // Set phone with +91
                         'address' => $user['address'],
                         'city' => $cityName, // Storing the city name here
@@ -61,7 +64,8 @@ class ImportController extends Controller
                         'industry' => $user['industries'],
                         'sub_industry' => NULL,
                     ]);
-                } else {
+                }
+                else {
                     // Handle "gstin" being a space, set it to NULL
                     $gstin = ($user['gst_no'] === " " || $user['gst_no'] === "test") ? null : $user['gst_no'];
 
