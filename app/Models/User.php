@@ -22,11 +22,13 @@ class User extends Authenticatable
         'user_id',
         'name',
         'email',
+        'google_id',
         'password',
         'role',
         'username',
         'phone',
         'otp',
+        'is_active',
         'expires_at',
         'company_name',
         'address',
@@ -59,5 +61,20 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function products()
+    {
+        return $this->hasMany(ProductModel::class, 'user_id', 'id');
+    }
+
+    public function industryDetails()
+    {
+        return $this->belongsTo(IndustryModel::class, 'industry', 'id');
+    }
+
+    public function subIndustryDetails()
+    {
+        return $this->belongsTo(SubIndustryModel::class, 'sub_industry', 'id');
     }
 }

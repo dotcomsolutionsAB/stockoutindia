@@ -15,6 +15,7 @@ class RazorpayOrdersModel extends Model
         'user',
         'product',
         'payment_amount',
+        'coupon',
         'razorpay_order_id',
         'status',
         'comments',
@@ -26,4 +27,13 @@ class RazorpayOrdersModel extends Model
         return $this->belongsTo(ProductModel::class, 'product', 'id');
     }
 
+    public function get_user()
+    {
+        return $this->belongsTo(User::class, 'user', 'id');
+    }
+    
+    public function get_product()
+    {
+        return $this->belongsTo(ProductModel::class, 'product', 'id');
+    }    
 }

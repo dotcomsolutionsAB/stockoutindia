@@ -12,6 +12,7 @@ use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\RazorpayController;
+use App\Http\Controllers\CouponController;
 
 // Route::get('/user', function (Request $request) {
 //     return $request->user();
@@ -23,11 +24,12 @@ Route::get('/refund-policy', [UserController::class, 'refundPolicy'])->name('ref
 Route::get('/faqs', [UserController::class, 'getFaqsJson']);
 
 Route::post('/register', [UserController::class, 'register']);
-Route::post('/login/{otp?}', [AuthController::class, 'login']);
+Route::post('/login', [AuthController::class, 'login']);
 Route::post('/get_otp', [AuthController::class, 'generate_otp']);
 Route::post('/forget_password', [AuthController::class, 'forgotPassword']);
 Route::post('/gst_details', [UserController::class, 'fetchGstDetails']);
 Route::get('/banners', [UserController::class, 'fetchBanners']);
+Route::post('/upload_banners', [UserController::class, 'uploadBanner']);
 
 // Add a route in web.php
 Route::get('import_users', [ImportController::class, 'importUsers']);
@@ -69,6 +71,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/images/{id}', [ProductController::class, 'uploadProductImages']); // Upload image for a specific product
         Route::delete('/{id}', [ProductController::class, 'deleteProduct']); // Delete a specific product
         //Route::delete('/images/{id}', [ProductController::class, 'deleteProductImages']); // Delete specific product image
+        Route::patch('/temp_delete/{id}', [ProductController::class, 'tempdeleteProduct']);
 
         Route::post('/update_status', [ProductController::class, 'updateProductStatus']); // Update product status
 
@@ -97,10 +100,28 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::delete('/{id}', [WishlistController::class, 'deleteProduct']); // Update a specific user
     });
 
+    Route::prefix('coupon')->group(function () {
+        Route::post('/add', [CouponController::class, 'store']); // Create Products
+        Route::get('/index/{id?}', [CouponController::class, 'index']); // Retrieve products
+        Route::post('/edit/{id}', [CouponController::class, 'update']); // Update a specific user
+        Route::delete('/{id}', [CouponController::class, 'destroy']); // Update a specific user
+    });
+
     Route::post('/make_payment', [RazorpayController::class, 'processPayment']);
     Route::post('/fetch_payment', [RazorpayController::class, 'fetchPayments']);
 
     Route::post('/store_payment', [RazorpayController::class, 'storePayment']);
+
+    Route::middleware(['auth:sanctum', 'adminOnly'])->group(function () {
+
+        Route::prefix('admin')->group(function () {
+            Route::post('/products', [ProductController::class, 'admin_fetchProducts']);
+            Route::post('/users_with_products', [UserController::class, 'usersWithProducts']);
+            Route::post('/user_orders', [UserController::class, 'userOrders']);
+            Route::post('/user_toggle_status', [UserController::class, 'toggleUserStatus']);
+            Route::post('/product_toggle_status', [ProductController::class, 'toggleProductStatus']);
+        });
+    });
 });
 
 

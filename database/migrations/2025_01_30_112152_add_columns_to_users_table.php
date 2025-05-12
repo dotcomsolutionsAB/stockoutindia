@@ -14,10 +14,12 @@ return new class extends Migration
         Schema::table('users', function (Blueprint $table) {
             //
             $table->string('name')->nullable()->change();
+            $table->string('google_id')->after('email');
             $table->enum('role', ['admin', 'user'])->after('password');
             $table->string('username')->unique()->after('role'); // Making username unique
             $table->string('phone')->unique()->after('username'); // Making phone unique
             $table->integer('otp')->after('phone')->nullable();
+            $table->enum('is_active', ['0', '1'])->after('otp');
             $table->timestamp('expires_at')->after('otp')->nullable();
             $table->string('company_name')->after('expires_at');
             $table->string('address')->after('company_name');

@@ -1,11 +1,12 @@
 <?php
 
 namespace App\Http\Controllers\Auth;
-
+use App\Services\GoogleAuthService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use App\Mail\SendNewPassword;
 use App\Models\User;
 use Auth;
@@ -13,10 +14,81 @@ use Auth;
 class AuthController extends Controller
 {
     //
+    protected $googleAuth;
+
+    public function __construct(GoogleAuthService $googleAuth)
+    {
+        $this->googleAuth = $googleAuth;
+    }
+
     // user `login`
-    public function login(Request $request, $otp = null)
+    public function login(Request $request)
     {
         try {
+
+        // Step 1: Check if logging in via Google
+        if ($request->has('idToken')) {
+            $request->validate([
+                'idToken' => 'required|string',
+            ]);
+
+        // Call the reusable function
+        $payload = $this->googleAuth->verifyGoogleToken(
+            $request->idToken,
+            env('GOOGLE_CLIENT_ID')
+        );
+
+        if (!$payload) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid or expired Google ID token.',
+            ], 401);
+        }
+
+        // Extract user info from payload
+        $email = $payload['email'] ?? null;
+        $googleId = $payload['sub'] ?? null;
+
+        $user = User::where('email', $email)->first();
+
+        if ($user) {
+            if ($user->is_active == 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Your account is inactive. Please contact support.',
+                ], 403);
+            }
+
+            if ($user->google_id !== $googleId) {
+                $user->google_id = $googleId;
+                $user->save();
+            }
+
+            $token = $user->createToken('API TOKEN')->plainTextToken;
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Google login successful.',
+                'account_created' => true,
+                'data' => [
+                    'token' => $token,
+                    'user_id' => $user->id,
+                    'name' => $user->name,
+                    'role' => $user->role,
+                    'username' => $user->username,
+                ]
+            ], 200);
+            } else {
+                return response()->json([
+                    'success' => true,
+                    'account_created' => false,
+                    'message' => 'User not found. Proceed to registration.',
+                ], 200);
+            }
+        }
+
+        // Step 2: Fallback to standard username/password login
+
             $request->validate([
                 'username' => 'required|string',
                 'password' => [
@@ -30,6 +102,14 @@ class AuthController extends Controller
             if(Auth::attempt([$loginField => $request->username, 'password' => $request->password]))
             {
                 $user = Auth::user();
+
+                 // Check if the user is inactive
+                if ($user->is_active == 0) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Your account is inactive. Please contact support.',
+                    ], 403);
+                }
 
                 if ($user->role == "user") {
                     // Revoke previous tokens
@@ -87,89 +167,18 @@ class AuthController extends Controller
         ], 204);
     }
 
-    // genearate otp and send to `whatsapp`
-    public function generate_otp(Request $request)
-    {
-        $request->validate([
-            'username' => 'required',
-        ]);
-
-        $username = $request->input('username');
-        
-        $get_user = User::select('id', 'mobile')
-            ->where('username', $username)
-            ->first();
-        
-        if(!$get_user == null)
-        {
-            $mobile = $get_user->mobile;
-
-            $six_digit_otp = random_int(100000, 999999);
-
-            $expiresAt = now()->addMinutes(10);
-
-            $store_otp = User::where('mobile', $mobile)
-                            ->update([
-                                'otp' => $six_digit_otp,
-                                'expires_at' => $expiresAt,
-                            ]);
-
-            if($store_otp)
-            {
-                $templateParams = [
-                    'name' => 'login_otp', // Replace with your WhatsApp template name
-                    'language' => ['code' => 'en'],
-                    'components' => [
-                        [
-                            'type' => 'body',
-                            'parameters' => [
-                                [
-                                    'type' => 'text',
-                                    'text' => $six_digit_otp,
-                                ],
-                            ],
-                        ],
-                        [
-                            'type' => 'button',
-                            'sub_type' => 'url',
-                            "index" => "0",
-                            'parameters' => [
-                                [
-                                    'type' => 'text',
-                                    'text' => $six_digit_otp,
-                                ],
-                            ],
-                        ]
-                    ],
-                ];
-
-                $whatsappUtility = new sendWhatsAppUtility();
-
-                $response = $whatsappUtility->sendWhatsApp($mobile, $templateParams, $mobile, 'OTP Campaign');
-
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Otp sent successfully!'
-                ], 200);
-            }
-        }
-        else {
-            return response()->json([
-                'success' => true,
-                'message' => 'User has not registered!',
-            ], 404);
-        }
-    }
-
     // forget password
     public function forgotPassword(Request $request)
     {
         $request->validate([
-            'email' => 'required|email|exists:users,email',
+            'username' => 'required|string',
         ]);
 
         try {
-            $user = User::where('email', $request->email)->firstOrFail();
+            $loginField = filter_var($request->username, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
+
+            // Fetch user by email or username
+            $user = User::where($loginField, $request->username)->firstOrFail();
 
             // Generate strong password
             $newPassword = $this->generateStrongPassword();

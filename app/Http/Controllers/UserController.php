@@ -4,36 +4,67 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\RazorpayOrdersModel;
+use App\Models\Users;
+use App\Models\ProductModel;
+use App\Models\UploadModel;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use App\Services\GoogleAuthService;
 use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
+    protected $googleAuth;
+
+    public function __construct(GoogleAuthService $googleAuth)
+    {
+        $this->googleAuth = $googleAuth;
+    }
     // create
     public function register(Request $request)
     {
         try {
-            $validator = Validator::make($request->all(), [
-                'email' => 'required|email|unique:users,email',
-                'password' => 'required|string|min:8',
-                // 'role' => ['required', Rule::in(['admin', 'user'])],
+
+            $google_id_token = $request->input('idToken'); // idToken from Google
+
+            $googleEmail = null;
+            $googleId = null;
+    
+            // Step 1: If idToken is provided, verify it
+            if ($google_id_token) {
+                $payload = $this->googleAuth->verifyGoogleToken(
+                    $google_id_token,
+                    env('GOOGLE_CLIENT_ID')
+                );
+    
+                $googleEmail = $payload['email'] ?? null;
+                $googleId = $payload['sub'] ?? null;
+            }
+
+            // Step 2: Dynamically set validation rules
+            $rules = [
+                // 'email' => ['required', 'email', 'unique:users,email'],
+                'role' => ['required', Rule::in(['admin', 'user'])],
                 'phone' => 'required|string|unique:users,phone',
-
-                // Make `gstin` optional; if present, must be unique
                 'gstin' => 'nullable|string|unique:users,gstin',
-
-                // If `gstin` is present => these are optional,
-                // otherwise they are required.
                 'name' => 'required_without:gstin|string|max:255',
                 'company_name' => 'required_without:gstin|string|max:255',
                 'address' => 'required_without:gstin|string|max:255',
                 'pincode' => 'required_without:gstin|string|max:10',
                 'city' => 'required_without:gstin|string',
                 'state' => 'required_without:gstin|integer|exists:t_states,id',
-                'industry' => 'nullable|string',
-                'sub_industry' => 'nullable|string',
-            ]);
+                'industry' => 'nullable|integer|exists:t_industries,id',
+                'sub_industry' => 'nullable|integer|exists:t_sub_industries,id',
+            ];
+
+            // If googleId is not available, validate email
+            if (!$googleId) {
+                $rules['email'] = ['required', 'email', 'unique:users,email'];
+            }
+
+            // Validate the data
+            $validator = Validator::make($request->all(), $rules);
 
             if ($validator->fails()) {
                 return response()->json([
@@ -42,14 +73,24 @@ class UserController extends Controller
                 ], 200);
             }
 
+            // If googleEmail exists, ensure it is unique
+            if ($googleEmail && User::where('email', $googleEmail)->exists()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'The email associated with the Google account is already in use.',
+                ], 200);
+            }
+
+            // Create User
             $user = User::create([
                 'name' => $request->name,
-                'email' => $request->email,
-                'password' => bcrypt($request->password),
-                // 'role' => $request->role,
-                'role' => "user",
+                'email' => $googleEmail ?? $request->email,
+                'password' => bcrypt($request->password), // No password if using google login
+                'google_id' => $googleId,
+                'role' => $request->role,
                 'username' => $request->phone, // Store phone in username
                 'phone' => $request->phone,
+                'is_active' => "1",
                 'company_name' => $request->company_name,
                 'address' => $request->address,
                 'pincode' => $request->pincode,
@@ -327,16 +368,277 @@ class UserController extends Controller
         }
     }
 
+    // public function fetchBanners()
+    // {
+    //     return response()->json([
+    //         'success' => true,
+    //         'message' => 'Units fetched successfully!',
+    //         'data' => [
+    //             'https://api.stockoutindia.com/storage/uploads/banners/banner_1.jpg',
+    //             'https://api.stockoutindia.com/storage/uploads/banners/banner_2.jpg'
+    //         ]
+            
+    //     ], 200);
+    // }
+
+    public function uploadBanner(Request $request)
+    {
+        try {
+            if (!$request->hasFile('banners')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No banner files provided.',
+                ], 400);
+            }
+
+            $files = $request->file('banners');
+
+            // Delete old banners from DB and server
+            $oldBanners = UploadModel::where('file_url', 'like', '%uploads/banners/%')->get();
+            foreach ($oldBanners as $file) {
+                $filePath = public_path('storage/uploads/banners/' . $file->file_name);
+                if (file_exists($filePath)) {
+                    unlink($filePath);
+                }
+                $file->delete();
+            }
+
+            $uploadedUrls = [];
+            foreach ($files as $index => $file) {
+                $originalExt = $file->getClientOriginalExtension();
+                $newFileName = 'banner_file' . ($index + 1) . '.' . $originalExt;
+                $relativePath = 'uploads/banners/' . $newFileName;
+
+                $fileSize = $file->getSize(); // Get size before move
+
+                // Move the file to storage
+                $file->move(public_path('storage/uploads/banners'), $newFileName);
+
+                // Save to DB
+                UploadModel::create([
+                    'file_name' => $newFileName,
+                    'file_ext' => $originalExt,
+                    'file_url' => $relativePath,
+                    'file_size' => $fileSize, // Use the captured size
+                ]);
+
+                $uploadedUrls[] = url('storage/' . $relativePath);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Banners uploaded successfully.',
+                'data' => $uploadedUrls,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Upload failed.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function fetchBanners()
     {
+        $banners = UploadModel::where('file_name', 'LIKE', 'banner_file%')
+            ->orderBy('file_name')
+            ->pluck('file_url')
+            ->map(function ($url) {
+                return url('storage/' . $url);
+            });
+
         return response()->json([
             'success' => true,
-            'message' => 'Units fetched successfully!',
-            'data' => [
-                'http://api.stockoutindia.com/storage/uploads/banners/banner_1.jpg',
-                'http://api.stockoutindia.com/storage/uploads/banners/banner_2.jpg'
-            ]
-            
+            'message' => 'Banners fetched successfully!',
+            'data' => $banners,
         ], 200);
+    }
+
+    public function usersWithProducts(Request $request)
+    {
+        try {
+            $limit = $request->input('limit', 10);
+            $offset = $request->input('offset', 0);
+            $userIds = $request->input('user_ids');
+
+            $query = User::with([
+                'products' => function ($q) {
+                    $q->where('status', 'active')
+                        ->with(['industryDetails:id,name', 'subIndustryDetails:id,name']);
+                },
+                'industryDetails:id,name',
+                'subIndustryDetails:id,name',
+            ]);
+
+            if ($userIds) {
+                $userIdsArray = explode(',', $userIds);
+                $query->whereIn('id', $userIdsArray);
+            }
+
+            $users = $query->offset($offset)->limit($limit)->get();
+            $totalCount = User::count();
+
+            // Fetch all upload records in one go
+            $allUploads = UploadModel::pluck('file_url', 'id')->toArray();
+
+            $data = $users->map(function ($user) use ($allUploads) {
+                $products = $user->products->map(function ($product) use ($allUploads) {
+                    $imageUrls = [];
+                    if (!empty($product->image)) {
+                        $imageIds = explode(',', $product->image);
+                        foreach ($imageIds as $id) {
+                            if (isset($allUploads[$id])) {
+                                $imageUrls[] = url($allUploads[$id]);
+                            }
+                        }
+                    }
+
+                    return [
+                        'id' => $product->id,
+                        'name' => $product->name,
+                        'selling_price' => $product->selling_price,
+                        'image_urls' => $imageUrls,
+                        'industry' => [
+                            'id' => $product->industryDetails->id ?? null,
+                            'name' => $product->industryDetails->name ?? null,
+                        ],
+                        'sub_industry' => [
+                            'id' => $product->subIndustryDetails->id ?? null,
+                            'name' => $product->subIndustryDetails->name ?? null,
+                        ],
+                    ];
+                });
+
+                return [
+                    'user_id' => $user->user_id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'google_id' => $user->google_id,
+                    'role' => $user->role,
+                    'username' => $user->username,
+                    'phone' => $user->phone,
+                    'status' => $user->is_active ? 'active' : 'in-active',
+                    'company_name' => $user->company_name,
+                    'address' => $user->address,
+                    'pincode' => $user->pincode,
+                    'city' => $user->city,
+                    'state' => $user->state,
+                    'gstin' => $user->gstin,
+                    'industry' => [
+                        'id' => $user->industryDetails->id ?? null,
+                        'name' => $user->industryDetails->name ?? null,
+                    ],
+                    'sub_industry' => [
+                        'id' => $user->subIndustryDetails->id ?? null,
+                        'name' => $user->subIndustryDetails->name ?? null,
+                    ],
+                    'active_product_count' => $products->count(),
+                    'products' => $products,
+                ];
+            });
+
+            return response()->json([
+                'code' => 200,
+                'success' => true,
+                'data' => $data,
+                'total_count' => $totalCount,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'code' => 500,
+                'success' => false,
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
+
+    public function userOrders(Request $request)
+    {
+        try {
+            // Get limit and offset from the request
+            $limit = $request->input('limit', 10); // Default limit is 10
+            $offset = $request->input('offset', 0); // Default offset is 0
+            $userId = $request->input('user_id'); // User ID filter (optional)
+
+            // Build the query to fetch orders
+            $query = RazorpayOrdersModel::query();
+
+            // If user_id is provided, filter by user_id
+            if ($userId) {
+                $query->where('user', $userId);
+            }
+
+            // Get total count without limit/offset
+            $totalCount = $query->count();
+
+            // Get the orders with pagination
+            $orders = $query->offset($offset)->limit($limit)->get();
+
+            // Manually fetch related user and product data
+            $grouped = $orders->map(function ($order) {
+                // Manually fetching user and product
+                $user = User::find($order->user);  // Find user by ID
+                $product = ProductModel::find($order->product);  // Find product by ID
+
+                return [
+                    'user' => $user ? [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'email' => $user->email,  // Add other user details as needed
+                    ] : null,  // If user is null, return null
+                    'orders' => [
+                        'order_id' => $order->id,
+                        'razorpay_order_id' => $order->razorpay_order_id,
+                        'amount' => $order->payment_amount,
+                        'status' => $order->status,
+                        'date' => $order->date,
+                        'product' => $product ? [
+                            'id' => $product->id,
+                            'name' => $product->name,
+                            'price' => $product->selling_price,  // Add other product details as needed
+                        ] : null,  // If product is null, return null
+                    ],
+                ];
+            });
+
+            return response()->json([
+                'code' => 200,
+                'success' => true,
+                'data' => $grouped,
+                'total_count' => $totalCount,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'code' => 500,
+                'success' => false,
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function toggleUserStatus(Request $request)
+    {
+        try {
+            $request->validate([
+                'user_id' => 'required|exists:users,id',
+                'is_active' => 'required|boolean',
+            ]);
+
+            $user = User::find($request->user_id);
+            $user->is_active = $request->is_active;
+            $user->save();
+
+            return response()->json([
+                'code' => 200,
+                'success' => true,
+                'message' => 'User status updated successfully.',
+                'data' => $user,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['code' => 500, 'success' => false, 'error' => $e->getMessage()], 500);
+        }
     }
 }

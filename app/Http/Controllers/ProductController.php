@@ -56,6 +56,7 @@ class ProductController extends Controller
                 'status' => $request->status ?? 'in-active',
                 'description' => $request->description,
                 'dimensions' => $request->dimensions,
+                'is_delete' => '0',
                 // 'image' => will be empty or null initially; handled in separate method
             ]);
 
@@ -84,7 +85,8 @@ class ProductController extends Controller
                     'user:id,name,phone,city',
                     'industryDetails:id,name',
                     'subIndustryDetails:id,name'
-                ])->find($id);
+                ])->where('is_delete', '0')
+                ->find($id);
 
                 if (!$product) {
                     return response()->json([
@@ -138,7 +140,7 @@ class ProductController extends Controller
                 'user:id,name,phone,city',
                 'industryDetails:id,name',
                 'subIndustryDetails:id,name'
-            ]);
+            ])->where('is_delete', '0');
 
             // 🔹 **Fix: Search in product_name, user->name, and user->city**
             if (!empty($search)) {
@@ -232,7 +234,6 @@ class ProductController extends Controller
         }
     }
 
-
     // for guest-user
     public function fetchOnlyProducts(Request $request, $id = null)
     {
@@ -243,7 +244,9 @@ class ProductController extends Controller
                     'user:id,name,city', // Removed phone number
                     'industryDetails:id,name',
                     'subIndustryDetails:id,name'
-                ])->find($id);
+                ])
+                ->where('is_delete', '0')
+                ->find($id);
 
                 if (!$product) {
                     return response()->json([
@@ -296,7 +299,7 @@ class ProductController extends Controller
                 'user:id,name,city', // Removed phone number
                 'industryDetails:id,name',
                 'subIndustryDetails:id,name'
-            ]);
+            ])->where('is_delete', '0');
 
             // 🔹 **Search in Product Name & User's City**
             if (!empty($search)) {
@@ -380,7 +383,6 @@ class ProductController extends Controller
         }
     }
 
-
     // update
     public function updateProduct(Request $request, $id)
     {
@@ -404,10 +406,10 @@ class ProductController extends Controller
                 'sub_industry' => 'sometimes|integer|exists:t_sub_industries,id',
                 'city' => 'sometimes|nullable|string|max:255', // Added city field
                 'state_id' => 'sometimes|nullable|integer|exists:t_states,id', // Added state_id validation
-                'status' => 'sometimes|in:active,in-active',
+                'status' => 'sometimes|in:active,in-active,sold',
                 'description' => 'sometimes|nullable|string',
                 'dimensions' => 'sometimes|nullable|string|max:256', // Added dimensions field
-                        ]);
+            ]);
 
             if ($validator->fails()) {
                 return response()->json([
@@ -700,6 +702,35 @@ class ProductController extends Controller
         }
     }
 
+    public function tempdeleteProduct($id)
+    {
+        try {
+            $product = ProductModel::find($id);
+
+            if (!$product) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Product not found!',
+                ], 200);
+            }
+
+            // Mark product as deleted (custom soft delete)
+            $product->is_delete = '1';
+            $product->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Product temporarily deleted successfully!',
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
     // delete product image
     // public function deleteProductImages(Request $request, $id)
     // {
@@ -934,5 +965,122 @@ class ProductController extends Controller
             ]
             
         ], 200);
+    }
+
+    public function admin_fetchProducts(Request $request)
+    {
+        try {
+            $query = ProductModel::with([
+                'industryDetails:id,name',
+                'subIndustryDetails:id,name',
+                'user:id,name'
+            ]);
+
+            if ($request->filled('product_name')) {
+                $query->where('product_name', 'LIKE', '%' . $request->product_name . '%');
+            }
+
+            if ($request->filled('industry')) {
+                $industries = explode(',', $request->industry);
+                $query->whereIn('industry', $industries);
+            }
+
+            if ($request->filled('sub_industry')) {
+                $subIndustries = explode(',', $request->sub_industry);
+                $query->whereIn('sub_industry', $subIndustries);
+            }
+
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            }
+
+            if ($request->filled('user')) {
+                $userIds = explode(',', $request->user);
+                $query->whereIn('user_id', $userIds);
+            }
+
+            $min = $request->input('min_amount', 0);
+            $max = $request->input('max_amount', ProductModel::max('selling_price'));
+            $query->whereBetween('selling_price', [$min, $max]);
+
+            $limit = $request->input('limit', 10);
+            $offset = $request->input('offset', 0);
+
+            // Clone query for accurate count before pagination
+            $totalCount = (clone $query)->count();
+
+            $products = $query->offset($offset)->limit($limit)->get();
+
+            // Map image ids to URLs and format final response
+            $formatted = $products->map(function ($product) {
+                // Resolve image URLs
+                $imageUrls = [];
+                if (!empty($product->image)) {
+                    $imageIds = explode(',', $product->image);
+                    $imageUrls = UploadModel::whereIn('id', $imageIds)
+                        ->pluck('file_url')
+                        ->map(fn($path) => url($path))
+                        ->values()
+                        ->toArray();
+                }
+
+                return [
+                    'id'              => $product->id,
+                    'product_id'      => $product->product_id,
+                    'product_name'    => $product->product_name,
+                    'original_price'  => $product->original_price,
+                    'selling_price'   => $product->selling_price,
+                    'offer_quantity'  => $product->offer_quantity,
+                    'minimum_quantity'=> $product->minimum_quantity,
+                    'unit'            => $product->unit,
+                    'description'     => $product->description,
+                    'dimensions'      => $product->dimensions,
+                    'validity'        => $product->validity,
+                    'status'          => $product->status,
+                    'image'           => $imageUrls,
+                    'industry'        => $product->industryDetails 
+                        ? ['id' => $product->industryDetails->id, 'name' => $product->industryDetails->name] 
+                        : null,
+                    'sub_industry'    => $product->subIndustryDetails 
+                        ? ['id' => $product->subIndustryDetails->id, 'name' => $product->subIndustryDetails->name] 
+                        : null,
+                    'user'            => $product->user 
+                        ? ['id' => $product->user->id, 'name' => $product->user->name] 
+                        : null,
+                ];
+            });
+
+            return response()->json([
+                'code'        => 200,
+                'success'     => true,
+                'data'        => $formatted,
+                'total_count' => $totalCount,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['code' => 500, 'success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function toggleProductStatus(Request $request)
+    {
+        try {
+            $request->validate([
+                'product_id' => 'required|exists:t_products,id',
+                'product_status' => 'required|in:active,in-active,sold',
+            ]);
+
+            $product = ProductModel::find($request->product_id);
+            $product->status = $request->product_status;
+            $product->save();
+
+            return response()->json([
+                'code' => 200,
+                'success' => true,
+                'message' => 'Product status updated successfully.',
+                'data' => $product,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['code' => 500, 'success' => false, 'error' => $e->getMessage()], 500);
+        }
     }
 }

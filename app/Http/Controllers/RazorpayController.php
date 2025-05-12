@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use App\Models\RazorpayOrdersModel;
 use App\Models\RazorpayPaymentsModel;
 use App\Models\ProductModel;
+use App\Models\CouponModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Razorpay\Api\Api;
@@ -60,38 +61,52 @@ class RazorpayController extends Controller
     public function processPayment(Request $request)
     {
         try {
-            // Validate the incoming request
+            // Validate input
             $request->validate([
                 'payment_amount' => 'required|numeric|min:1',
                 'product' => 'required|integer|exists:t_products,id',
+                'coupon' => 'nullable|string|exists:t_coupons,name',
                 'comments' => 'nullable|string',
             ]);
 
-            // Get authenticated user
+            // Authenticated user
             $user = Auth::user();
             if (!$user) {
                 return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
             }
 
-            // Pass the payment amount directly to createOrder
-            $razorpayResponse = $this->createOrder($request->payment_amount); // Pass amount directly
+            $couponId = null;
+            $finalAmount = $request->payment_amount;
 
+            // Check coupon
+            if ($request->coupon) {
+                $coupon = CouponModel::where('name', $request->coupon)->first();
 
-            // Store payment details in database
+                if ($coupon && $coupon->is_active === '1') {
+                    $finalAmount = max(0, $finalAmount - $coupon->value);
+                    $couponId = $coupon->id;
+                }
+            }
+
+            // Create Razorpay order using final amount
+            $razorpayResponse = $this->createOrder($finalAmount);
+
+            // Save order
             $payment = RazorpayOrdersModel::create([
                 'user' => $user->id,
                 'product' => $request->product,
-                'payment_amount' => $request->payment_amount,
+                'payment_amount' => $finalAmount, // Correct amount after discount
                 'razorpay_order_id' => $razorpayResponse['order_id'],
                 'status' => $razorpayResponse['order']['status'],
                 'comments' => $request->comments,
                 'date' => now()->toDateString(),
+                'coupon' => $couponId, // Save coupon if applicable
             ]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Payment processed successfully!',
-                'data' => $payment->makeHidden(['updated_at', 'created_at'])
+                'data' => $payment->makeHidden(['created_at', 'updated_at']),
             ], 201);
 
         } catch (\Exception $e) {
@@ -101,6 +116,7 @@ class RazorpayController extends Controller
             ], 500);
         }
     }
+
 
     /**
      * Fetch payments for the logged-in user (or admin-provided user_id)
