@@ -38,18 +38,14 @@ class ImportController extends Controller
                 // Get the city name using CityModel (assuming city_id is the city_id in the API)
                 $cityName = CityModel::where('id', $user['city_id'])->first()->name ?? null;
             
-                // Skip if mobile number is duplicate, and email is not duplicate
-                if ($existingUserByMobile && !$existingUserByEmail) {
-                    // Skip the current iteration (do not insert or update)
-                    continue;
-                }
-            
-                // If the user exists by email, update it. Otherwise, create a new record
-                if ($existingUserByEmail) {
+                // If mobile or email already exists, update it
+                if ($existingUserByEmail || $existingUserByMobile) {
                     // Handle "gstin" being a space, set it to NULL
                     $gstin = ($user['gst_no'] === " " || $user['gst_no'] === "test") ? null : $user['gst_no'];
 
-                    $existingUserByEmail->update([
+                    // Update the existing user (mobile or email)
+                    $existingUser = $existingUserByEmail ?? $existingUserByMobile;
+                    $existingUser->update([
                         'user_id' => $user['id'],
                         'name' => $user['fullname'],
                         'email' => $user['email'],
@@ -69,7 +65,7 @@ class ImportController extends Controller
                     // Handle "gstin" being a space, set it to NULL
                     $gstin = ($user['gst_no'] === " " || $user['gst_no'] === "test") ? null : $user['gst_no'];
 
-                    // If user doesn't exist by email, create a new user
+                    // If user doesn't exist by email or mobile, create a new user
                     User::create([
                         'user_id' => $user['id'],
                         'name' => $user['fullname'],
@@ -88,7 +84,6 @@ class ImportController extends Controller
                     ]);
                 }
             }
-            
 
             return response()->json(['status' => true, 'message' => 'Users imported successfully']);
         }
@@ -96,6 +91,7 @@ class ImportController extends Controller
         // If API call fails
         return response()->json(['status' => false, 'message' => 'Failed to fetch users from API']);
     }
+
 
     // Method to import products from external API
     public function importProducts()
