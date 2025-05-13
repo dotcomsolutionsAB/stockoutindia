@@ -190,6 +190,10 @@ class AuthController extends Controller
             // Invalidate old tokens (if any)
             //$user->tokens()->delete();
 
+            if($user->name == '') {
+                $user->name = 'User';
+            }
+
             // Send password to user's email
             Mail::to($user->email)->send(new SendNewPassword($user->name, $newPassword));
 
