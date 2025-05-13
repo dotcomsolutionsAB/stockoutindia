@@ -141,7 +141,7 @@ class ProductController extends Controller
                 'user:id,name,phone,city',
                 'industryDetails:id,name',
                 'subIndustryDetails:id,name'
-            ])->where('is_delete', '0')->where('status', 'active');
+            ])->where('is_delete', '0');
 
             // 🔹 **Fix: Search in product_name, user->name, and user->city**
             if (!empty($search)) {
@@ -162,6 +162,13 @@ class ProductController extends Controller
                         $q->whereIn('city', $cities);
                     });
                 });
+            }
+
+            // 🔹 Conditional logic for status
+            if (!empty($userIds)) {
+                $query->whereIn('user_id', $userIds); // Don't filter by status
+            } else {
+                $query->where('status', 'active'); // Apply status only if user_id not provided
             }
 
             // Apply Filters if Provided
