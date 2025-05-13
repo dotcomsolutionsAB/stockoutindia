@@ -24,70 +24,70 @@ class AuthController extends Controller
     // user `login`
     public function login(Request $request)
     {
-        try {
+        try 
+        {
+            // Step 1: Check if logging in via Google
+            if ($request->has('idToken')) {
+                $request->validate([
+                    'idToken' => 'required|string',
+                ]);
 
-        // Step 1: Check if logging in via Google
-        if ($request->has('idToken')) {
-            $request->validate([
-                'idToken' => 'required|string',
-            ]);
+                // Call the reusable function
+                $payload = $this->googleAuth->verifyGoogleToken(
+                    $request->idToken,
+                    env('GOOGLE_CLIENT_ID')
+                );
 
-        // Call the reusable function
-        $payload = $this->googleAuth->verifyGoogleToken(
-            $request->idToken,
-            env('GOOGLE_CLIENT_ID')
-        );
+                if (!$payload) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Invalid or expired Google ID token.',
+                    ], 401);
+                }
 
-        if (!$payload) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Invalid or expired Google ID token.',
-            ], 401);
-        }
+                // Extract user info from payload
+                $email = $payload['email'] ?? null;
+                $googleId = $payload['sub'] ?? null;
 
-        // Extract user info from payload
-        $email = $payload['email'] ?? null;
-        $googleId = $payload['sub'] ?? null;
+                $user = User::where('email', $email)->first();
 
-        $user = User::where('email', $email)->first();
+                if ($user) {
+                    if ($user->is_active == 0) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Your account is inactive. Please contact support.',
+                        ], 403);
+                    }
 
-        if ($user) {
-            if ($user->is_active == 0) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Your account is inactive. Please contact support.',
-                ], 403);
+                    if ($user->google_id !== $googleId) {
+                        $user->google_id = $googleId;
+                        $user->save();
+                    }
+
+                    $token = $user->createToken('API TOKEN')->plainTextToken;
+
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Google login successful.',
+                        'account_created' => true,
+                        'data' => [
+                            'token' => $token,
+                            'user_id' => $user->id,
+                            'name' => $user->name,
+                            'role' => $user->role,
+                            'username' => $user->username,
+                        ]
+                    ], 200);
+                } else {
+                    return response()->json([
+                        'success' => true,
+                        'account_created' => false,
+                        'message' => 'User not found. Proceed to registration.',
+                    ], 200);
+                }
             }
 
-            if ($user->google_id !== $googleId) {
-                $user->google_id = $googleId;
-                $user->save();
-            }
-
-            $token = $user->createToken('API TOKEN')->plainTextToken;
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Google login successful.',
-                'account_created' => true,
-                'data' => [
-                    'token' => $token,
-                    'user_id' => $user->id,
-                    'name' => $user->name,
-                    'role' => $user->role,
-                    'username' => $user->username,
-                ]
-            ], 200);
-            } else {
-                return response()->json([
-                    'success' => true,
-                    'account_created' => false,
-                    'message' => 'User not found. Proceed to registration.',
-                ], 200);
-            }
-        }
-
-        // Step 2: Fallback to standard username/password login
+            // Step 2: Fallback to standard username/password login
 
             $request->validate([
                 'username' => 'required|string',
@@ -103,7 +103,7 @@ class AuthController extends Controller
             {
                 $user = Auth::user();
 
-                 // Check if the user is inactive
+                // Check if the user is inactive
                 if ($user->is_active == 0) {
                     return response()->json([
                         'success' => false,
@@ -137,7 +137,8 @@ class AuthController extends Controller
                     'message' => 'Invalid Username or Password.',
                 ], 200);
             }
-        } catch (\Exception $e) {
+        } 
+        catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Something went wrong.',
