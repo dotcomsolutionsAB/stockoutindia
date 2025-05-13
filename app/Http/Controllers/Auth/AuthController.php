@@ -103,14 +103,16 @@ class AuthController extends Controller
                         'message' => 'User not found. Proceed to registration.',
                     ], 200);
                 }
+
+                Log::warning('No idToken provided in the request.');
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No idToken provided.',
+                ], 400);
+
             }
 
-            Log::warning('No idToken provided in the request.');
-            return response()->json([
-                'success' => false,
-                'message' => 'No idToken provided.',
-            ], 400);
-
+            
             // Step 2: Fallback to standard username/password login
 
             $request->validate([
