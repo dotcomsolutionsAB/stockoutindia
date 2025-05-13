@@ -86,7 +86,7 @@ class ProductController extends Controller
                     'industryDetails:id,name',
                     'subIndustryDetails:id,name'
                 ])->where('is_delete', '0')
-                ->where('status', 'active')
+                // ->where('status', 'active')
                 ->find($id);
 
                 if (!$product) {
