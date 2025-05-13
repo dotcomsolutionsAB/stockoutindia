@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use App\Mail\SendNewPassword;
 use App\Models\User;
+use Illuminate\Support\Facades\Log;
 use Auth;
 
 class AuthController extends Controller
@@ -28,9 +29,12 @@ class AuthController extends Controller
         {
             // Step 1: Check if logging in via Google
             if ($request->has('idToken')) {
+                Log::info('Google login attempt started.');
+
                 $request->validate([
                     'idToken' => 'required|string',
                 ]);
+                Log::info('idToken validation passed.');
 
                 // Call the reusable function
                 $payload = $this->googleAuth->verifyGoogleToken(
@@ -39,20 +43,29 @@ class AuthController extends Controller
                 );
 
                 if (!$payload) {
+                    Log::warning('Invalid or expired Google ID token.');
+
                     return response()->json([
                         'success' => false,
                         'message' => 'Invalid or expired Google ID token.',
                     ], 401);
                 }
 
+                Log::info('Google ID token verified successfully.');
+
                 // Extract user info from payload
                 $email = $payload['email'] ?? null;
                 $googleId = $payload['sub'] ?? null;
+                Log::info('Extracted email: ' . $email . ', Google ID: ' . $googleId);
 
                 $user = User::where('email', $email)->first();
 
                 if ($user) {
+                    Log::info('User found: ' . $user->name);
+
                     if ($user->is_active == 0) {
+                        Log::warning('User account is inactive: ' . $user->name);
+
                         return response()->json([
                             'success' => false,
                             'message' => 'Your account is inactive. Please contact support.',
@@ -60,11 +73,14 @@ class AuthController extends Controller
                     }
 
                     if ($user->google_id !== $googleId) {
+                        Log::info('Updating Google ID for user: ' . $user->name);
                         $user->google_id = $googleId;
                         $user->save();
                     }
 
                     $token = $user->createToken('API TOKEN')->plainTextToken;
+
+                    Log::info('Google login successful for user: ' . $user->name);
 
                     return response()->json([
                         'success' => true,
@@ -79,6 +95,8 @@ class AuthController extends Controller
                         ]
                     ], 200);
                 } else {
+                    Log::info('User not found with email: ' . $email);
+
                     return response()->json([
                         'success' => true,
                         'account_created' => false,
@@ -86,6 +104,12 @@ class AuthController extends Controller
                     ], 200);
                 }
             }
+
+            Log::warning('No idToken provided in the request.');
+            return response()->json([
+                'success' => false,
+                'message' => 'No idToken provided.',
+            ], 400);
 
             // Step 2: Fallback to standard username/password login
 
