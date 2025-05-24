@@ -7,6 +7,8 @@ use Firebase\JWT\JWK;
 use Exception;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+
 
 class AppleAuthService
 {
@@ -25,6 +27,12 @@ class AppleAuthService
         try {
             $appleKeys = $this->getAppleKeys();
 
+            \Log::info('About to call JWT::decode', [
+                'idToken' => $idToken,
+                'keys' => $appleKeys,
+                'algs' => ['RS256']
+            ]);
+            
             $decodedPayload = JWT::decode($idToken, JWK::parseKeySet($appleKeys), ['RS256']);
             $payloadArray = json_decode(json_encode($decodedPayload), true);
 
