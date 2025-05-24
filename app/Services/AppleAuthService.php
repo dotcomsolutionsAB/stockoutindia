@@ -36,11 +36,11 @@ class AppleAuthService
             $decodedPayload = JWT::decode($idToken, JWK::parseKeySet($appleKeys));
             $payloadArray = json_decode(json_encode($decodedPayload), true);
 
-            if (($payloadArray['aud'] ?? null) !== $clientId) {
-                throw new Exception('Invalid audience.');
+            if ($payloadArray) {
+                return $payloadArray;
             }
 
-            return $payloadArray;
+            throw new Exception('Invalid or expired token.');
         } catch (Exception $e) {
             \Log::error('Apple Token Verification Failed: ' . $e->getMessage());
             throw $e;
