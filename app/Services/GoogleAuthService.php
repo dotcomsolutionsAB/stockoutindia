@@ -2,28 +2,43 @@
 
 namespace App\Services;
 
-use Google_Client;
+use Firebase\JWT\JWT;
+use Firebase\JWT\JWK;
 use Exception;
+use Illuminate\Support\Facades\Http;
 
 class GoogleAuthService
 {
+    private const GOOGLE_KEYS_URL = 'https://www.googleapis.com/oauth2/v3/certs';
+
     /**
-     * Verify a Google ID token
+     * Verify a Google ID token with leeway
      *
      * @param string $idToken The ID token to verify
-     * @param string $audience Your Google Client ID
+     * @param string $clientId Your Google Client ID (audience)
      * @return array The decoded payload data
      * @throws Exception If token verification fails
      */
-    public function verifyGoogleToken(string $idToken, string $audience): array
+    public function verifyGoogleToken(string $idToken, string $clientId): array
     {
-        $client = new Google_Client(['client_id' => $audience]);
-
         try {
-            $payload = $client->verifyIdToken($idToken);
+            // Fetch Google's public keys (optional cache can be added)
+            $response = Http::get(self::GOOGLE_KEYS_URL);
+            if (!$response->successful()) {
+                throw new Exception('Failed to fetch Google public keys.');
+            }
+            $googleKeys = $response->json();
 
-            if ($payload) {
-                return $payload;
+            // Set leeway in seconds (e.g., 60 seconds)
+            JWT::$leeway = 60;
+
+            // Decode JWT with JWK
+            $decodedPayload = JWT::decode($idToken, JWK::parseKeySet($googleKeys), ['RS256']);
+            $payloadArray = json_decode(json_encode($decodedPayload), true);
+
+            // Validate audience (client ID)
+            if ($payloadArray) {
+                return $payloadArray;
             }
 
             throw new Exception('Invalid or expired token.');
