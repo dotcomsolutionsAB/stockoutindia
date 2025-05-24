@@ -32,18 +32,23 @@ class AppleAuthService
                 return $response->json();
             });
 
+            // Correct call to decode (no third parameter)
             $decodedPayload = JWT::decode($idToken, JWK::parseKeySet($appleKeys), ['RS256']);
 
-            // Verify audience
-            if ($decodedPayload->aud !== $clientId) {
+            // Convert the decoded payload (which is a stdClass) to an array
+            $payloadArray = json_decode(json_encode($decodedPayload), true);
+
+            // Validate the audience
+            if (($payloadArray['aud'] ?? null) !== $clientId) {
                 throw new Exception('Invalid audience.');
             }
 
-            // Convert payload to array
-            return (array)$decodedPayload;
+            return $payloadArray;
+
         } catch (Exception $e) {
             \Log::error('Apple Token Verification Failed: ' . $e->getMessage());
             throw $e;
         }
     }
+
 }
