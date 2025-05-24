@@ -33,7 +33,7 @@ class AppleAuthService
                 'algs' => ['RS256']
             ]);
             
-            $decodedPayload = JWT::decode($idToken, JWK::parseKeySet($appleKeys), ['RS256']);
+            $decodedPayload = JWT::decode($idToken, JWK::parseKeySet($appleKeys));
             $payloadArray = json_decode(json_encode($decodedPayload), true);
 
             if (($payloadArray['aud'] ?? null) !== $clientId) {
