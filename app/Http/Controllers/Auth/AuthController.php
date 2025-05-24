@@ -17,11 +17,14 @@ class AuthController extends Controller
 {
     //
     protected $googleAuth;
+    protected $appleAuth;
 
-    public function __construct(GoogleAuthService $googleAuth)
+    public function __construct(GoogleAuthService $googleAuth, AppleAuthService $appleAuth)
     {
         $this->googleAuth = $googleAuth;
+        $this->appleAuth = $appleAuth;
     }
+
 
     // user `login`
     public function login(Request $request)
