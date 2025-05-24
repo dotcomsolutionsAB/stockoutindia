@@ -32,8 +32,14 @@ class GoogleAuthService
             // Set leeway in seconds (e.g., 60 seconds)
             JWT::$leeway = 60;
 
+            \Log::info('Google Sign In About to call JWT::decode', [
+                'idToken' => $idToken,
+                'keys' => $appleKeys,
+                'algs' => ['RS256']
+            ]);
+
             // Decode JWT with JWK
-            $decodedPayload = JWT::decode($idToken, JWK::parseKeySet($googleKeys), ['RS256']);
+            $decodedPayload = JWT::decode($idToken, JWK::parseKeySet($googleKeys));
             $payloadArray = json_decode(json_encode($decodedPayload), true);
 
             // Validate audience (client ID)
