@@ -8,6 +8,7 @@ use App\Models\RazorpayOrdersModel;
 use App\Models\Users;
 use App\Models\ProductModel;
 use App\Models\UploadModel;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use App\Services\GoogleAuthService;
