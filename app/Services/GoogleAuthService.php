@@ -34,7 +34,7 @@ class GoogleAuthService
 
             \Log::info('Google Sign In About to call JWT::decode', [
                 'idToken' => $idToken,
-                'keys' => $appleKeys,
+                'keys' => $googleKeys,
                 'algs' => ['RS256']
             ]);
 
