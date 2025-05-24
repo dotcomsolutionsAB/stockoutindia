@@ -33,7 +33,9 @@ class AppleAuthService
             });
 
             // Correct call to decode (no third parameter)
-            $decodedPayload = JWT::decode($idToken, JWK::parseKeySet($appleKeys), ['RS256']);
+            $headers = [];
+            $decodedPayload = JWT::decode($idToken, JWK::parseKeySet($appleKeys), ['RS256'], $headers);
+
 
             // Convert the decoded payload (which is a stdClass) to an array
             $payloadArray = json_decode(json_encode($decodedPayload), true);
