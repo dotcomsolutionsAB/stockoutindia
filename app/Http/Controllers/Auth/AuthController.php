@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 use App\Services\GoogleAuthService;
+use App\Services\AppleAuthService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -111,6 +112,72 @@ class AuthController extends Controller
                 ], 400);
 
             }
+
+            if ($request->has('appleIdToken')) {
+                Log::info('Apple login attempt started.');
+            
+                $request->validate([
+                    'appleIdToken' => 'required|string',
+                ]);
+            
+                $payload = $this->appleAuth->verifyAppleToken(
+                    $request->appleIdToken,
+                    env('APPLE_CLIENT_ID') // Replace with your Apple Service ID
+                );
+            
+                if (!$payload) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Invalid or expired Apple ID token.',
+                    ], 401);
+                }
+            
+                $email = $payload['email'] ?? null; // Might not always be present
+                $appleSub = $payload['sub'] ?? null; // Unique Apple user ID
+            
+                $user = User::where('apple_id', $appleSub)->first();
+            
+                if (!$user && $email) {
+                    // Try finding by email (if user used Apple with email)
+                    $user = User::where('email', $email)->first();
+                }
+            
+                if ($user) {
+                    if ($user->is_active == 0) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Your account is inactive. Please contact support.',
+                        ], 403);
+                    }
+            
+                    if ($user->apple_id !== $appleSub) {
+                        $user->apple_id = $appleSub;
+                        $user->save();
+                    }
+            
+                    $token = $user->createToken('API TOKEN')->plainTextToken;
+            
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Apple login successful.',
+                        'account_created' => true,
+                        'data' => [
+                            'token' => $token,
+                            'user_id' => $user->id,
+                            'name' => $user->name,
+                            'role' => $user->role,
+                            'username' => $user->username,
+                        ]
+                    ], 200);
+                } else {
+                    return response()->json([
+                        'success' => true,
+                        'account_created' => false,
+                        'message' => 'User not found. Proceed to registration.',
+                    ], 200);
+                }
+            }
+            
 
             
             // Step 2: Fallback to standard username/password login
