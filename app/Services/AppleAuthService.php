@@ -32,6 +32,9 @@ class AppleAuthService
                 'keys' => $appleKeys,
                 'algs' => ['RS256']
             ]);
+
+            // Set leeway in seconds (e.g., 60 seconds)
+            JWT::$leeway = 60;
             
             $decodedPayload = JWT::decode($idToken, JWK::parseKeySet($appleKeys));
             $payloadArray = json_decode(json_encode($decodedPayload), true);
