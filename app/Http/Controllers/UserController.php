@@ -11,15 +11,18 @@ use App\Models\UploadModel;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use App\Services\GoogleAuthService;
+use App\Services\AppleAuthService;
 use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
     protected $googleAuth;
+    protected $appleAuth;
 
-    public function __construct(GoogleAuthService $googleAuth)
+    public function __construct(GoogleAuthService $googleAuth, AppleAuthService $appleAuth)
     {
         $this->googleAuth = $googleAuth;
+        $this->appleAuth = $appleAuth;
     }
     // create
     // public function register(Request $request)
@@ -140,6 +143,28 @@ class UserController extends Controller
                 $googleId = $payload['sub'] ?? null;
             }
 
+            $apple_id_token = $request->input('appleIdToken'); // idToken from Google
+            $appleEmail = null;
+            $appleId = null;
+
+            // Step 1: If idToken is provided, verify it
+            if ($apple_id_token) {
+                $payload = $this->appleAuth->verifyAppleToken(
+                    $apple_id_token,
+                    env('APPLE_CLIENT_ID')
+                );
+
+                if (!$payload) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Invalid or expired Google ID token.',
+                    ], 401);
+                }
+
+                $appleEmail = $payload['email'] ?? null;
+                $appleId = $payload['sub'] ?? null;
+            }
+
             // Step 2: Dynamically set validation rules
             $rules = [
                 'role' => ['required', Rule::in(['admin', 'user'])],
@@ -155,7 +180,7 @@ class UserController extends Controller
                 'sub_industry' => 'nullable|integer|exists:t_sub_industries,id',
             ];
 
-            if (!$googleId) {
+            if (!$googleId && !$appleId) {
                 $rules['email'] = ['required', 'email', 'unique:users,email'];
             }
 
@@ -175,12 +200,20 @@ class UserController extends Controller
                 ], 200);
             }
 
+            if ($appleEmail && User::where('email', $appleEmail)->exists()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'The email associated with the Apple account is already in use.',
+                ], 200);
+            }
+
             // Create User
             $user = User::create([
                 'name' => $request->name,
                 'email' => $googleEmail ?? $request->email,
                 'password' => $request->password ? bcrypt($request->password) : bcrypt(Str::random(16)),
                 'google_id' => $googleId,
+                'apple_id' => $appleId,
                 'role' => $request->role,
                 'username' => $request->phone,
                 'phone' => $request->phone,
@@ -202,6 +235,24 @@ class UserController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'User registered successfully via Google!',
+                    'account_created' => true,
+                    'data' => [
+                        'token' => $token,
+                        'user_id' => $user->id,
+                        'name' => $user->name,
+                        'role' => $user->role,
+                        'username' => $user->username,
+                    ]
+                ], 201);
+            }
+
+            // If registered via Apple, generate and return the token
+            if ($appleId) {
+                $token = $user->createToken('API TOKEN')->plainTextToken;
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'User registered successfully via Apple!',
                     'account_created' => true,
                     'data' => [
                         'token' => $token,
