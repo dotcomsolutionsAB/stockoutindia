@@ -243,6 +243,7 @@ class UserController extends Controller
                         'name' => $user->name,
                         'role' => $user->role,
                         'username' => $user->username,
+                        'email' => $user->email,
                     ]
                 ], 201);
             }
@@ -261,6 +262,7 @@ class UserController extends Controller
                         'name' => $user->name,
                         'role' => $user->role,
                         'username' => $user->username,
+                        'email' => $user->email,
                     ]
                 ], 201);
             }
