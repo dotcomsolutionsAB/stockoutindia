@@ -170,7 +170,8 @@ class UserController extends Controller
             \Log::info('Register using Apple : ', [
                     'apple_id_token' => $apple_id_token,
                     'appleEmail' => $appleEmail,
-                    'appleId' => $appleId
+                    'appleId' => $appleId,
+                    'request' => json_encode($request->all()),
                 ]);
 
             // Step 2: Dynamically set validation rules
