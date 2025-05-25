@@ -27,11 +27,11 @@ class AppleAuthService
         try {
             $appleKeys = $this->getAppleKeys();
 
-            \Log::info('About to call JWT::decode', [
-                'idToken' => $idToken,
-                'keys' => $appleKeys,
-                'algs' => ['RS256']
-            ]);
+            // \Log::info('About to call JWT::decode', [
+            //     'idToken' => $idToken,
+            //     'keys' => $appleKeys,
+            //     'algs' => ['RS256']
+            // ]);
 
             // Set leeway in seconds (e.g., 60 seconds)
             JWT::$leeway = 60;

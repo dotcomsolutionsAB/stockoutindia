@@ -14,6 +14,7 @@ use Illuminate\Validation\Rule;
 use App\Services\GoogleAuthService;
 use App\Services\AppleAuthService;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
@@ -165,6 +166,12 @@ class UserController extends Controller
                 $appleEmail = $payload['email'] ?? null;
                 $appleId = $payload['sub'] ?? null;
             }
+
+            \Log::info('Register using Apple : ', [
+                    'apple_id_token' => $apple_id_token,
+                    'appleEmail' => $appleEmail,
+                    'appleId' => $appleId
+                ]);
 
             // Step 2: Dynamically set validation rules
             $rules = [
