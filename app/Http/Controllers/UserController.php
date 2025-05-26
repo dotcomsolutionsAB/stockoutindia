@@ -237,6 +237,14 @@ class UserController extends Controller
                 'sub_industry' => $request->sub_industry,
             ]);
 
+            // Send signup confirmation email
+            try {
+                Mail::to($user->email)->send(new SignupConfirmationMail($user->name));
+            } catch (\Exception $mailEx) {
+                // Log the error, but do not fail the registration for email issues
+                \Log::error('Failed to send signup confirmation email: '.$mailEx->getMessage());
+            }
+
             // If registered via Google, generate and return the token
             if ($googleId) {
                 $token = $user->createToken('API TOKEN')->plainTextToken;
