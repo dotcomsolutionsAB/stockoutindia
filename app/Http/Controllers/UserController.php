@@ -15,6 +15,7 @@ use App\Services\GoogleAuthService;
 use App\Services\AppleAuthService;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class UserController extends Controller
 {
