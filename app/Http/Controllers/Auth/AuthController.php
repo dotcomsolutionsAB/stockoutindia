@@ -60,7 +60,7 @@ class AuthController extends Controller
                 // Extract user info from payload
                 $email = $payload['email'] ?? null;
                 $googleId = $payload['sub'] ?? null;
-                Log::info('Extracted email: ' . $email . ', Google ID: ' . $googleId);
+                Log::info('Extracted email: ' . $email . ', Google ID: ' . $googleId . ', Payload: ' . json_encode($payload));
 
                 $user = User::where('email', $email)->first();
 
@@ -138,6 +138,7 @@ class AuthController extends Controller
             
                 $email = $payload['email'] ?? null; // Might not always be present
                 $appleSub = $payload['sub'] ?? null; // Unique Apple user ID
+                Log::info('Extracted email: ' . $email . ', Google ID: ' . $appleSub . ', Payload: ' . json_encode($payload));
             
                 $user = User::where('apple_id', $appleSub)->first();
             
