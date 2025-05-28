@@ -143,6 +143,10 @@ class UserController extends Controller
                     ], 401);
                 }
 
+                \Log::info('Google Sign In : ', [
+                    'payload' => $payload,
+                ]);
+
                 $googleEmail = $payload['email'] ?? null;
                 $googleId = $payload['sub'] ?? null;
             }
@@ -164,6 +168,10 @@ class UserController extends Controller
                         'message' => 'Invalid or expired Google ID token.',
                     ], 401);
                 }
+
+                \Log::info('Google Sign In : ', [
+                    'payload' => $payload,
+                ]);
 
                 $appleEmail = $payload['email'] ?? null;
                 $appleId = $payload['sub'] ?? null;
