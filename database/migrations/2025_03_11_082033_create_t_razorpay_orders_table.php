@@ -16,7 +16,7 @@ return new class extends Migration
             $table->unsignedBigInteger('user'); // User from Auth
             $table->unsignedBigInteger('product'); // Product ID from frontend
             $table->float('payment_amount', 10, 2); // Payment amount
-            $table->integer('coupon'); // coupon id
+            $table->integer('coupon')->nullable(); // coupon id
             $table->string('razorpay_order_id')->unique(); // Razorpay Order ID
             $table->string('status'); // Payment status from Razorpay
             $table->text('comments')->nullable(); // Optional user comments
