@@ -15,6 +15,8 @@ class ImportController extends Controller
     // Method to import users from external API
     public function importUsers()
     {
+        set_time_limit(300); // 5 minutes
+
         // Fetch the users from the external API
         $response = Http::get('https://stockout.ongoingsites.xyz/get_users.php'); // Replace with your Users API URL
         
