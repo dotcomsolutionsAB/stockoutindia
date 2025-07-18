@@ -16,7 +16,7 @@ class ImportController extends Controller
     public function importUsers()
     {
         // Fetch the users from the external API
-        $response = Http::get('http://sync.stockoutindia.com/get_users.php'); // Replace with your Users API URL
+        $response = Http::get('https://stockout.ongoingsites.xyz/get_users.php'); // Replace with your Users API URL
         
         // Check if the response is successful
         if ($response->successful()) {
@@ -101,7 +101,7 @@ class ImportController extends Controller
     public function importProducts()
     {
         // Fetch the products from the external API
-        $response = Http::get('http://sync.stockoutindia.com/get_products.php');
+        $response = Http::get('https://stockout.ongoingsites.xyz/get_products.php');
 
         // Check if the response is successful
         if ($response->successful()) {
