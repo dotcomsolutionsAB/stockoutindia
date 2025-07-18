@@ -52,7 +52,7 @@ class ImportController extends Controller
                         'user_id' => $user['id'],
                         'name' => $user['fullname'],
                         'email' => $user['email'],
-                        'password' => bcrypt($user['password']),
+                        'password' => $user['password'], // if already hashed
                         'role' => 'user', // You can modify this based on your logic
                         'username' => $username, // Set username as phone with +91, or keep existing one if it already exists
                         'phone' => $phoneWithPrefix, // Set phone with +91
