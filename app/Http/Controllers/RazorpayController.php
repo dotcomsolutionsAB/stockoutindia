@@ -78,6 +78,7 @@ class RazorpayController extends Controller
 
             $couponId = null;
             $finalAmount = $request->payment_amount;
+            dd($finalAmount);
 
             // Check coupon
             if ($request->coupon) {
