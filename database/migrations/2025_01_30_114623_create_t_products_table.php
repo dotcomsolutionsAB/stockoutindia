@@ -29,6 +29,7 @@ return new class extends Migration
             $table->longText('description')->nullable();
             $table->string('dimensions', 256)->nullable();
             $table->date('validity')->nullable();
+            $table->integer('is_delete')->default('0');
             $table->timestamps();
         });
     }
