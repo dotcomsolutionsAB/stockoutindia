@@ -49,7 +49,7 @@ Route::prefix('sub_industry')->group(function () {
     Route::delete('/{id}', [SubIndustryController::class, 'deleteSubIndustry']); // Delete a specific review record
 });
 
-Route::post('/get_products/{id?}', [ProductController::class, 'fetchOnlyProducts']); // Retrieve product (all or specific)
+Route::get('/get_products/{id?}', [ProductController::class, 'fetchOnlyProducts']); // Retrieve product (all or specific)
 
 Route::get('/countries', [MasterController::class, 'fetchAllCountries']);
 Route::get('/states', [MasterController::class, 'fetchAllStates']);
