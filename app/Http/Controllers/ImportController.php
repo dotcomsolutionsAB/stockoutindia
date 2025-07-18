@@ -102,6 +102,7 @@ class ImportController extends Controller
     // Method to import products from external API
     public function importProducts()
     {
+        set_time_limit(600); // 5 minutes
         // Fetch the products from the external API
         $response = Http::get('https://stockout.ongoingsites.xyz/get_products.php');
 
