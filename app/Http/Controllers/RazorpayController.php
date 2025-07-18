@@ -78,7 +78,6 @@ class RazorpayController extends Controller
 
             $couponId = null;
             $finalAmount = $request->payment_amount;
-            dd($finalAmount);
 
             // Check coupon
             if ($request->coupon) {
@@ -92,6 +91,7 @@ class RazorpayController extends Controller
 
             // Create Razorpay order using final amount
             $razorpayResponse = $this->createOrder($finalAmount);
+            dd($razorpayResponse);
 
             // Save order
             $payment = RazorpayOrdersModel::create([
