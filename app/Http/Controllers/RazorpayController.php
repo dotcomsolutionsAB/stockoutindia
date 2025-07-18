@@ -39,6 +39,7 @@ class RazorpayController extends Controller
 
             // Create Order in Razorpay
             $order = $this->razorpay->order->create($orderData);
+            dd($order);
             $orderId = $order['id'];
 
             return [
