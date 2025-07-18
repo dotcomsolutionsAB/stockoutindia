@@ -39,7 +39,6 @@ class RazorpayController extends Controller
 
             // Create Order in Razorpay
             $order = $this->razorpay->order->create($orderData);
-            dd($order);
             $orderId = $order['id'];
 
             return [
@@ -91,7 +90,6 @@ class RazorpayController extends Controller
 
             // Create Razorpay order using final amount
             $razorpayResponse = $this->createOrder($finalAmount);
-            dd($razorpayResponse);
 
             // Save order
             $payment = RazorpayOrdersModel::create([
