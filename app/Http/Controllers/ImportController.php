@@ -15,8 +15,10 @@ class ImportController extends Controller
     // Method to import users from external API
     public function importUsers()
     {
+        set_time_limit(300); // 5 minutes
+
         // Fetch the users from the external API
-        $response = Http::get('http://sync.stockoutindia.com/get_users.php'); // Replace with your Users API URL
+        $response = Http::get('https://stockout.ongoingsites.xyz/get_users.php'); // Replace with your Users API URL
         
         // Check if the response is successful
         if ($response->successful()) {
@@ -52,7 +54,7 @@ class ImportController extends Controller
                         'user_id' => $user['id'],
                         'name' => $user['fullname'],
                         'email' => $user['email'],
-                        'password' => bcrypt($user['password']),
+                        'password' => $user['password'], // if already hashed
                         'role' => 'user', // You can modify this based on your logic
                         'username' => $username, // Set username as phone with +91, or keep existing one if it already exists
                         'phone' => $phoneWithPrefix, // Set phone with +91
@@ -100,8 +102,9 @@ class ImportController extends Controller
     // Method to import products from external API
     public function importProducts()
     {
+        set_time_limit(600); // 5 minutes
         // Fetch the products from the external API
-        $response = Http::get('http://sync.stockoutindia.com/get_products.php');
+        $response = Http::get('https://stockout.ongoingsites.xyz/get_products.php');
 
         // Check if the response is successful
         if ($response->successful()) {
