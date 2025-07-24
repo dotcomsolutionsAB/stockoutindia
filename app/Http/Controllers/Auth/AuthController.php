@@ -311,7 +311,7 @@ class AuthController extends Controller
                 'code' => 200,
                 'success' => true,
                 'message' => 'New password has been sent to your email address.',
-                // 'password' => $newPassword,
+                'password' => $newPassword,
             ]);
         } catch (\Exception $e) {
             return response()->json([
