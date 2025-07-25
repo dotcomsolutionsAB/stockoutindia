@@ -78,7 +78,6 @@ class RazorpayController extends Controller
             $couponId = null;
             $finalAmount = $request->payment_amount;
 
-            // Apply coupon
             // Check coupon
             if ($request->coupon) {
                 $coupon = CouponModel::where('name', $request->coupon)->first();
@@ -89,27 +88,6 @@ class RazorpayController extends Controller
                 }
             }
 
-            // If finalAmount = 0, mark as paid (skip Razorpay)
-            if ($finalAmount == 0) {
-                $payment = RazorpayOrdersModel::create([
-                    'user'            => $user->id,
-                    'product'         => $request->product,
-                    'payment_amount'  => 0,
-                    'razorpay_order_id' => null,
-                    'status'          => 'paid_via_coupon',  // Custom status
-                    'comments'        => $request->comments,
-                    'date'            => now()->toDateString(),
-                    'coupon'          => $couponId,
-                ]);
-
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Payment completed using coupon.',
-                    'data'    => $payment->makeHidden(['created_at', 'updated_at']),
-                ], 201);
-            }
-
-            // Otherwise, create Razorpay order
             // Create Razorpay order using final amount
             $razorpayResponse = $this->createOrder($finalAmount);
 
