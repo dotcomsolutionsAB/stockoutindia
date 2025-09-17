@@ -107,6 +107,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::delete('/{id}', [CouponController::class, 'destroy']); // Update a specific user
     });
 
+    Route::post('/key', [RazorpayController::class, 'key']);
     Route::post('/make_payment', [RazorpayController::class, 'processPayment']);
     Route::post('/fetch_payment', [RazorpayController::class, 'fetchPayments']);
 

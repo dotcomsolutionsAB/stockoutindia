@@ -39,4 +39,12 @@ return [
         'client_id' => env('GOOGLE_CLIENT_ID'),
     ],
 
+
+    // ...existing services
+
+    'razorpay' => [
+        'key'    => env('RAZORPAY_KEY'),      // public key (safe to expose)
+        'secret' => env('RAZORPAY_SECRET'),   // DO NOT expose via API
+    ],
+
 ];
