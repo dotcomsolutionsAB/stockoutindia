@@ -88,6 +88,14 @@ class RazorpayController extends Controller
                 }
             }
 
+             // **New Check**: If the final amount is less than 1 INR, return an error message
+            if ($finalAmount < 1) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Minimum 1 INR needs to be paid.',
+                ], 400);
+            }
+
             // Create Razorpay order using final amount
             $razorpayResponse = $this->createOrder($finalAmount);
 

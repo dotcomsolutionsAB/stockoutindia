@@ -639,7 +639,8 @@ class UserController extends Controller
             ->orderBy('file_name')
             ->pluck('file_url')
             ->map(function ($url) {
-                return url('storage/' . $url);
+                // return url('storage/' . $url);
+                return url($url);
             });
 
         return response()->json([

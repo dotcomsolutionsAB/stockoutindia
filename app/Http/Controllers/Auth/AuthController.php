@@ -305,13 +305,13 @@ class AuthController extends Controller
             }
 
             // Send password to user's email
-            Mail::to($user->email)->send(new SendNewPassword($user->name, $newPassword));
+            //Mail::to($user->email)->send(new SendNewPassword($user->name, $newPassword));
 
             return response()->json([
                 'code' => 200,
                 'success' => true,
                 'message' => 'New password has been sent to your email address.',
-                // 'password' => $newPassword,
+                'password' => $newPassword,
             ]);
         } catch (\Exception $e) {
             return response()->json([
