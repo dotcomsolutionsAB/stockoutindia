@@ -234,7 +234,7 @@ class RazorpayController extends Controller
         }
     }
 
-    public function key(): JsonResponse
+    public function key()
     {
         // Only return whitelisted, non-sensitive values
         $razorpayKey = config('services.razorpay.key');
