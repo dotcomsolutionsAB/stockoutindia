@@ -282,7 +282,7 @@ class ProductController extends Controller
                     ],
                     // 'industry' => optional($product->industryDetails)->name,
                     // 'sub_industry' => optional($product->subIndustryDetails)->name,
-                    'industry' => $product->industryNames(),
+                    'industry' => optional($product)->industryNames(),
                 ] + $product->toArray();
 
                 return response()->json([
@@ -374,7 +374,7 @@ class ProductController extends Controller
                     ],
                     // 'industry' => optional($prod->industryDetails)->name,
                     // 'sub_industry' => optional($prod->subIndustryDetails)->name,
-                    'industry' => $prod->industryNames(),
+                    'industry' => optional($product)->industryNames(),
                 ] + $prod->toArray())->except(['user_id', 'industry', 'sub_industry', 'created_at', 'updated_at']);
             });
 
