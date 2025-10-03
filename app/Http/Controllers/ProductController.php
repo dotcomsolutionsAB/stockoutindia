@@ -25,8 +25,7 @@ class ProductController extends Controller
                 'offer_quantity' => 'required|integer',
                 'minimum_quantity' => 'required|integer',
                 'unit' => 'required|string|max:255',
-                'industry' => 'required|integer|exists:t_industries,id',
-                'sub_industry' => 'required|integer|exists:t_sub_industries,id',
+                'industry' => 'required|string|max:256',
                 'city' => 'nullable|string|max:255',
                 'state_id' => 'nullable|integer|exists:t_states,id',
                 'status' => 'sometimes|in:active,in-active',
@@ -50,7 +49,6 @@ class ProductController extends Controller
                 'minimum_quantity' => $request->minimum_quantity,
                 'unit' => $request->unit,
                 'industry' => $request->industry,
-                'sub_industry' => $request->sub_industry,
                 'city' => $request->city,
                 'state_id' => $request->state_id,
                 'status' => $request->status ?? 'in-active',
@@ -113,8 +111,9 @@ class ProductController extends Controller
                         'phone' => optional($product->user)->phone,
                         'city' => optional($product->user)->city
                     ],
-                    'industry' => optional($product->industryDetails)->name,
-                    'sub_industry' => optional($product->subIndustryDetails)->name,
+                    // 'industry' => optional($product->industryDetails)->name,
+                    'industry' => $product->industries->pluck('name')->filter()->values(),
+                    // 'sub_industry' => optional($product->subIndustryDetails)->name,
                     'is_wishlist' => $isWishlist,
                 ] + $product->toArray();
 
@@ -281,8 +280,9 @@ class ProductController extends Controller
                         'name' => optional($product->user)->name,
                         'city' => optional($product->user)->city
                     ],
-                    'industry' => optional($product->industryDetails)->name,
-                    'sub_industry' => optional($product->subIndustryDetails)->name,
+                    // 'industry' => optional($product->industryDetails)->name,
+                    // 'sub_industry' => optional($product->subIndustryDetails)->name,
+                    'industry' => $product->industries->pluck('name')->filter()->values(),
                 ] + $product->toArray();
 
                 return response()->json([

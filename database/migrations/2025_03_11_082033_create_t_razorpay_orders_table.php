@@ -18,7 +18,7 @@ return new class extends Migration
             $table->float('payment_amount', 10, 2); // Payment amount
             $table->integer('coupon')->nullable(); // coupon id
             $table->string('razorpay_order_id')->unique(); // Razorpay Order ID
-            $table->string('status'); // Payment status from Razorpay
+            $table->enum('status', ['created', 'failed', 'success']); // Payment status from Razorpay
             $table->text('comments')->nullable(); // Optional user comments
             $table->date('date'); // Use date or dateTime as needed
             $table->timestamps();

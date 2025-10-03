@@ -181,7 +181,7 @@ class UserController extends Controller
                     'apple_id_token' => $apple_id_token,
                     'appleEmail' => $appleEmail,
                     'appleId' => $appleId,
-                    'request' => json_encode($request->all()),
+                    'request' => json_encode($request->all()),  
                 ]);
 
             // Step 2: Dynamically set validation rules
@@ -196,7 +196,6 @@ class UserController extends Controller
                 'city' => 'required_without:gstin|string',
                 'state' => 'required_without:gstin|integer|exists:t_states,id',
                 'industry' => 'nullable|integer|exists:t_industries,id',
-                'sub_industry' => 'nullable|integer|exists:t_sub_industries,id',
             ];
 
             if (!$googleId && !$appleId) {
@@ -244,7 +243,6 @@ class UserController extends Controller
                 'state' => $request->state,
                 'gstin' => $request->gstin,
                 'industry' => $request->industry,
-                'sub_industry' => $request->sub_industry,
             ]);
 
             // Send signup confirmation email
@@ -368,7 +366,6 @@ class UserController extends Controller
                 'state' => 'sometimes|integer',
                 'gstin' => ['sometimes', 'string', Rule::unique('users')->ignore($user->id)],
                 'industry' => 'nullable|string',
-                'sub_industry' => 'nullable|string',
             ]);
 
             // Check if password needs to be hashed
