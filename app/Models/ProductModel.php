@@ -55,4 +55,12 @@ class ProductModel extends Model
         $ids = array_filter(explode(',', (string) $this->industry));
         return $ids ? IndustryModel::whereIn('id', $ids)->pluck('name') : collect();
     }
+
+    // App\Models\ProductModel
+    public function firstImage()
+    {
+        // image column holds "123,456,789"
+        $firstId = head(array_filter(explode(',', (string) $this->image)));
+        return $this->hasOne(UploadModel::class, 'id', '')->where('id', $firstId);
+    }
 }
