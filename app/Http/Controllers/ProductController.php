@@ -374,7 +374,7 @@ class ProductController extends Controller
                     ],
                     // 'industry' => optional($prod->industryDetails)->name,
                     // 'sub_industry' => optional($prod->subIndustryDetails)->name,
-                    'industry' => optional($product)->industryNames(),
+                    'industry' => optional($prod)->industryNames(),
                 ] + $prod->toArray())->except(['user_id', 'industry', 'sub_industry', 'created_at', 'updated_at']);
             });
 
