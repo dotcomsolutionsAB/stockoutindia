@@ -5,6 +5,7 @@ use App\Models\RazorpayOrdersModel;
 use App\Models\RazorpayPaymentsModel;
 use App\Models\ProductModel;
 use App\Models\CouponModel;
+use App\Models\UploadModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Razorpay\Api\Api;
