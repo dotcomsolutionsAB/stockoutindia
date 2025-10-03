@@ -195,7 +195,7 @@ class UserController extends Controller
                 'pincode' => 'required_without:gstin|string|max:10',
                 'city' => 'required_without:gstin|string',
                 'state' => 'required_without:gstin|integer|exists:t_states,id',
-                'industry' => 'nullable|integer|exists:t_industries,id',
+                'industry' => 'nullable|string|max:255',
             ];
 
             if (!$googleId && !$appleId) {
