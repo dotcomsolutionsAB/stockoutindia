@@ -52,10 +52,7 @@ class ProductModel extends Model
      */
     public function industryNames()
     {
-        $ids = array_filter(explode(',', $this->industry ?? ''));
-        return $ids
-            ? IndustryModel::whereIn('id', $ids)->pluck('name')
-            : collect();   // always a collection, never null
+        $ids = array_filter(explode(',', (string) $this->industry));
+        return $ids ? IndustryModel::whereIn('id', $ids)->pluck('name') : collect();
     }
-
 }
