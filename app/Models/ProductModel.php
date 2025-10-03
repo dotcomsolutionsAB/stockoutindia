@@ -50,11 +50,10 @@ class ProductModel extends Model
     /**
      * Return a collection of IndustryModel for the comma-separated ids.
      */
-    public function industries()
+    public function industryNames()
     {
-        // industry column holds "1,2,3"
-        $ids = explode(',', $this->industry ?? '');
-        return IndustryModel::whereIn('id', $ids)->get(['id','name']);
+        $ids = array_filter(explode(',', $this->industry ?? ''));
+        return \App\Models\IndustryModel::whereIn('id', $ids)->pluck('name');
     }
 
 }
