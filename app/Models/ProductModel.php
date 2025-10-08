@@ -37,6 +37,12 @@ class ProductModel extends Model
         return $this->belongsTo(User::class, 'user_id', 'id');
     }
 
+    // ✅ Add this: proper state relationship (so you can eager-load and get the name)
+    public function state()
+    {
+        return $this->belongsTo(StateModel::class, 'state_id', 'id');
+    }
+
     public function industryDetails()
     {
         return $this->belongsTo(IndustryModel::class, 'industry', 'id');
@@ -46,9 +52,8 @@ class ProductModel extends Model
     {
         return $this->belongsTo(SubIndustryModel::class, 'sub_industry', 'id');
     }
-
     /**
-     * Return a collection of IndustryModel for the comma-separated ids.
+     * ✅ Keep/Use: returns collection of industry names for the CSV ids in `industry`.
      */
     public function industryNames()
     {
