@@ -127,7 +127,7 @@ class ProductController extends Controller
                     ],
                     'industry' => $product ? $product->industryNames() : collect(), // 🔹 Fix: Use industryNames() for multiple industries
                     // 'sub_industry' => optional($product->subIndustryDetails)->name, // 🔹 Fix: Add to match multi-product response
-                    'state'       => $stateName,
+                    'state'       => optional($product->state)->name,
                     'is_wishlist' => $isWishlist,
                 ] + $product->toArray();
 
@@ -257,7 +257,7 @@ class ProductController extends Controller
                     'industry' => $prod ? $prod->industryNames() : collect(), // 🔹 Fix: Use industryNames() for multiple industries
                     // 'sub_industry' => optional($prod->subIndustryDetails)->name,
                     // Add is_wishlist: true if product exists in user's wishlist, else false.
-                    'state'       => $stateMap[$prod->state_id] ?? null,
+                    'state'       => optional($product->state)->name,
                     'is_wishlist' => in_array($prod->id, $wishlistProductIds),
                 ] + $prod->toArray())->except(['user_id', 'industry', 'sub_industry', 'created_at', 'updated_at']);
             });
