@@ -85,6 +85,7 @@ class ProductController extends Controller
                     //'industryDetails:id,name', // Remove if not using, since industry is comma-separated
                     // 'subIndustryDetails:id,name'
                     'state:id,name', // ✅ add this
+                    'industryDetails:id,name',
                 ])->where('is_delete', '0')
                 // ->where('status', 'active') // Commented, but consider conditional status based on ownership
                 ->find($id);
@@ -125,7 +126,7 @@ class ProductController extends Controller
                         'phone' => optional($product->user)->phone,
                         'city' => optional($product->user)->city
                     ],
-                    'industry' => $product ? $product->industryNames() : collect(), // 🔹 Fix: Use industryNames() for multiple industries
+                    'industry_details' => optional($product->industryDetails)->name, // 🔹 Fix: Use industryNames() for multiple industries
                     // 'sub_industry' => optional($product->subIndustryDetails)->name, // 🔹 Fix: Add to match multi-product response
                     'state'       => optional($product->state)->name,
                     'is_wishlist' => $isWishlist,
@@ -155,6 +156,7 @@ class ProductController extends Controller
                 //'industryDetails:id,name', // Remove if not using, since industry is comma-separated
                 // 'subIndustryDetails:id,name'
                 'state:id,name', // ✅ add this
+                'industryDetails:id,name',
             ])->where('is_delete', '0');
 
             // 🔹 **Fix: Search in product_name, user->name, and user->city**
@@ -254,7 +256,7 @@ class ProductController extends Controller
                         'phone' => optional($prod->user)->phone,
                         'city' => optional($prod->user)->city
                     ],
-                    'industry' => $prod ? $prod->industryNames() : collect(), // 🔹 Fix: Use industryNames() for multiple industries
+                    'industry_details' => optional($prod->industryDetails)->name, // 🔹 Fix: Use industryNames() for multiple industries
                     // 'sub_industry' => optional($prod->subIndustryDetails)->name,
                     // Add is_wishlist: true if product exists in user's wishlist, else false.
                     'state'       => optional($prod->state)->name,
