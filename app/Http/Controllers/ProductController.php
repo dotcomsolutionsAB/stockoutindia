@@ -126,7 +126,9 @@ class ProductController extends Controller
                         'phone' => optional($product->user)->phone,
                         'city' => optional($product->user)->city
                     ],
-                    'industry_details' => optional($product->industryDetails)->name, // 🔹 Fix: Use industryNames() for multiple industries
+                    'industry' => $product->industryDetails
+                        ? ['id' => $product->industryDetails->id, 'name' => $product->industryDetails->name]
+                        : null,
                     // 'sub_industry' => optional($product->subIndustryDetails)->name, // 🔹 Fix: Add to match multi-product response
                     'state'       => optional($product->state)->name,
                     'is_wishlist' => $isWishlist,
@@ -256,7 +258,9 @@ class ProductController extends Controller
                         'phone' => optional($prod->user)->phone,
                         'city' => optional($prod->user)->city
                     ],
-                    'industry_details' => optional($prod->industryDetails)->name, // 🔹 Fix: Use industryNames() for multiple industries
+                    'industry' => $product->industryDetails
+                        ? ['id' => $product->industryDetails->id, 'name' => $product->industryDetails->name]
+                        : null,
                     // 'sub_industry' => optional($prod->subIndustryDetails)->name,
                     // Add is_wishlist: true if product exists in user's wishlist, else false.
                     'state'       => optional($prod->state)->name,
@@ -281,16 +285,16 @@ class ProductController extends Controller
     }
 
     // for guest-user
-
     public function fetchOnlyProducts(Request $request, $id = null)
     {
         try {
             if ($id) {
                 // Fetch a single product
                 $product = ProductModel::with([
-                    'user:id,name,city', // Removed phone number
+                    'user:id,name,city',
                     'industryDetails:id,name',
-                    'subIndustryDetails:id,name'
+                    'subIndustryDetails:id,name',
+                    'state:id,name'          // ← NEW
                 ])
                 ->where('is_delete', '0')
                 ->where('status', 'active')
@@ -326,9 +330,11 @@ class ProductController extends Controller
                         'name' => optional($product->user)->name,
                         'city' => optional($product->user)->city
                     ],
-                    // 'industry' => optional($product->industryDetails)->name,
-                    // 'sub_industry' => optional($product->subIndustryDetails)->name,
-                    'industry' => $product ? $product->industryNames() : collect(),
+                    'industry' => $product->industryNames()          // collection [{id,name},…]
+                                ->map(fn($i) => ['id' => $i->id, 'name' => $i->name]),
+                    'state'    => $product->state
+                                ? ['id' => $product->state->id, 'name' => $product->state->name]
+                                : null,
                 ] + $product->toArray();
 
                 return response()->json([
@@ -353,7 +359,8 @@ class ProductController extends Controller
             $query = ProductModel::with([
                 'user:id,name,city', // Removed phone number
                 'industryDetails:id,name',
-                'subIndustryDetails:id,name'
+                'subIndustryDetails:id,name',
+                'state:id,name'
             ])->where('is_delete', '0')->where('status', 'active');
 
             // 🔹 **Search in Product Name & User's City**
@@ -424,10 +431,13 @@ class ProductController extends Controller
                         'name' => optional($prod->user)->name,
                         'city' => optional($prod->user)->city
                     ],
-                    // 'industry' => optional($prod->industryDetails)->name,
-                    // 'sub_industry' => optional($prod->subIndustryDetails)->name,
-                    'industry' => $prod ? $prod->industryNames() : collect(),
-                ] + $prod->toArray())->except(['user_id', 'industry', 'sub_industry', 'created_at', 'updated_at']);
+                    'industry' => $prod->industryNames()          // collection [{id,name},…]
+                          ->map(fn($i) => ['id' => $i->id, 'name' => $i->name]),
+                    'state'    => $prod->state
+                                ? ['id' => $prod->state->id, 'name' => $prod->state->name]
+                                : null,
+                ] + $prod->toArray())
+                ->except(['user_id', 'industry', 'sub_industry', 'created_at', 'updated_at']);
             });
 
             return response()->json([
