@@ -257,7 +257,7 @@ class ProductController extends Controller
                     'industry' => $prod ? $prod->industryNames() : collect(), // 🔹 Fix: Use industryNames() for multiple industries
                     // 'sub_industry' => optional($prod->subIndustryDetails)->name,
                     // Add is_wishlist: true if product exists in user's wishlist, else false.
-                    'state'       => optional($product->state)->name,
+                    'state'       => optional($prod->state)->name,
                     'is_wishlist' => in_array($prod->id, $wishlistProductIds),
                 ] + $prod->toArray())->except(['user_id', 'industry', 'sub_industry', 'created_at', 'updated_at']);
             });
