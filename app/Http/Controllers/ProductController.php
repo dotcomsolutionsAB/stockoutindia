@@ -84,6 +84,7 @@ class ProductController extends Controller
                     'user:id,name,phone,city',
                     //'industryDetails:id,name', // Remove if not using, since industry is comma-separated
                     // 'subIndustryDetails:id,name'
+                    'state:id,name', // ✅ add this
                 ])->where('is_delete', '0')
                 // ->where('status', 'active') // Commented, but consider conditional status based on ownership
                 ->find($id);
@@ -116,7 +117,6 @@ class ProductController extends Controller
                 if (!empty($product->state_id)) {
                     $stateName = StateModel::where('id', $product->state_id)->value('name');
                 }
-
 
                 // Format response correctly
                 $responseData = [
@@ -154,6 +154,7 @@ class ProductController extends Controller
                 'user:id,name,phone,city',
                 //'industryDetails:id,name', // Remove if not using, since industry is comma-separated
                 // 'subIndustryDetails:id,name'
+                'state:id,name', // ✅ add this
             ])->where('is_delete', '0');
 
             // 🔹 **Fix: Search in product_name, user->name, and user->city**
