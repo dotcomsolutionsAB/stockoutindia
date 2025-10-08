@@ -258,8 +258,8 @@ class ProductController extends Controller
                         'phone' => optional($prod->user)->phone,
                         'city' => optional($prod->user)->city
                     ],
-                    'industry' => $product->industryDetails
-                        ? ['id' => $product->industryDetails->id, 'name' => $product->industryDetails->name]
+                    'industry' => $prod->industryDetails
+                        ? ['id' => $prod->industryDetails->id, 'name' => $prod->industryDetails->name]
                         : null,
                     // 'sub_industry' => optional($prod->subIndustryDetails)->name,
                     // Add is_wishlist: true if product exists in user's wishlist, else false.
