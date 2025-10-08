@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\ProductModel;
 use App\Models\UploadModel;
 use App\Models\WishlistModel;
+use App\Models\StateModel;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Storage;
@@ -82,7 +83,7 @@ class ProductController extends Controller
                 $product = ProductModel::with([
                     'user:id,name,phone,city',
                     //'industryDetails:id,name', // Remove if not using, since industry is comma-separated
-                    'subIndustryDetails:id,name'
+                    // 'subIndustryDetails:id,name'
                 ])->where('is_delete', '0')
                 // ->where('status', 'active') // Commented, but consider conditional status based on ownership
                 ->find($id);
@@ -111,6 +112,12 @@ class ProductController extends Controller
                 ->where('product_id', $product->id)
                 ->exists();
 
+                $stateName = null;
+                if (!empty($product->state_id)) {
+                    $stateName = StateModel::where('id', $product->state_id)->value('name');
+                }
+
+
                 // Format response correctly
                 $responseData = [
                     'user' => [
@@ -119,7 +126,8 @@ class ProductController extends Controller
                         'city' => optional($product->user)->city
                     ],
                     'industry' => $product ? $product->industryNames() : collect(), // 🔹 Fix: Use industryNames() for multiple industries
-                    'sub_industry' => optional($product->subIndustryDetails)->name, // 🔹 Fix: Add to match multi-product response
+                    // 'sub_industry' => optional($product->subIndustryDetails)->name, // 🔹 Fix: Add to match multi-product response
+                    'state'       => $stateName,
                     'is_wishlist' => $isWishlist,
                 ] + $product->toArray();
 
@@ -145,7 +153,7 @@ class ProductController extends Controller
             $query = ProductModel::with([
                 'user:id,name,phone,city',
                 //'industryDetails:id,name', // Remove if not using, since industry is comma-separated
-                'subIndustryDetails:id,name'
+                // 'subIndustryDetails:id,name'
             ])->where('is_delete', '0');
 
             // 🔹 **Fix: Search in product_name, user->name, and user->city**
@@ -202,6 +210,13 @@ class ProductController extends Controller
             $totalRecords = $query->count();
             $products = $query->orderBy('id', 'desc')->offset($offset)->limit($limit)->get();
 
+            // 🔹 Preload all state names (map of id => name)
+            $stateIdSet = $products->pluck('state_id')->filter()->unique();
+            $stateMap = $stateIdSet->isEmpty()
+                ? collect()
+                : StateModel::whereIn('id', $stateIdSet)->pluck('name', 'id');
+
+
             // Handle Empty Results
             if ($products->isEmpty()) {
                 return response()->json([
@@ -239,8 +254,9 @@ class ProductController extends Controller
                         'city' => optional($prod->user)->city
                     ],
                     'industry' => $prod ? $prod->industryNames() : collect(), // 🔹 Fix: Use industryNames() for multiple industries
-                    'sub_industry' => optional($prod->subIndustryDetails)->name,
+                    // 'sub_industry' => optional($prod->subIndustryDetails)->name,
                     // Add is_wishlist: true if product exists in user's wishlist, else false.
+                    'state'       => $stateMap[$prod->state_id] ?? null,
                     'is_wishlist' => in_array($prod->id, $wishlistProductIds),
                 ] + $prod->toArray())->except(['user_id', 'industry', 'sub_industry', 'created_at', 'updated_at']);
             });
