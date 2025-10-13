@@ -330,8 +330,9 @@ class ProductController extends Controller
                         'name' => optional($product->user)->name,
                         'city' => optional($product->user)->city
                     ],
-                    'industry' => $product->industryNames()          // collection [{id,name},…]
-                                ->map(fn($i) => ['id' => $i->id, 'name' => $i->name]),
+                    'industry_details' => $product->industryDetails
+                        ? ['id' => $product->industryDetails->id, 'name' => $product->industryDetails->name]
+                        : null,
                     'state'    => $product->state
                                 ? ['id' => $product->state->id, 'name' => $product->state->name]
                                 : null,
@@ -431,8 +432,9 @@ class ProductController extends Controller
                         'name' => optional($prod->user)->name,
                         'city' => optional($prod->user)->city
                     ],
-                    'industry' => $prod->industryNames()          // collection [{id,name},…]
-                          ->map(fn($i) => ['id' => $i->id, 'name' => $i->name]),
+                    'industry_details' => $prod->industryDetails
+                        ? ['id' => $prod->industryDetails->id, 'name' => $prod->industryDetails->name]
+                        : null,
                     'state'    => $prod->state
                                 ? ['id' => $prod->state->id, 'name' => $prod->state->name]
                                 : null,
