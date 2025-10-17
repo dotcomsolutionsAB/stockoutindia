@@ -870,6 +870,119 @@ class ProductController extends Controller
     //     }
     // }
 
+    // Delete specific product specific image
+    public function deleteSProductImages(int $product_id, int $upload_id)
+    {
+        try {
+            return DB::transaction(function () use ($product_id, $upload_id) {
+                // 1) Product must exist
+                $product = ProductModel::find($product_id);
+                if (!$product) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Product not found.',
+                    ], 404);
+                }
+
+                // 2) Parse current image CSV into int IDs
+                $existingIds = [];
+                if (!empty($product->image)) {
+                    $existingIds = array_values(array_filter(array_map(function ($v) {
+                        $v = trim($v);
+                        return $v !== '' ? (int) $v : null;
+                    }, explode(',', $product->image))));
+                }
+
+                // 3) Ensure the requested upload is attached to this product
+                if (!in_array((int)$upload_id, $existingIds, true)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Image not attached to this product.',
+                    ], 404);
+                }
+
+                // 4) Upload must exist
+                $upload = UploadModel::find($upload_id);
+                if (!$upload) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Upload not found.',
+                    ], 404);
+                }
+
+                // Helper to normalize to a public-relative path (for Storage::disk('public'))
+                $toPublicRelative = function (string $path) {
+                    $path = trim($path);
+                    if ($path === '') return null;
+
+                    // If a full Storage::url() was stored, strip the prefix.
+                    $storageUrlPrefix = rtrim(Storage::url(''), '/'); // e.g. /storage
+                    if (str_starts_with($path, $storageUrlPrefix)) {
+                        $path = ltrim(substr($path, strlen($storageUrlPrefix)), '/'); // remove '/storage/'
+                    }
+
+                    // If a full app URL was stored, strip base + '/storage'
+                    $appUrl = rtrim(config('app.url'), '/');
+                    if (str_starts_with($path, $appUrl)) {
+                        $afterBase = ltrim(substr($path, strlen($appUrl)), '/');
+                        if (str_starts_with($afterBase, 'storage/')) {
+                            $path = substr($afterBase, strlen('storage/'));
+                        } else {
+                            $path = $afterBase; // best effort
+                        }
+                    }
+
+                    return ltrim($path, '/'); // public disk expects path like 'uploads/...'
+                };
+
+                // 5) Delete the physical file (best-effort)
+                // NOTE: Your UploadModel fields show `file_path` (not `file_url`). We’ll support both.
+                $rawPath = $upload->file_path ?? $upload->file_url ?? null;
+                if ($rawPath) {
+                    $publicRelative = $toPublicRelative($rawPath);
+                    if ($publicRelative && Storage::disk('public')->exists($publicRelative)) {
+                        Storage::disk('public')->delete($publicRelative);
+                    }
+                }
+
+                // 6) Delete the upload row
+                $upload->delete();
+
+                // 7) Remove the id from the product CSV and save
+                $remainingIds = array_values(array_filter($existingIds, fn ($id) => (int)$id !== (int)$upload_id));
+                $product->image = implode(',', $remainingIds);
+                $product->save();
+
+                // 8) Build remaining images as [{id, url}] for convenience
+                $remaining = [];
+                if (!empty($remainingIds)) {
+                    $uploads = UploadModel::whereIn('id', $remainingIds)->get(['id', 'file_path']);
+                    $map = $uploads->keyBy('id');
+                    foreach ($remainingIds as $id) {
+                        if (isset($map[$id])) {
+                            $path = $map[$id]->file_path ?? '';
+                            // Turn storage path into absolute URL
+                            $publicRelative = $toPublicRelative($path ?? '');
+                            $url = $publicRelative ? Storage::url($publicRelative) : ($path ?? null);
+                            $remaining[] = ['id' => $id, 'url' => $url];
+                        }
+                    }
+                }
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Image deleted successfully.',
+                    'remaining_images' => $remaining, // [{id, url}]
+                ], 200);
+            });
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
     // import images
     public function importProductImagesFromCSV()
     {
@@ -1041,6 +1154,100 @@ class ProductController extends Controller
         ], 200);
     }
 
+    // public function admin_fetchProducts(Request $request)
+    // {
+    //     try {
+    //         $query = ProductModel::with([
+    //             'industryDetails:id,name',
+    //             'subIndustryDetails:id,name',
+    //             'user:id,name'
+    //         ]);
+
+    //         if ($request->filled('product_name')) {
+    //             $query->where('product_name', 'LIKE', '%' . $request->product_name . '%');
+    //         }
+
+    //         if ($request->filled('industry')) {
+    //             $industries = explode(',', $request->industry);
+    //             $query->whereIn('industry', $industries);
+    //         }
+
+    //         if ($request->filled('sub_industry')) {
+    //             $subIndustries = explode(',', $request->sub_industry);
+    //             $query->whereIn('sub_industry', $subIndustries);
+    //         }
+
+    //         if ($request->filled('status')) {
+    //             $query->where('status', $request->status);
+    //         }
+
+    //         if ($request->filled('user')) {
+    //             $userIds = explode(',', $request->user);
+    //             $query->whereIn('user_id', $userIds);
+    //         }
+
+    //         $min = $request->input('min_amount', 0);
+    //         $max = $request->input('max_amount', ProductModel::max('selling_price'));
+    //         $query->whereBetween('selling_price', [$min, $max]);
+
+    //         $limit = $request->input('limit', 10);
+    //         $offset = $request->input('offset', 0);
+
+    //         // Clone query for accurate count before pagination
+    //         $totalCount = (clone $query)->count();
+
+    //         $products = $query->offset($offset)->limit($limit)->get();
+
+    //         // Map image ids to URLs and format final response
+    //         $formatted = $products->map(function ($product) {
+    //             // Resolve image URLs
+    //             $imageUrls = [];
+    //             if (!empty($product->image)) {
+    //                 $imageIds = explode(',', $product->image);
+    //                 $imageUrls = UploadModel::whereIn('id', $imageIds)
+    //                     ->pluck('file_url')
+    //                     ->map(fn($path) => url($path))
+    //                     ->values()
+    //                     ->toArray();
+    //             }
+
+    //             return [
+    //                 'id'              => $product->id,
+    //                 'product_id'      => $product->product_id,
+    //                 'product_name'    => $product->product_name,
+    //                 'original_price'  => $product->original_price,
+    //                 'selling_price'   => $product->selling_price,
+    //                 'offer_quantity'  => $product->offer_quantity,
+    //                 'minimum_quantity'=> $product->minimum_quantity,
+    //                 'unit'            => $product->unit,
+    //                 'description'     => $product->description,
+    //                 'dimensions'      => $product->dimensions,
+    //                 'validity'        => $product->validity,
+    //                 'status'          => $product->status,
+    //                 'image'           => $imageUrls,
+    //                 'industry'        => $product->industryDetails 
+    //                     ? ['id' => $product->industryDetails->id, 'name' => $product->industryDetails->name] 
+    //                     : null,
+    //                 'sub_industry'    => $product->subIndustryDetails 
+    //                     ? ['id' => $product->subIndustryDetails->id, 'name' => $product->subIndustryDetails->name] 
+    //                     : null,
+    //                 'user'            => $product->user 
+    //                     ? ['id' => $product->user->id, 'name' => $product->user->name] 
+    //                     : null,
+    //             ];
+    //         });
+
+    //         return response()->json([
+    //             'code'        => 200,
+    //             'success'     => true,
+    //             'data'        => $formatted,
+    //             'total_count' => $totalCount,
+    //         ]);
+    //     } catch (\Exception $e) {
+    //         return response()->json(['code' => 500, 'success' => false, 'error' => $e->getMessage()], 500);
+    //     }
+    // }
+
     public function admin_fetchProducts(Request $request)
     {
         try {
@@ -1048,20 +1255,24 @@ class ProductController extends Controller
                 'industryDetails:id,name',
                 'subIndustryDetails:id,name',
                 'user:id,name'
-            ]);
+            ])
+            // 1) exclude deleted (NULL treated as not deleted)
+            ->where(function ($q) {
+                $q->whereNull('is_delete')->orWhere('is_delete', '!=', 1);
+            });
 
             if ($request->filled('product_name')) {
                 $query->where('product_name', 'LIKE', '%' . $request->product_name . '%');
             }
 
             if ($request->filled('industry')) {
-                $industries = explode(',', $request->industry);
-                $query->whereIn('industry', $industries);
+                $industries = array_filter(array_map('trim', explode(',', $request->industry)));
+                if (!empty($industries)) $query->whereIn('industry', $industries);
             }
 
             if ($request->filled('sub_industry')) {
-                $subIndustries = explode(',', $request->sub_industry);
-                $query->whereIn('sub_industry', $subIndustries);
+                $subIndustries = array_filter(array_map('trim', explode(',', $request->sub_industry)));
+                if (!empty($subIndustries)) $query->whereIn('sub_industry', $subIndustries);
             }
 
             if ($request->filled('status')) {
@@ -1069,57 +1280,74 @@ class ProductController extends Controller
             }
 
             if ($request->filled('user')) {
-                $userIds = explode(',', $request->user);
-                $query->whereIn('user_id', $userIds);
+                $userIds = array_filter(array_map('trim', explode(',', $request->user)));
+                if (!empty($userIds)) $query->whereIn('user_id', $userIds);
             }
 
-            $min = $request->input('min_amount', 0);
-            $max = $request->input('max_amount', ProductModel::max('selling_price'));
+            // Compute max after applying is_delete filter (and other filters)
+            $min = (float) $request->input('min_amount', 0);
+            $max = (clone $query)->max('selling_price') ?? 0;
+            $max = (float) $request->input('max_amount', $max);
             $query->whereBetween('selling_price', [$min, $max]);
 
-            $limit = $request->input('limit', 10);
-            $offset = $request->input('offset', 0);
+            $limit  = (int) $request->input('limit', 10);
+            $offset = (int) $request->input('offset', 0);
 
-            // Clone query for accurate count before pagination
+            // Accurate count before pagination
             $totalCount = (clone $query)->count();
 
             $products = $query->offset($offset)->limit($limit)->get();
 
-            // Map image ids to URLs and format final response
             $formatted = $products->map(function ($product) {
-                // Resolve image URLs
-                $imageUrls = [];
+                // 2) Resolve image IDs -> [{id, url}] preserving original order
+                $imageArray = [];
                 if (!empty($product->image)) {
-                    $imageIds = explode(',', $product->image);
-                    $imageUrls = UploadModel::whereIn('id', $imageIds)
-                        ->pluck('file_url')
-                        ->map(fn($path) => url($path))
-                        ->values()
-                        ->toArray();
+                    $imageIds = array_values(array_filter(array_map(function ($v) {
+                        $v = trim($v);
+                        return $v !== '' ? (int) $v : null;
+                    }, explode(',', $product->image))));
+
+                    if (!empty($imageIds)) {
+                        // Fetch id + file_url in one query
+                        $uploads = UploadModel::whereIn('id', $imageIds)
+                            ->get(['id', 'file_url'])
+                            ->keyBy('id');
+
+                        // Preserve original CSV order, skip missing IDs gracefully
+                        foreach ($imageIds as $id) {
+                            if (isset($uploads[$id])) {
+                                $fileUrl = $uploads[$id]->file_url;
+                                $imageArray[] = [
+                                    'id'  => $id,
+                                    'url' => url($fileUrl),
+                                ];
+                            }
+                        }
+                    }
                 }
 
                 return [
-                    'id'              => $product->id,
-                    'product_id'      => $product->product_id,
-                    'product_name'    => $product->product_name,
-                    'original_price'  => $product->original_price,
-                    'selling_price'   => $product->selling_price,
-                    'offer_quantity'  => $product->offer_quantity,
-                    'minimum_quantity'=> $product->minimum_quantity,
-                    'unit'            => $product->unit,
-                    'description'     => $product->description,
-                    'dimensions'      => $product->dimensions,
-                    'validity'        => $product->validity,
-                    'status'          => $product->status,
-                    'image'           => $imageUrls,
-                    'industry'        => $product->industryDetails 
-                        ? ['id' => $product->industryDetails->id, 'name' => $product->industryDetails->name] 
+                    'id'               => $product->id,
+                    'product_id'       => $product->product_id,
+                    'product_name'     => $product->product_name,
+                    'original_price'   => $product->original_price,
+                    'selling_price'    => $product->selling_price,
+                    'offer_quantity'   => $product->offer_quantity,
+                    'minimum_quantity' => $product->minimum_quantity,
+                    'unit'             => $product->unit,
+                    'description'      => $product->description,
+                    'dimensions'       => $product->dimensions,
+                    'validity'         => $product->validity,
+                    'status'           => $product->status,
+                    'image'            => $imageArray, // [{id, url}]
+                    'industry'         => $product->industryDetails
+                        ? ['id' => $product->industryDetails->id, 'name' => $product->industryDetails->name]
                         : null,
-                    'sub_industry'    => $product->subIndustryDetails 
-                        ? ['id' => $product->subIndustryDetails->id, 'name' => $product->subIndustryDetails->name] 
+                    'sub_industry'     => $product->subIndustryDetails
+                        ? ['id' => $product->subIndustryDetails->id, 'name' => $product->subIndustryDetails->name]
                         : null,
-                    'user'            => $product->user 
-                        ? ['id' => $product->user->id, 'name' => $product->user->name] 
+                    'user'             => $product->user
+                        ? ['id' => $product->user->id, 'name' => $product->user->name]
                         : null,
                 ];
             });
