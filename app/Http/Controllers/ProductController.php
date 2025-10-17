@@ -884,7 +884,7 @@ class ProductController extends Controller
                     ], 404);
                 }
 
-                // 2) Parse current image CSV into int IDs
+                // 2) Parse product image CSV into int IDs
                 $existingIds = [];
                 if (!empty($product->image)) {
                     $existingIds = array_values(array_filter(array_map(function ($v) {
@@ -893,7 +893,7 @@ class ProductController extends Controller
                     }, explode(',', $product->image))));
                 }
 
-                // 3) Ensure the requested upload is attached to this product
+                // Must be attached
                 if (!in_array((int)$upload_id, $existingIds, true)) {
                     return response()->json([
                         'success' => false,
@@ -901,7 +901,7 @@ class ProductController extends Controller
                     ], 404);
                 }
 
-                // 4) Upload must exist
+                // 3) Upload must exist
                 $upload = UploadModel::find($upload_id);
                 if (!$upload) {
                     return response()->json([
@@ -910,62 +910,66 @@ class ProductController extends Controller
                     ], 404);
                 }
 
-                // Helper to normalize to a public-relative path (for Storage::disk('public'))
-                $toPublicRelative = function (string $path) {
-                    $path = trim($path);
-                    if ($path === '') return null;
+                // Helper: convert file_url -> path relative to the "public" disk
+                $toPublicRelativeFromUrl = function (?string $fileUrl) {
+                    if (!$fileUrl) return null;
 
-                    // If a full Storage::url() was stored, strip the prefix.
-                    $storageUrlPrefix = rtrim(Storage::url(''), '/'); // e.g. /storage
-                    if (str_starts_with($path, $storageUrlPrefix)) {
-                        $path = ltrim(substr($path, strlen($storageUrlPrefix)), '/'); // remove '/storage/'
+                    // If it's an absolute URL, parse its path. Otherwise treat it as a path already.
+                    $path = $fileUrl;
+                    if (preg_match('~^https?://~i', $fileUrl)) {
+                        $parsed = parse_url($fileUrl);
+                        $path = $parsed['path'] ?? '';
                     }
 
-                    // If a full app URL was stored, strip base + '/storage'
-                    $appUrl = rtrim(config('app.url'), '/');
-                    if (str_starts_with($path, $appUrl)) {
-                        $afterBase = ltrim(substr($path, strlen($appUrl)), '/');
-                        if (str_starts_with($afterBase, 'storage/')) {
-                            $path = substr($afterBase, strlen('storage/'));
-                        } else {
-                            $path = $afterBase; // best effort
-                        }
+                    $path = ltrim($path, '/');
+
+                    // Common cases:
+                    // - storage/uploads/...   → public disk path is uploads/...
+                    // - /storage/uploads/...  → uploads/...
+                    // - uploads/...           → assume already public-relative
+                    if (strpos($path, 'storage/') === 0) {
+                        return substr($path, strlen('storage/'));
+                    }
+                    if (($pos = strpos($path, '/storage/')) !== false) {
+                        return substr($path, $pos + strlen('/storage/'));
                     }
 
-                    return ltrim($path, '/'); // public disk expects path like 'uploads/...'
+                    // If there's no 'storage/' segment, best-effort: assume it’s already relative to public disk.
+                    return $path;
                 };
 
-                // 5) Delete the physical file (best-effort)
-                // NOTE: Your UploadModel fields show `file_path` (not `file_url`). We’ll support both.
-                $rawPath = $upload->file_path ?? $upload->file_url ?? null;
-                if ($rawPath) {
-                    $publicRelative = $toPublicRelative($rawPath);
-                    if ($publicRelative && Storage::disk('public')->exists($publicRelative)) {
-                        Storage::disk('public')->delete($publicRelative);
-                    }
+                // 4) Delete the physical file (best-effort) using file_url
+                $publicRelative = $toPublicRelativeFromUrl($upload->file_url);
+                if ($publicRelative && Storage::disk('public')->exists($publicRelative)) {
+                    Storage::disk('public')->delete($publicRelative);
                 }
 
-                // 6) Delete the upload row
+                // 5) Delete the uploads row
                 $upload->delete();
 
-                // 7) Remove the id from the product CSV and save
+                // 6) Remove the id from product CSV and save
                 $remainingIds = array_values(array_filter($existingIds, fn ($id) => (int)$id !== (int)$upload_id));
                 $product->image = implode(',', $remainingIds);
                 $product->save();
 
-                // 8) Build remaining images as [{id, url}] for convenience
+                // 7) Build remaining images as [{id, url}] preserving order
                 $remaining = [];
                 if (!empty($remainingIds)) {
-                    $uploads = UploadModel::whereIn('id', $remainingIds)->get(['id', 'file_path']);
-                    $map = $uploads->keyBy('id');
+                    $uploads = UploadModel::whereIn('id', $remainingIds)->get(['id', 'file_url'])->keyBy('id');
                     foreach ($remainingIds as $id) {
-                        if (isset($map[$id])) {
-                            $path = $map[$id]->file_path ?? '';
-                            // Turn storage path into absolute URL
-                            $publicRelative = $toPublicRelative($path ?? '');
-                            $url = $publicRelative ? Storage::url($publicRelative) : ($path ?? null);
-                            $remaining[] = ['id' => $id, 'url' => $url];
+                        if (!isset($uploads[$id])) continue;
+
+                        $storedUrl = $uploads[$id]->file_url ?? null;
+                        // If stored URL is absolute, keep it; otherwise, convert to absolute via Storage::url
+                        if ($storedUrl && !preg_match('~^https?://~i', $storedUrl)) {
+                            $pr = $toPublicRelativeFromUrl($storedUrl) ?? ltrim($storedUrl, '/');
+                            $storedUrl = Storage::url($pr);
                         }
+
+                        $remaining[] = [
+                            'id'  => (int)$id,
+                            'url' => $storedUrl,
+                        ];
                     }
                 }
 
