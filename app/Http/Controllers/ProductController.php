@@ -530,7 +530,114 @@ class ProductController extends Controller
 
     // upload image
     //only new image will create and replace the old one
-    public function uploadProductImages(Request $request, $id)
+    // public function uploadProductImages(Request $request, $id)
+    // {
+    //     try {
+    //         $product = ProductModel::find($id);
+    //         if (!$product) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'message' => 'Product not found!',
+    //             ], 200);
+    //         }
+
+    //         // Validate new files
+    //         $validator = Validator::make($request->all(), [
+    //             'files.*' => 'required|mimes:jpg,jpeg,png,heif|max:2048',
+    //         ]);
+
+    //         if ($validator->fails()) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'message' => $validator->errors()->first(),
+    //             ], 200);
+    //         }
+
+    //         // Delete old images from DB + server
+    //         $oldImageIds = $product->image ? explode(',', $product->image) : [];
+
+    //         foreach ($oldImageIds as $imgId) {
+    //             $upload = UploadModel::find($imgId);
+    //             if ($upload) {
+    //                 // Extract only the relative file path
+    //                 // $filePath = str_replace(asset('storage/'), '', $upload->file_url);
+    //                 $filePath = str_replace('storage/', '', $upload->file_url); // Fix: Remove storage/ prefix
+
+    //                 // Delete from server
+    //                 if (Storage::disk('public')->exists($filePath)) {
+    //                     Storage::disk('public')->delete($filePath);
+    //                 }
+    //                 // Delete from DB
+    //                 $upload->delete();
+    //             }
+    //         }
+
+    //         // Get old image IDs
+    //         $oldImageIds = $product->image ? explode(',', $product->image) : [];
+
+    //         foreach ($oldImageIds as $imgId) {
+    //             $upload = UploadModel::find($imgId);
+    //             if ($upload) {
+    //                 // Extract only the relative file path
+    //                 $filePath = str_replace(asset('storage/'), '', $upload->file_url);
+
+    //                 // Delete from server
+    //                 if (Storage::disk('public')->exists($filePath)) {
+    //                     Storage::disk('public')->delete($filePath);
+    //                 }
+    //                 // Delete from DB
+    //                 $upload->delete();
+    //             }
+    //         }
+
+    //         $uploadIds = [];
+    //         // Handle new files
+    //         if ($request->hasFile('files')) {
+    //             foreach ($request->file('files') as $file) {
+                    
+    //                 $originalName = $file->getClientOriginalName(); // e.g. "photo.jpg"
+
+    //                 // This will actually save the file to storage/app/public/uploads/products/product_images
+    //                 $path = $file->storeAs('uploads/products/product_images', $originalName, 'public');
+
+    //                 // Generate the correct relative URL, e.g. "storage/uploads/products/product_images/filename.jpg"
+    //                 $storedPath = Storage::url($path);
+
+    //                 $extension = $file->extension();                // e.g. "jpg"
+    //                 $size = $file->getSize();                       // e.g. 123456 (bytes)
+
+    //                 $upload = UploadModel::create([
+    //                     'file_name' => $originalName,
+    //                     'file_ext' => $extension,
+    //                     // 'file_url' => asset("storage/$path"),
+    //                     'file_url' => $storedPath ,
+    //                     'file_size' => $size,
+    //                 ]);
+    //                 $uploadIds[] = $upload->id;
+    //             }
+    //         }
+
+    //         // Update product image column with new comma separated IDs
+    //         $product->image = implode(',', $uploadIds);
+    //         $product->save();
+
+    //         return response()->json([
+    //             'success' => true,
+    //             'message' => 'Product images updated successfully!',
+    //             'data' => $product->makeHidden(['id', 'created_at', 'updated_at']),
+    //             // 'data_product' => $product->makeHidden(['id', 'created_at', 'updated_at']),
+    //             // 'data_upload' => $upload->makeHidden(['id', 'created_at', 'updated_at'])
+    //         ], 200);
+
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Something went wrong: ' . $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
+
+    public function uploadProductImages(Request $request, int $id)
     {
         try {
             $product = ProductModel::find($id);
@@ -538,11 +645,12 @@ class ProductController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Product not found!',
-                ], 200);
+                ], 404);
             }
 
-            // Validate new files
+            // validate new files (array-of-files under "files")
             $validator = Validator::make($request->all(), [
+                'files'   => 'required|array',
                 'files.*' => 'required|mimes:jpg,jpeg,png,heif|max:2048',
             ]);
 
@@ -550,86 +658,70 @@ class ProductController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => $validator->errors()->first(),
+                ], 422);
+            }
+
+            return DB::transaction(function () use ($request, $product) {
+                // 1) existing IDs (CSV -> array<int>)
+                $existingIds = [];
+                if (!empty($product->image)) {
+                    $existingIds = array_values(array_filter(array_map(function ($v) {
+                        $v = trim($v);
+                        return $v !== '' ? (int) $v : null;
+                    }, explode(',', $product->image))));
+                }
+
+                // 2) upload new files
+                $newIds = [];
+                if ($request->hasFile('files')) {
+                    foreach ($request->file('files') as $file) {
+                        // store file (keeps original name — change to store() if you want unique hashed names)
+                        $originalName = $file->getClientOriginalName();
+                        $path = $file->storeAs('uploads/products/product_images', $originalName, 'public');
+                        $storedUrl = Storage::url($path);           // e.g. /storage/uploads/...
+
+                        $upload = UploadModel::create([
+                            'file_name' => $originalName,
+                            'file_ext'  => $file->extension(),
+                            'file_url'  => $storedUrl,                // matches your UploadModel schema
+                            'file_size' => $file->getSize(),
+                        ]);
+
+                        $newIds[] = (int) $upload->id;
+                    }
+                }
+
+                // 3) merge existing + new (preserve order, remove dupes)
+                $merged = array_values(array_unique(array_merge($existingIds, $newIds)));
+
+                // 4) save back to product
+                $product->image = implode(',', $merged);
+                $product->save();
+
+                // 5) build convenient [{id, url}] in merged order
+                $images = [];
+                if (!empty($merged)) {
+                    $uploads = UploadModel::whereIn('id', $merged)->get(['id','file_url'])->keyBy('id');
+                    foreach ($merged as $uid) {
+                        if (isset($uploads[$uid])) {
+                            $url = $uploads[$uid]->file_url ?? null;
+                            // if a relative path sneaks in, normalize to absolute
+                            if ($url && !preg_match('~^https?://~i', $url)) {
+                                $url = Storage::url(ltrim($url, '/storage/'));
+                            }
+                            $images[] = ['id' => (int)$uid, 'url' => $url];
+                        }
+                    }
+                }
+
+                return response()->json([
+                    'success'        => true,
+                    'message'        => 'Product images uploaded successfully!',
+                    'image_ids'      => $merged,   // e.g. [5,9,12]
+                    'images'         => $images,   // e.g. [{id, url}, ...]
                 ], 200);
-            }
-
-            // Delete old images from DB + server
-            $oldImageIds = $product->image ? explode(',', $product->image) : [];
-
-            foreach ($oldImageIds as $imgId) {
-                $upload = UploadModel::find($imgId);
-                if ($upload) {
-                    // Extract only the relative file path
-                    // $filePath = str_replace(asset('storage/'), '', $upload->file_url);
-                    $filePath = str_replace('storage/', '', $upload->file_url); // Fix: Remove storage/ prefix
-
-                    // Delete from server
-                    if (Storage::disk('public')->exists($filePath)) {
-                        Storage::disk('public')->delete($filePath);
-                    }
-                    // Delete from DB
-                    $upload->delete();
-                }
-            }
-
-            // Get old image IDs
-            $oldImageIds = $product->image ? explode(',', $product->image) : [];
-
-            foreach ($oldImageIds as $imgId) {
-                $upload = UploadModel::find($imgId);
-                if ($upload) {
-                    // Extract only the relative file path
-                    $filePath = str_replace(asset('storage/'), '', $upload->file_url);
-
-                    // Delete from server
-                    if (Storage::disk('public')->exists($filePath)) {
-                        Storage::disk('public')->delete($filePath);
-                    }
-                    // Delete from DB
-                    $upload->delete();
-                }
-            }
-
-            $uploadIds = [];
-            // Handle new files
-            if ($request->hasFile('files')) {
-                foreach ($request->file('files') as $file) {
-                    
-                    $originalName = $file->getClientOriginalName(); // e.g. "photo.jpg"
-
-                    // This will actually save the file to storage/app/public/uploads/products/product_images
-                    $path = $file->storeAs('uploads/products/product_images', $originalName, 'public');
-
-                    // Generate the correct relative URL, e.g. "storage/uploads/products/product_images/filename.jpg"
-                    $storedPath = Storage::url($path);
-
-                    $extension = $file->extension();                // e.g. "jpg"
-                    $size = $file->getSize();                       // e.g. 123456 (bytes)
-
-                    $upload = UploadModel::create([
-                        'file_name' => $originalName,
-                        'file_ext' => $extension,
-                        // 'file_url' => asset("storage/$path"),
-                        'file_url' => $storedPath ,
-                        'file_size' => $size,
-                    ]);
-                    $uploadIds[] = $upload->id;
-                }
-            }
-
-            // Update product image column with new comma separated IDs
-            $product->image = implode(',', $uploadIds);
-            $product->save();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Product images updated successfully!',
-                'data' => $product->makeHidden(['id', 'created_at', 'updated_at']),
-                // 'data_product' => $product->makeHidden(['id', 'created_at', 'updated_at']),
-                // 'data_upload' => $upload->makeHidden(['id', 'created_at', 'updated_at'])
-            ], 200);
-
-        } catch (\Exception $e) {
+            });
+        } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Something went wrong: ' . $e->getMessage(),
