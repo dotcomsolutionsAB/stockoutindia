@@ -51,6 +51,8 @@ class IndustryController extends Controller
     public function getIndustries($id = null)
     {
         try {
+             $baseUrl = env('APP_URL');
+
             // Fetch industries with sub-industries
             if ($id) {
                 $industry = IndustryModel::with('subIndustries:id,industry,name')->find($id);
@@ -69,7 +71,7 @@ class IndustryController extends Controller
                     'slug' => $industry->slug,
                     'desc' => $industry->desc,
                     'sequence' => $industry->sequence,
-                    'industry_image' => $industry->image,
+                    'industry_image' => $industry->image ? $baseUrl . $industry->image : null,
                     // 'industry_image' => $industry->image
                     //     ? secure_url(optional(UploadModel::find($industry->image))->file_url)
                     //     : null,
@@ -104,7 +106,7 @@ class IndustryController extends Controller
                     'slug' => $industry->slug,
                     'desc' => $industry->desc,
                     'sequence' => $industry->sequence,
-                    'industry_image' => $industry->image,
+                    'industry_image' => $industry->image ? $baseUrl . $industry->image : null,
                     // 'industry_image' => $industry->image
                     //     ? secure_url(optional(UploadModel::find($industry->image))->file_url)
                     //     : null,
@@ -137,7 +139,6 @@ class IndustryController extends Controller
             ], 500);
         }
     }
-    
 
     // update
     // public function updateIndustry(Request $request, $id)
