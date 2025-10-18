@@ -69,9 +69,10 @@ class IndustryController extends Controller
                     'slug' => $industry->slug,
                     'desc' => $industry->desc,
                     'sequence' => $industry->sequence,
-                    'industry_image' => $industry->image
-                        ? secure_url(optional(UploadModel::find($industry->image))->file_url)
-                        : null,
+                    'industry_image' => $industry->image,
+                    // 'industry_image' => $industry->image
+                    //     ? secure_url(optional(UploadModel::find($industry->image))->file_url)
+                    //     : null,
                     'sub_industries' => $industry->subIndustries->map(function ($sub) {
                         return [
                             'id' => $sub->id,
@@ -103,9 +104,10 @@ class IndustryController extends Controller
                     'slug' => $industry->slug,
                     'desc' => $industry->desc,
                     'sequence' => $industry->sequence,
-                    'industry_image' => $industry->image
-                        ? secure_url(optional(UploadModel::find($industry->image))->file_url)
-                        : null,
+                    'industry_image' => $industry->image,
+                    // 'industry_image' => $industry->image
+                    //     ? secure_url(optional(UploadModel::find($industry->image))->file_url)
+                    //     : null,
                     'sub_industries' => $industry->subIndustries->map(function ($sub) {
                         return [
                             'id' => $sub->id,
@@ -270,8 +272,6 @@ class IndustryController extends Controller
             ], 500);
         }
     }
-
-
 
     // delete
     public function deleteIndustry($id)
