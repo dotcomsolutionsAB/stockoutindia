@@ -48,22 +48,113 @@ class IndustryController extends Controller
     }
 
     // view
+    // public function getIndustries($id = null)
+    // {
+    //     try {
+    //          $baseUrl = env('APP_URL');
+
+    //         // Fetch industries with sub-industries
+    //         if ($id) {
+    //             $industry = IndustryModel::with('subIndustries:id,industry,name')->find($id);
+    
+    //             if (!$industry) {
+    //                 return response()->json([
+    //                     'success' => false,
+    //                     'message' => 'Industry not found!',
+    //                 ], 404);
+    //             }
+    
+    //             // Transform single industry response
+    //             $formattedIndustry = [
+    //                 'id' => $industry->id,
+    //                 'name' => $industry->name,
+    //                 'slug' => $industry->slug,
+    //                 'desc' => $industry->desc,
+    //                 'sequence' => $industry->sequence,
+    //                 'industry_image' => $industry->image ? $baseUrl . $industry->image : null,
+    //                 // 'industry_image' => $industry->image
+    //                 //     ? secure_url(optional(UploadModel::find($industry->image))->file_url)
+    //                 //     : null,
+    //                 'sub_industries' => $industry->subIndustries->map(function ($sub) {
+    //                     return [
+    //                         'id' => $sub->id,
+    //                         'name' => $sub->name,
+    //                         'image' => $sub->image
+    //                             ? secure_url(optional(UploadModel::find($sub->image))->file_url)
+    //                             : null,
+    //                          // Count the products in this sub-industry using the relationship
+    //                         'product_count' => $sub->products()->count(),
+    //                     ];
+    //                 }),
+    //             ];
+    
+    //             return response()->json([
+    //                 'success' => true,
+    //                 'message' => 'Industry data retrieved successfully!',
+    //                 'data' => $formattedIndustry,
+    //             ], 200);
+    //         }
+    
+    //         // Fetch all industries
+    //         $industries = IndustryModel::with('subIndustries:id,industry,name,image')->get();
+
+    //         // Transform all industries response
+    //         $formattedIndustries = $industries->map(function ($industry) {
+    //             return [
+    //                 'id' => $industry->id,
+    //                 'name' => $industry->name,
+    //                 'slug' => $industry->slug,
+    //                 'desc' => $industry->desc,
+    //                 'sequence' => $industry->sequence,
+    //                 'industry_image' => $industry->image ? $baseUrl . $industry->image : null,
+    //                 // 'industry_image' => $industry->image
+    //                 //     ? secure_url(optional(UploadModel::find($industry->image))->file_url)
+    //                 //     : null,
+    //                 'sub_industries' => $industry->subIndustries->map(function ($sub) {
+    //                     return [
+    //                         'id' => $sub->id,
+    //                         'name' => $sub->name,
+    //                         'image' => $sub->image
+    //                             ? secure_url(optional(UploadModel::find($sub->image))->file_url)
+    //                             : null,
+    //                         // Count the products in this sub-industry using the relationship
+    //                         'product_count' => $sub->products()->count(),
+    //                     ];
+    //                 }),
+    //             ];
+    //         });
+    
+    //         return response()->json([
+    //             'success' => true,
+    //             'message' => 'Industry data retrieved successfully!',
+    //             'data' => $formattedIndustries,
+    //             'total_record' => $industries->count(),
+    //         ], 200);
+    
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Something went wrong!',
+    //             'error' => $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
     public function getIndustries($id = null)
     {
         try {
-             $baseUrl = env('APP_URL');
+            $baseUrl = env('APP_URL'); // Get base URL from .env file
 
             // Fetch industries with sub-industries
             if ($id) {
-                $industry = IndustryModel::with('subIndustries:id,industry,name')->find($id);
-    
+                $industry = IndustryModel::with('subIndustries:id,industry,name,image')->find($id);
+
                 if (!$industry) {
                     return response()->json([
                         'success' => false,
                         'message' => 'Industry not found!',
                     ], 404);
                 }
-    
+
                 // Transform single industry response
                 $formattedIndustry = [
                     'id' => $industry->id,
@@ -71,66 +162,54 @@ class IndustryController extends Controller
                     'slug' => $industry->slug,
                     'desc' => $industry->desc,
                     'sequence' => $industry->sequence,
-                    'industry_image' => $industry->image ? $baseUrl . $industry->image : null,
-                    // 'industry_image' => $industry->image
-                    //     ? secure_url(optional(UploadModel::find($industry->image))->file_url)
-                    //     : null,
-                    'sub_industries' => $industry->subIndustries->map(function ($sub) {
+                    'industry_image' => $industry->image ? $baseUrl . $industry->image : null, // Full URL for industry image
+                    'sub_industries' => $industry->subIndustries->map(function ($sub) use ($baseUrl) {
                         return [
                             'id' => $sub->id,
                             'name' => $sub->name,
-                            'image' => $sub->image
-                                ? secure_url(optional(UploadModel::find($sub->image))->file_url)
-                                : null,
-                             // Count the products in this sub-industry using the relationship
+                            'image' => $sub->image ? $baseUrl . $sub->image : null, // Full URL for sub-industry image
                             'product_count' => $sub->products()->count(),
                         ];
                     }),
                 ];
-    
+
                 return response()->json([
                     'success' => true,
                     'message' => 'Industry data retrieved successfully!',
                     'data' => $formattedIndustry,
                 ], 200);
             }
-    
+
             // Fetch all industries
             $industries = IndustryModel::with('subIndustries:id,industry,name,image')->get();
 
             // Transform all industries response
-            $formattedIndustries = $industries->map(function ($industry) {
+            $formattedIndustries = $industries->map(function ($industry) use ($baseUrl) {
                 return [
                     'id' => $industry->id,
                     'name' => $industry->name,
                     'slug' => $industry->slug,
                     'desc' => $industry->desc,
                     'sequence' => $industry->sequence,
-                    'industry_image' => $industry->image ? $baseUrl . $industry->image : null,
-                    // 'industry_image' => $industry->image
-                    //     ? secure_url(optional(UploadModel::find($industry->image))->file_url)
-                    //     : null,
-                    'sub_industries' => $industry->subIndustries->map(function ($sub) {
+                    'industry_image' => $industry->image ? $baseUrl . $industry->image : null, // Full URL for industry image
+                    'sub_industries' => $industry->subIndustries->map(function ($sub) use ($baseUrl) {
                         return [
                             'id' => $sub->id,
                             'name' => $sub->name,
-                            'image' => $sub->image
-                                ? secure_url(optional(UploadModel::find($sub->image))->file_url)
-                                : null,
-                            // Count the products in this sub-industry using the relationship
+                            'image' => $sub->image ? $baseUrl . $sub->image : null, // Full URL for sub-industry image
                             'product_count' => $sub->products()->count(),
                         ];
                     }),
                 ];
             });
-    
+
             return response()->json([
                 'success' => true,
                 'message' => 'Industry data retrieved successfully!',
                 'data' => $formattedIndustries,
                 'total_record' => $industries->count(),
             ], 200);
-    
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -139,6 +218,7 @@ class IndustryController extends Controller
             ], 500);
         }
     }
+
 
     // update
     // public function updateIndustry(Request $request, $id)
