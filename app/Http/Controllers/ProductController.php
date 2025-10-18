@@ -651,7 +651,7 @@ class ProductController extends Controller
             // validate new files (array-of-files under "files")
             $validator = Validator::make($request->all(), [
                 'files'   => 'required|array',
-                'files.*' => 'required|mimes:jpg,jpeg,png,heif|max:2048',
+                'files.*' => 'required|mimes:jpg,jpeg,png,heif|max:30720',
             ]);
 
             if ($validator->fails()) {
