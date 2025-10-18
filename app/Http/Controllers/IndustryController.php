@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\IndustryModel;
-use App\Models\UploadModel;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+use App\Models\UploadModel;
 use Illuminate\Database\QueryException;
 
 class IndustryController extends Controller
