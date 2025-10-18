@@ -218,7 +218,7 @@ class IndustryController extends Controller
                 $image = $request->file('image');
                 // Store image and get the URL
                 $path = $image->storeAs('uploads/industries', $image->getClientOriginalName(), 'public');
-                $imageUrl = Storage::url($path);
+                $imageUrl = Storage::url($path); // relative path: /storage/uploads/industries/Apparel.jpeg
             }
 
             // Column-wise update
@@ -242,11 +242,24 @@ class IndustryController extends Controller
 
             $industry->save();
 
+            // Define the base URL
+            $baseUrl = env('APP_URL'); // Assuming you set it in your .env file like: APP_URL=https://api.stockoutindia.com
+
+            // If there's an image, update the image field to include the full URL
+            if ($imageUrl) {
+                $imageUrl = $baseUrl . $imageUrl;  // Concatenate base URL with the relative path
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Industry updated successfully!',
-                'data' => $industry->makeHidden(['id', 'created_at', 'updated_at']),
-                'image_url' => $imageUrl,  // Return image URL in response
+                'data' => [
+                    'name' => $industry->name,
+                    'slug' => $industry->slug,
+                    'desc' => $industry->desc,
+                    'sequence' => $industry->sequence,
+                    'image' => $imageUrl,  // Full image URL
+                ]
             ], 200);
 
         } catch (\Exception $e) {
@@ -257,6 +270,7 @@ class IndustryController extends Controller
             ], 500);
         }
     }
+
 
 
     // delete
