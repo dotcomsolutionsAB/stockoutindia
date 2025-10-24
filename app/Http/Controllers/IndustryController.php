@@ -219,7 +219,6 @@ class IndustryController extends Controller
         }
     }
 
-
     // update
     // public function updateIndustry(Request $request, $id)
     // {

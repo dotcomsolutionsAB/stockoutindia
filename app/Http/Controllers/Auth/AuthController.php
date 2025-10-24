@@ -305,7 +305,7 @@ class AuthController extends Controller
             }
 
             // Send password to user's email
-            //Mail::to($user->email)->send(new SendNewPassword($user->name, $newPassword));
+            Mail::to($user->email)->send(new SendNewPassword($user->name, $newPassword));
 
             return response()->json([
                 'code' => 200,
