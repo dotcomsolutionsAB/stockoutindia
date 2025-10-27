@@ -6,12 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Services\GoogleAuthService;
 use App\Services\AppleAuthService;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 use App\Mail\SendNewPassword;
 use App\Models\User;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Auth;
 
@@ -282,59 +282,50 @@ class AuthController extends Controller
     public function forgotPassword(Request $request)
     {
         try {
-            // Validate request
             $request->validate([
                 'email' => 'required|email|exists:users,email',
             ]);
 
-            // Fetch the user
             $user = User::where('email', $request->email)->first();
-
-            // Generate a strong password
             $newPassword = $this->generateRandomPassword(12);
 
-            // Update password and send email atomically
+            // 1) Save WITHOUT keeping a long transaction open
             DB::beginTransaction();
-
             $user->password = Hash::make($newPassword);
-
-            // Set a fallback name for the email template, if needed
             if (empty($user->name)) {
                 $user->name = 'User';
             }
-
             $user->save();
+            DB::commit(); // ✅ commit BEFORE SMTP
 
-            // Optionally invalidate old tokens (e.g., Sanctum)
-            // if (method_exists($user, 'tokens')) {
-            //     $user->tokens()->delete();
-            // }
-
+            // 2) Send email AFTER commit (no DB lock/transaction)
             try {
-                Mail::to($user->email)->send(new SendNewPassword($user, $newPassword));
-            } catch (\Exception $mailEx) {
-                DB::rollBack();
+                // Option A: immediate send after commit
+                // Mail::to($user->email)->send(new SendNewPassword($user, $newPassword));
 
+                // Option B (better): send after commit & use queue if available
+                Mail::to($user->email)
+                    ->send((new SendNewPassword($user, $newPassword))->afterCommit());
+
+            } catch (\Exception $mailEx) {
+                // Email failure shouldn’t undo the password change.
                 return response()->json([
                     'code'    => 500,
                     'success' => false,
-                    'message' => 'Failed to send the email. Please try again later.',
-                    'data'    => [],
-                    'error'   => $mailEx->getMessage(), // remove in production if you prefer
+                    'message' => 'Password updated, but failed to send the email. Use the password in the response and change it after login.',
+                    'data'    => ['password' => $newPassword],
+                    'error'   => $mailEx->getMessage(), // hide in prod if you want
                 ], 500);
             }
-
-            DB::commit();
 
             return response()->json([
                 'code'    => 200,
                 'success' => true,
                 'message' => 'A new password has been sent to your email address.',
-                // If you don’t want to expose the password in API response, return 'data' => []
                 'data'    => ['password' => $newPassword],
             ], 200);
+
         } catch (ValidationException $ve) {
-            // Uniform validation error shape
             return response()->json([
                 'code'    => 422,
                 'success' => false,
@@ -342,12 +333,16 @@ class AuthController extends Controller
                 'data'    => $ve->errors(),
             ], 422);
         } catch (\Exception $e) {
+            // Ensure we’re not stuck mid-transaction
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
             return response()->json([
                 'code'    => 500,
                 'success' => false,
                 'message' => 'Something went wrong.',
                 'data'    => [],
-                'error'   => $e->getMessage(), // remove in production if you prefer
+                'error'   => $e->getMessage(),
             ], 500);
         }
     }
