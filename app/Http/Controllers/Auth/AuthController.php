@@ -283,10 +283,10 @@ class AuthController extends Controller
     {
         try {
             $request->validate([
-                'email' => 'required|email|exists:users,email',
+                'username' => 'required|email|exists:users,email',
             ]);
 
-            $user = User::where('email', $request->email)->first();
+            $user = User::where('email', $request->username)->first();
             $newPassword = $this->generateRandomPassword(12);
 
             // 1) Save WITHOUT keeping a long transaction open
