@@ -1,13 +1,15 @@
 <?php
 
 namespace App\Http\Controllers\Auth;
+use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 use App\Services\GoogleAuthService;
 use App\Services\AppleAuthService;
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Validation\ValidationException;
 use App\Mail\SendNewPassword;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
