@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -13,16 +14,15 @@ class SendNewPassword extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $user;
-    public $newPassword;
+    public User $user;
+    public string $newPassword;
     /**
      * Create a new message instance.
      */
-    public function __construct(string $name, string $password)
+    public function __construct(User $user, string $newPassword)
     {
-        //
         $this->user = $user;
-        $this->newPassword = $password;
+        $this->newPassword = $newPassword;
     }
 
     /**
@@ -43,10 +43,9 @@ class SendNewPassword extends Mailable
         return new Content(
             view: 'emails.new_password',
             with: [
-                'user'        => $this->user,
                 'name'        => $this->user->name ?? 'User',
                 'email'       => $this->user->email,
-                'newPassword' => $this->newPassword,
+                'newPassword' => $this->newPassword,  // <-- use this in Blade
             ]
         );
     }
