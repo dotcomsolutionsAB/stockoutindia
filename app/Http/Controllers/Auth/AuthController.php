@@ -310,12 +310,12 @@ class AuthController extends Controller
             } catch (\Exception $mailEx) {
                 // Email failure shouldn’t undo the password change.
                 return response()->json([
-                    'code'    => 500,
-                    'success' => false,
+                    'code'    => 200,
+                    'success' => true,
                     'message' => 'Password updated, but failed to send the email. Use the password in the response and change it after login.',
                     'data'    => ['password' => $newPassword],
                     'error'   => $mailEx->getMessage(), // hide in prod if you want
-                ], 500);
+                ], 200);
             }
 
             return response()->json([
