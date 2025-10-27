@@ -277,69 +277,181 @@ class AuthController extends Controller
         ], 204);
     }
 
-    // forget password
     public function forgotPassword(Request $request)
     {
-        $request->validate([
-            'username' => 'required|string',
-        ]);
-
         try {
-            $loginField = filter_var($request->username, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
+            // Validate request
+            $request->validate([
+                'email' => 'required|email|exists:users,email',
+            ]);
 
-            // Fetch user by email or username
-            $user = User::where($loginField, $request->username)->firstOrFail();
+            // Fetch the user
+            $user = User::where('email', $request->email)->first();
 
-            // Generate strong password
-            $newPassword = $this->generateStrongPassword();
+            // Generate a strong password
+            $newPassword = $this->generateRandomPassword(12);
 
-            // Update DB
+            // Update password and send email atomically
+            DB::beginTransaction();
+
             $user->password = Hash::make($newPassword);
-            $user->save();
 
-            // Invalidate old tokens (if any)
-            //$user->tokens()->delete();
-
-            if($user->name == '') {
+            // Set a fallback name for the email template, if needed
+            if (empty($user->name)) {
                 $user->name = 'User';
             }
 
-            // Send password to user's email
-            Mail::to($user->email)->send(new SendNewPassword($user->name, $newPassword));
+            $user->save();
+
+            // Optionally invalidate old tokens (e.g., Sanctum)
+            // if (method_exists($user, 'tokens')) {
+            //     $user->tokens()->delete();
+            // }
+
+            try {
+                Mail::to($user->email)->send(new SendNewPassword($user, $newPassword));
+            } catch (\Exception $mailEx) {
+                DB::rollBack();
+
+                return response()->json([
+                    'code'    => 500,
+                    'success' => false,
+                    'message' => 'Failed to send the email. Please try again later.',
+                    'data'    => [],
+                    'error'   => $mailEx->getMessage(), // remove in production if you prefer
+                ], 500);
+            }
+
+            DB::commit();
 
             return response()->json([
-                'code' => 200,
+                'code'    => 200,
                 'success' => true,
-                'message' => 'New password has been sent to your email address.',
-                'password' => $newPassword,
-            ]);
+                'message' => 'A new password has been sent to your email address.',
+                // If you don’t want to expose the password in API response, return 'data' => []
+                'data'    => ['password' => $newPassword],
+            ], 200);
+        } catch (ValidationException $ve) {
+            // Uniform validation error shape
+            return response()->json([
+                'code'    => 422,
+                'success' => false,
+                'message' => 'Validation failed.',
+                'data'    => $ve->errors(),
+            ], 422);
         } catch (\Exception $e) {
             return response()->json([
-                'code' => 500,
+                'code'    => 500,
                 'success' => false,
                 'message' => 'Something went wrong.',
-                'error' => $e->getMessage(),
-            ]);
+                'data'    => [],
+                'error'   => $e->getMessage(), // remove in production if you prefer
+            ], 500);
         }
     }
 
-    // helper function for generate a strong password
-    private function generateStrongPassword($length = 12)
+    /**
+     * Generate a cryptographically secure random password that includes:
+     * - at least 1 lowercase
+     * - at least 1 uppercase
+     * - at least 1 digit
+     * - at least 1 special char
+     */
+    private function generateRandomPassword(int $length = 12): string
     {
-        $upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        $lower = 'abcdefghijklmnopqrstuvwxyz';
-        $numbers = '0123456789';
-        $special = '@$!%*?&#';
-        $all = $upper . $lower . $numbers . $special;
+        $length = max(8, $length); // enforce a sensible minimum
 
-        return substr(str_shuffle(
-            str_shuffle($upper)[0] .
-            str_shuffle($lower)[0] .
-            str_shuffle($numbers)[0] .
-            str_shuffle($special)[0] .
-            str_shuffle($all)
-        ), 0, $length);
+        $lower   = 'abcdefghijklmnopqrstuvwxyz';
+        $upper   = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $digits  = '0123456789';
+        $special = '!@#$%^&*()_-=+[]{}<>?';
+        $all     = $lower . $upper . $digits . $special;
+
+        // Guarantee at least one of each required class
+        $password = [];
+        $password[] = $lower[random_int(0, strlen($lower) - 1)];
+        $password[] = $upper[random_int(0, strlen($upper) - 1)];
+        $password[] = $digits[random_int(0, strlen($digits) - 1)];
+        $password[] = $special[random_int(0, strlen($special) - 1)];
+
+        // Fill the remainder with secure random chars
+        for ($i = 4; $i < $length; $i++) {
+            $password[] = $all[random_int(0, strlen($all) - 1)];
+        }
+
+        // Securely shuffle the result
+        // (Fisher–Yates shuffle using random_int)
+        for ($i = count($password) - 1; $i > 0; $i--) {
+            $j = random_int(0, $i);
+            [$password[$i], $password[$j]] = [$password[$j], $password[$i]];
+        }
+
+        return implode('', $password);
     }
+
+
+    // forget password
+    // public function forgotPassword(Request $request)
+    // {
+    //     $request->validate([
+    //         'username' => 'required|string',
+    //     ]);
+
+    //     try {
+    //         $loginField = filter_var($request->username, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
+
+    //         // Fetch user by email or username
+    //         $user = User::where($loginField, $request->username)->firstOrFail();
+
+    //         // Generate strong password
+    //         $newPassword = $this->generateStrongPassword();
+
+    //         // Update DB
+    //         $user->password = Hash::make($newPassword);
+    //         $user->save();
+
+    //         // Invalidate old tokens (if any)
+    //         //$user->tokens()->delete();
+
+    //         if($user->name == '') {
+    //             $user->name = 'User';
+    //         }
+
+    //         // Send password to user's email
+    //         Mail::to($user->email)->send(new SendNewPassword($user->name, $newPassword));
+
+    //         return response()->json([
+    //             'code' => 200,
+    //             'success' => true,
+    //             'message' => 'New password has been sent to your email address.',
+    //             'password' => $newPassword,
+    //         ]);
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'code' => 500,
+    //             'success' => false,
+    //             'message' => 'Something went wrong.',
+    //             'error' => $e->getMessage(),
+    //         ]);
+    //     }
+    // }
+    // helper function for generate a strong password
+    // private function generateStrongPassword($length = 12)
+    // {
+    //     $upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    //     $lower = 'abcdefghijklmnopqrstuvwxyz';
+    //     $numbers = '0123456789';
+    //     $special = '@$!%*?&#';
+    //     $all = $upper . $lower . $numbers . $special;
+
+    //     return substr(str_shuffle(
+    //         str_shuffle($upper)[0] .
+    //         str_shuffle($lower)[0] .
+    //         str_shuffle($numbers)[0] .
+    //         str_shuffle($special)[0] .
+    //         str_shuffle($all)
+    //     ), 0, $length);
+    // }
 
     // Reset Password Function
     public function resetPassword(Request $request)
