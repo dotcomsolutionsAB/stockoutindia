@@ -21,7 +21,7 @@ class SendNewPassword extends Mailable
     public function __construct(string $name, string $password)
     {
         //
-        $this->name = $name;
+        $this->user = $user;
         $this->newPassword = $password;
     }
 
@@ -43,7 +43,8 @@ class SendNewPassword extends Mailable
         return new Content(
             view: 'emails.new_password',
             with: [
-                'name'        => $this->user->name,
+                'user'        => $this->user,
+                'name'        => $this->user->name ?? 'User',
                 'email'       => $this->user->email,
                 'newPassword' => $this->newPassword,
             ]
