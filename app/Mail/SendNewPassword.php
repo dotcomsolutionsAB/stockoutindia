@@ -13,6 +13,8 @@ class SendNewPassword extends Mailable
 {
     use Queueable, SerializesModels;
 
+    public $user;
+    public $newPassword;
     /**
      * Create a new message instance.
      */
@@ -20,7 +22,7 @@ class SendNewPassword extends Mailable
     {
         //
         $this->name = $name;
-        $this->password = $password;
+        $this->newPassword = $password;
     }
 
     /**
@@ -29,7 +31,7 @@ class SendNewPassword extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Password Reset',
+            subject: 'Your Password Has Been Reset',
         );
     }
 
@@ -41,8 +43,9 @@ class SendNewPassword extends Mailable
         return new Content(
             view: 'emails.new_password',
             with: [
-                'name' => $this->name,
-                'password' => $this->password,
+                'name'        => $this->user->name,
+                'email'       => $this->user->email,
+                'newPassword' => $this->newPassword,
             ]
         );
     }
