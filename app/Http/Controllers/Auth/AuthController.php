@@ -43,10 +43,26 @@ class AuthController extends Controller
                 Log::info('idToken validation passed.');
 
                 // Call the reusable function
+                // $payload = $this->googleAuth->verifyGoogleToken(
+                //     $request->idToken,
+                //     env('GOOGLE_CLIENT_ID')
+                // );
+
+                $clientId = config('services.google.client_id');
+
+                if (empty($clientId)) {
+                    Log::error('Google client ID is missing in config.');
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Server misconfiguration: Google Sign-In is not configured.',
+                    ], 500);
+                }
+
                 $payload = $this->googleAuth->verifyGoogleToken(
                     $request->idToken,
-                    env('GOOGLE_CLIENT_ID')
+                    $clientId
                 );
+
 
                 if (!$payload) {
                     Log::warning('Invalid or expired Google ID token.');
