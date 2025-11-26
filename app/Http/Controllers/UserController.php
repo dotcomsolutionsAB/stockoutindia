@@ -750,7 +750,7 @@ class UserController extends Controller
         try {
             $limit = $request->input('limit', 10);
             $offset = $request->input('offset', 0);
-            $userIds = $request->input('user_ids');
+            $userIds = $request->input('ids');
 
             $query = User::with([
                 'products' => function ($q) {
