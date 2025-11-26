@@ -25,6 +25,9 @@ Route::get('/faqs', [UserController::class, 'getFaqsJson']);
 
 Route::post('/register', [UserController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+
+Route::post('/admin/login-as-user', [AuthController::class, 'loginAsUser']);  // admin login as user 
+
 Route::post('/get_otp', [AuthController::class, 'generate_otp']);
 Route::post('/forget_password', [AuthController::class, 'forgotPassword']);
 Route::post('/gst_details', [UserController::class, 'fetchGstDetails']);
@@ -60,8 +63,7 @@ Route::prefix('product')->group(function () {
 });
 
 Route::middleware(['auth:sanctum'])->group(function () {
-    Route::post('/admin/login-as-user', [AuthController::class, 'loginAsUser']);  // admin login as user 
-
+    
     Route::post('/reset_password', [AuthController::class, 'resetPassword']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
@@ -93,8 +95,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/{id}', [UserController::class, 'updateUser']); // Update a speciic user
         Route::delete('/{id}', [UserController::class, 'deleteUser']); // Update a specific user
     });
-
-    
 
     Route::prefix('wishlist')->group(function () {
         Route::post('/add', [WishlistController::class, 'addProduct']); // Create Products
