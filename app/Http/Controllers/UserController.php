@@ -751,6 +751,9 @@ class UserController extends Controller
             $limit = $request->input('limit', 10);
             $offset = $request->input('offset', 0);
             $userIds = $request->input('ids');
+            $email    = $request->input('email');
+            $phone    = $request->input('phone');
+            $active   = $request->input('is_active'); // 1 or 0
 
             $query = User::with([
                 'products' => function ($q) {
@@ -765,9 +768,24 @@ class UserController extends Controller
                 $userIdsArray = explode(',', $userIds);
                 $query->whereIn('id', $userIdsArray);
             }
+            // 🔥 Filter by Email (LIKE search)
+            if ($email) {
+                $query->where('email', 'LIKE', "%$email%");
+            }
+
+            // 🔥 Filter by Mobile (LIKE search)
+            if ($phone) {
+                $query->where('phone', 'LIKE', "%$phone%");
+            }
+
+            // 🔥 Filter by Active / Inactive users
+            // Expects ?is_active=1 or ?is_active=0
+            if ($active !== null && $active !== '') {
+                $query->where('is_active', $active);
+            }
 
             $users = $query->offset($offset)->limit($limit)->get();
-            $totalCount = User::count();
+            $totalCount = (clone $query)->count();
 
             // Fetch all upload records in one go
             $allUploads = UploadModel::pluck('file_url', 'id')->toArray();
@@ -809,6 +827,7 @@ class UserController extends Controller
                     'role' => $user->role,
                     'username' => $user->username,
                     'phone' => $user->phone,
+                    'is_active'  => (int)$user->is_active, // 🔥 new raw status
                     'status' => $user->is_active ? 'active' : 'in-active',
                     'company_name' => $user->company_name,
                     'address' => $user->address,
