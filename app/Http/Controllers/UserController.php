@@ -748,117 +748,113 @@ class UserController extends Controller
     public function allUserDetails(Request $request)
     {
         try {
-            $limit = $request->input('limit', 10);
-            $offset = $request->input('offset', 0);
-            $userIds = $request->input('ids');
-            $email    = $request->input('email');
-            $phone    = $request->input('phone');
-            $active   = $request->input('is_active'); // 1 or 0
-
+            $limit     = $request->input('limit', 10);
+            $offset    = $request->input('offset', 0);
+            $userIds   = $request->input('ids');
+            $email     = $request->input('email');
+            $phone     = $request->input('phone');
+            $active    = $request->input('is_active'); // 1 or 0
+            
+            // 🔥 Sorting input
+            $sortBy     = $request->input('sort_by', 'created_at'); // default sort_by created_at
+            $sortOrder  = $request->input('sort_order', 'desc');     // default desc
+            
             $query = User::with([
                 'products' => function ($q) {
                     $q->where('status', 'active')
-                        ->with(['industryDetails:id,name', 'subIndustryDetails:id,name']);
+                    ->with(['industryDetails:id,name', 'subIndustryDetails:id,name']);
                 },
                 'industryDetails:id,name',
                 'subIndustryDetails:id,name',
             ]);
-
+            
+            // FILTERS --------------------------
             if ($userIds) {
-                $userIdsArray = explode(',', $userIds);
-                $query->whereIn('id', $userIdsArray);
+                $query->whereIn('id', explode(',', $userIds));
             }
-            // 🔥 Filter by Email (LIKE search)
             if ($email) {
-                $query->where('email', 'LIKE', "%$email%");
+                $query->where('email', 'LIKE', "%{$email}%");
             }
-
-            // 🔥 Filter by Mobile (LIKE search)
             if ($phone) {
-                $query->where('phone', 'LIKE', "%$phone%");
+                $query->where('phone', 'LIKE', "%{$phone}%");
             }
-
-            // 🔥 Filter by Active / Inactive users
-            // Expects ?is_active=1 or ?is_active=0
             if ($active !== null && $active !== '') {
                 $query->where('is_active', $active);
             }
 
-            $users = $query->offset($offset)->limit($limit)->get();
-            $totalCount = (clone $query)->count();
-
-            // Fetch all upload records in one go
-            $allUploads = UploadModel::pluck('file_url', 'id')->toArray();
-
+            // 🔥 APPLY SORTING HERE
+            $query->orderBy($sortBy, $sortOrder);
+            
+            // FINAL FETCH ----------------------
+            $users       = $query->offset($offset)->limit($limit)->get();
+            $totalCount  = (clone $query)->count();
+            $allUploads  = UploadModel::pluck('file_url', 'id')->toArray();
+            
             $data = $users->map(function ($user) use ($allUploads) {
                 $products = $user->products->map(function ($product) use ($allUploads) {
                     $imageUrls = [];
-                    if (!empty($product->image)) {
-                        $imageIds = explode(',', $product->image);
-                        foreach ($imageIds as $id) {
-                            if (isset($allUploads[$id])) {
-                                $imageUrls[] = url($allUploads[$id]);
-                            }
+                    if ($product->image) {
+                        foreach (explode(',', $product->image) as $id) {
+                            if(isset($allUploads[$id])) $imageUrls[] = url($allUploads[$id]);
                         }
                     }
-
                     return [
-                        'id' => $product->id,
-                        'name' => $product->name,
+                        'id'            => $product->id,
+                        'name'          => $product->name,
                         'selling_price' => $product->selling_price,
-                        'image_urls' => $imageUrls,
-                        'industry' => [
-                            'id' => $product->industryDetails->id ?? null,
-                            'name' => $product->industryDetails->name ?? null,
+                        'image_urls'    => $imageUrls,
+                        'industry'      => [
+                            'id'=> $product->industryDetails->id ?? null,
+                            'name'=> $product->industryDetails->name ?? null,
                         ],
-                        'sub_industry' => [
-                            'id' => $product->subIndustryDetails->id ?? null,
-                            'name' => $product->subIndustryDetails->name ?? null,
+                        'sub_industry'  => [
+                            'id'=> $product->subIndustryDetails->id ?? null,
+                            'name'=> $product->subIndustryDetails->name ?? null,
                         ],
                     ];
                 });
 
                 return [
-                    'id'   => $user->id,
-                    'user_id' => $user->user_id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'google_id' => $user->google_id,
-                    'role' => $user->role,
-                    'username' => $user->username,
-                    'phone' => $user->phone,
-                    'is_active'  => (int)$user->is_active, // 🔥 new raw status
-                    'status' => $user->is_active ? 'active' : 'in-active',
-                    'company_name' => $user->company_name,
-                    'address' => $user->address,
-                    'pincode' => $user->pincode,
-                    'city' => $user->city,
-                    'state' => $user->state,
-                    'gstin' => $user->gstin,
+                    'id'            => $user->id,
+                    'user_id'       => $user->user_id,
+                    'name'          => $user->name,
+                    'email'         => $user->email,
+                    'google_id'     => $user->google_id,
+                    'role'          => $user->role,
+                    'username'      => $user->username,
+                    'phone'         => $user->phone,
+                    'is_active'     => (int)$user->is_active,
+                    'status'        => $user->is_active ? 'active' : 'in-active',
+                    'company_name'  => $user->company_name,
+                    'address'       => $user->address,
+                    'pincode'       => $user->pincode,
+                    'city'          => $user->city,
+                    'state'         => $user->state,
+                    'gstin'         => $user->gstin,
                     'industry' => [
-                        'id' => $user->industryDetails->id ?? null,
-                        'name' => $user->industryDetails->name ?? null,
+                        'id'=> $user->industryDetails->id ?? null,
+                        'name'=> $user->industryDetails->name ?? null,
                     ],
                     'sub_industry' => [
-                        'id' => $user->subIndustryDetails->id ?? null,
-                        'name' => $user->subIndustryDetails->name ?? null,
+                        'id'=> $user->subIndustryDetails->id ?? null,
+                        'name'=> $user->subIndustryDetails->name ?? null,
                     ],
                     'active_product_count' => $products->count(),
-                    'products' => $products,
+                    'products'             => $products,
                 ];
             });
 
             return response()->json([
-                'code' => 200,
-                'success' => true,
-                'data' => $data,
+                'code'        => 200,
+                'success'     => true,
+                'data'        => $data,
                 'total_count' => $totalCount,
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'code' => 500,
+                'code'    => 500,
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error'   => $e->getMessage(),
             ], 500);
         }
     }
