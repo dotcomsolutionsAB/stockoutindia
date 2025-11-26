@@ -60,6 +60,7 @@ Route::prefix('product')->group(function () {
 });
 
 Route::middleware(['auth:sanctum'])->group(function () {
+    Route::post('/admin/login-as-user', [AuthController::class, 'loginAsUser']);  // admin login as user 
 
     Route::post('/reset_password', [AuthController::class, 'resetPassword']);
     Route::post('/logout', [AuthController::class, 'logout']);

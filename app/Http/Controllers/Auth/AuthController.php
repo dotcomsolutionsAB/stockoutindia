@@ -275,6 +275,102 @@ class AuthController extends Controller
         
     }
 
+    // Admin login as user 
+    public function loginAsUser(Request $request)
+    {
+        try {
+            // 1) Validate input
+            $request->validate([
+                'user_id'        => 'required|integer|exists:users,id',
+                'super_password' => 'required|string',
+            ]);
+
+            // 2) (Optional but recommended) Make sure caller is an admin
+            //    Only if route is protected by auth:sanctum
+            // $admin = $request->user();
+            // if (!$admin || $admin->role !== 'admin') {
+            //     return response()->json([
+            //         'success' => false,
+            //         'message' => 'Only admins can use this endpoint.',
+            //     ], 403);
+            // }
+
+            // 3) Verify super password
+            $providedSuperPassword = $request->input('super_password');
+            $configuredSuperPassword = env('SUPER_LOGIN_PASSWORD');
+
+            if (empty($configuredSuperPassword)) {
+                Log::error('SUPER_LOGIN_PASSWORD is not set in .env');
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Server misconfiguration. Super login password not set.',
+                ], 500);
+            }
+
+            // Plain text check (simple)
+            if ($providedSuperPassword !== $configuredSuperPassword) {
+                Log::warning('Invalid super password attempt for login-as-user');
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid credentials.',
+                ], 403);
+            }
+
+            // If using hashed version instead:
+            // if (!Hash::check($providedSuperPassword, $configuredSuperPassword)) { ... }
+
+            // 4) Fetch the target user
+            $user = User::find($request->user_id);
+
+            if (!$user) {
+                // Should not happen because of 'exists' rule, but just in case
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not found.',
+                ], 404);
+            }
+
+            // 5) Check if user is active (same as normal login)
+            if ($user->is_active == 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This user account is inactive. Please contact support.',
+                ], 403);
+            }
+
+            // 6) Optionally revoke previous tokens for that user (if you want a clean session)
+            // if ($user->role == "user") {
+            //     $user->tokens()->delete();
+            // }
+
+            // 7) Create a token as if the user logged in normally
+            $generated_token = $user->createToken('API TOKEN')->plainTextToken;
+
+            // 8) Return SAME RESPONSE SHAPE as normal username/password login
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'token'    => $generated_token,
+                    'user_id'  => $user->id,
+                    'name'     => $user->name,
+                    'role'     => $user->role,
+                    'username' => $user->username,
+                    'email'    => $user->email ?? null, // optional, to match others
+                ],
+                'message' => 'Logged in as user successfully (admin override).',
+            ], 200);
+
+        } catch (\Exception $e) {
+            Log::error('Error in loginAsUser: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong.',
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     // user `logout`
     public function logout(Request $request)
     {
