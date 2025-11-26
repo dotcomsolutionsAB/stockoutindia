@@ -120,6 +120,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::prefix('admin')->group(function () {
             Route::post('/products', [ProductController::class, 'admin_fetchProducts']);
             Route::post('/users_with_products', [UserController::class, 'usersWithProducts']);
+            Route::post('/fetch_user', [UserController::class, 'allUserDetails']);
             Route::post('/user_orders', [UserController::class, 'userOrders']);
             Route::post('/user_toggle_status', [UserController::class, 'toggleUserStatus']);
             Route::post('/product_toggle_status', [ProductController::class, 'toggleProductStatus']);
