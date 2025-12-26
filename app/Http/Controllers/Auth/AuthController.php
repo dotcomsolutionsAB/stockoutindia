@@ -389,11 +389,37 @@ class AuthController extends Controller
     public function forgotPassword(Request $request)
     {
         try {
+            // $request->validate([
+            //     'username' => 'required|email|exists:users,email',
+            // ]);
             $request->validate([
-                'username' => 'required|email|exists:users,email',
+                'username' => [
+                    'required',
+                    function ($attribute, $value, $fail) {
+                        $isEmail = filter_var($value, FILTER_VALIDATE_EMAIL);
+
+                        if ($isEmail) {
+                            if (!\App\Models\User::where('email', $value)->exists()) {
+                                $fail('The selected email is invalid.');
+                            }
+                        } else {
+                            // treat as phone/mobile
+                            if (!\App\Models\User::where('phone', $value)->exists()) {
+                                $fail('The selected mobile number is invalid.');
+                            }
+                        }
+                    }
+                ],
             ]);
 
-            $user = User::where('email', $request->username)->first();
+
+            // $user = User::where('email', $request->username)->first();
+            $username = $request->username;
+
+            $user = User::where('email', $username)
+                ->orWhere('phone', $username)
+                ->first();
+
             $newPassword = $this->generateRandomPassword(12);
 
             // 1) Save WITHOUT keeping a long transaction open
