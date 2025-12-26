@@ -9,6 +9,10 @@ use App\Models\UploadModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Razorpay\Api\Api;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
+use App\Mail\ProductListedConfirmationMail;
+use App\Models\User;
 
 class RazorpayController extends Controller
 {
@@ -126,120 +130,74 @@ class RazorpayController extends Controller
         }
     }
 
-
-    /**
-     * Fetch payments for the logged-in user (or admin-provided user_id)
-     */
-    // public function fetchPayments(Request $request)
-    // {
-    //     try {
-    //         // Check if the user is an admin or a regular user
-    //         $user = Auth::user();
-
-    //         // If the user is an admin and the user_id is provided, fetch payments for that user
-    //         if ($user->role == 'admin') {
-    //              // Validate that user_id exists in the users table if provided
-    //              $request->validate([
-    //                 'user' => 'required|integer|exists:users,id', // Ensure user_id exists in the users table
-    //             ]);
-
-    //             // Get the user_id from the request
-    //             $userId = $request->user;
-    //         } else {
-    //             // For regular users, use the authenticated user's ID
-    //             $userId = $user->id;
-    //         }
-
-    //         // Fetch payments for the specified user
-    //         $payments = RazorpayOrdersModel::with('productDetails')
-    //         ->where('user', $userId)
-    //         ->get();
-
-
-    //         // Return response with payment data
-    //         return response()->json([
-    //             'success' => true,
-    //             'message' => 'Payments fetched successfully!',
-    //             'data' => $payments->makeHidden(['updated_at', 'created_at']),
-    //         ], 200);
-
-    //     } catch (\Exception $e) {
-    //         // Handle any exceptions and return error message
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Error fetching payments: ' . $e->getMessage(),
-    //         ], 500);
-    //     }
-    // }
-
     public function fetchPayments(Request $request)
-{
-    try {
-        // Check if the user is an admin or a regular user
-        $user = Auth::user();
+    {
+        try {
+            // Check if the user is an admin or a regular user
+            $user = Auth::user();
 
-        // If the user is an admin and the user_id is provided, fetch payments for that user
-        if ($user->role == 'admin') {
-            // Validate that user_id exists in the users table if provided
-            $request->validate([
-                'user' => 'required|integer|exists:users,id', // Ensure user_id exists in the users table
-            ]);
+            // If the user is an admin and the user_id is provided, fetch payments for that user
+            if ($user->role == 'admin') {
+                // Validate that user_id exists in the users table if provided
+                $request->validate([
+                    'user' => 'required|integer|exists:users,id', // Ensure user_id exists in the users table
+                ]);
 
-            // Get the user_id from the request
-            $userId = $request->user;
-        } else {
-            // For regular users, use the authenticated user's ID
-            $userId = $user->id;
-        }
-
-        // Fetch payments for the specified user with product details
-        $payments = RazorpayOrdersModel::with(['productDetails' => function ($query) {
-            $query->with([
-                'user:id,name,phone,city',
-                'subIndustryDetails:id,name'
-            ])->where('is_delete', '0');
-        }])
-        ->where('user', $userId)
-        ->get();
-
-        // Get all image IDs from the products in one go
-        $allImageIds = $payments->pluck('productDetails.image')
-            ->flatMap(function ($image) {
-                return $image ? explode(',', $image) : [];
-            })->unique()->filter();
-
-        // Fetch file URLs for all image IDs
-        $uploads = $allImageIds->isEmpty()
-            ? collect()
-            : UploadModel::whereIn('id', $allImageIds)->pluck('file_url', 'id');
-
-        // Transform payments to include file_url instead of image IDs
-        $payments->transform(function ($payment) use ($uploads) {
-            if ($payment->productDetails) {
-                $uploadIds = $payment->productDetails->image ? explode(',', $payment->productDetails->image) : [];
-                $payment->productDetails->image = array_map(
-                    fn($uid) => isset($uploads[$uid]) ? secure_url($uploads[$uid]) : null,
-                    $uploadIds
-                );
+                // Get the user_id from the request
+                $userId = $request->user;
+            } else {
+                // For regular users, use the authenticated user's ID
+                $userId = $user->id;
             }
-            return $payment->makeHidden(['updated_at', 'created_at']);
-        });
 
-        // Return response with payment data
-        return response()->json([
-            'success' => true,
-            'message' => 'Payments fetched successfully!',
-            'data' => $payments,
-        ], 200);
+            // Fetch payments for the specified user with product details
+            $payments = RazorpayOrdersModel::with(['productDetails' => function ($query) {
+                $query->with([
+                    'user:id,name,phone,city',
+                    'subIndustryDetails:id,name'
+                ])->where('is_delete', '0');
+            }])
+            ->where('user', $userId)
+            ->get();
 
-    } catch (\Exception $e) {
-        // Handle any exceptions and return error message
-        return response()->json([
-            'success' => false,
-            'message' => 'Error fetching payments: ' . $e->getMessage(),
-        ], 500);
+            // Get all image IDs from the products in one go
+            $allImageIds = $payments->pluck('productDetails.image')
+                ->flatMap(function ($image) {
+                    return $image ? explode(',', $image) : [];
+                })->unique()->filter();
+
+            // Fetch file URLs for all image IDs
+            $uploads = $allImageIds->isEmpty()
+                ? collect()
+                : UploadModel::whereIn('id', $allImageIds)->pluck('file_url', 'id');
+
+            // Transform payments to include file_url instead of image IDs
+            $payments->transform(function ($payment) use ($uploads) {
+                if ($payment->productDetails) {
+                    $uploadIds = $payment->productDetails->image ? explode(',', $payment->productDetails->image) : [];
+                    $payment->productDetails->image = array_map(
+                        fn($uid) => isset($uploads[$uid]) ? secure_url($uploads[$uid]) : null,
+                        $uploadIds
+                    );
+                }
+                return $payment->makeHidden(['updated_at', 'created_at']);
+            });
+
+            // Return response with payment data
+            return response()->json([
+                'success' => true,
+                'message' => 'Payments fetched successfully!',
+                'data' => $payments,
+            ], 200);
+
+        } catch (\Exception $e) {
+            // Handle any exceptions and return error message
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching payments: ' . $e->getMessage(),
+            ], 500);
+        }
     }
-}
 
     /**
      * Store Razorpay Payment Details
@@ -258,6 +216,17 @@ class RazorpayController extends Controller
             $payment = $this->razorpay->payment->fetch($razorpayPaymentId);
             $paymentDetails = $payment->toArray(); // Convert response to array
 
+            // ✅ Only proceed if payment is actually successful
+            if (($paymentDetails['status'] ?? '') !== 'captured') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Payment not captured yet.',
+                    'data' => [
+                        'razorpay_status' => $paymentDetails['status'] ?? null
+                    ]
+                ], 400);
+            }
+
             // Ensure the `order_id` exists in the database
             $order = RazorpayOrdersModel::where('razorpay_order_id', $paymentDetails['order_id'])->first();
 
@@ -267,6 +236,23 @@ class RazorpayController extends Controller
                     'message' => 'Order not found in the database!',
                 ], 200);
             }
+
+            // ✅ Security: ensure the order is for the same product passed in request
+            if ((int)$order->product !== (int)$request->product) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Product does not match this payment order.',
+                ], 400);
+            }
+
+            // ✅ Optional: ensure the order belongs to current user
+            if ((int)$order->user !== (int)Auth::id()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized order access.',
+                ], 403);
+            }
+
 
             // Insert data column-wise
             $store_payment = RazorpayPaymentsModel::create([
@@ -286,6 +272,26 @@ class RazorpayController extends Controller
                 'validity' => $validityDate,
                 'status' => 'active'
             ]);
+
+            // Send Product Listed Confirmation Email
+            try {
+                $user = Auth::user();
+                $product = ProductModel::find($request->product);
+
+                if ($user && $user->email && $product) {
+                    Mail::to($user->email)->send(
+                        new ProductListedConfirmationMail(
+                            $product,
+                            $user,
+                            $validityDate,
+                            $razorpayPaymentId,
+                            $paymentDetails['method'] ?? 'NA'
+                        )
+                    );
+                }
+            } catch (\Exception $mailEx) {
+                Log::error('ProductListedConfirmationMail failed: ' . $mailEx->getMessage());
+            }
 
             // Return success response
             return response()->json([
