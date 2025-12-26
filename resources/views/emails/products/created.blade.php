@@ -13,7 +13,7 @@
           
           <!-- Header -->
           <tr>
-            <td style="padding:18px 22px;background:#0f172a;color:#fff;">
+            <td style="padding:18px 22px;background:#b30000;color:#fff;">
               <div style="font-size:16px;font-weight:700;letter-spacing:.2px;">
                 {{ config('app.name') }}
               </div>
@@ -38,11 +38,6 @@
                 </div>
 
                 <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-                  <tr>
-                    <td style="padding:10px 16px;border-bottom:1px solid #f1f5f9;width:40%;font-size:13px;color:#475569;">Product ID</td>
-                    <td style="padding:10px 16px;border-bottom:1px solid #f1f5f9;font-size:13px;"><b>{{ $product->id }}</b></td>
-                  </tr>
-
                   <tr>
                     <td style="padding:10px 16px;border-bottom:1px solid #f1f5f9;font-size:13px;color:#475569;">Product Name</td>
                     <td style="padding:10px 16px;border-bottom:1px solid #f1f5f9;font-size:13px;"><b>{{ $product->product_name }}</b></td>
@@ -72,22 +67,6 @@
                     <td style="padding:10px 16px;border-bottom:1px solid #f1f5f9;font-size:13px;color:#475569;">Unit</td>
                     <td style="padding:10px 16px;border-bottom:1px solid #f1f5f9;font-size:13px;">{{ $product->unit }}</td>
                   </tr>
-
-                  <tr>
-                    <td style="padding:10px 16px;border-bottom:1px solid #f1f5f9;font-size:13px;color:#475569;">Industry</td>
-                    <td style="padding:10px 16px;border-bottom:1px solid #f1f5f9;font-size:13px;">{{ $product->industry ?? '-' }}</td>
-                  </tr>
-
-                  <tr>
-                    <td style="padding:10px 16px;border-bottom:1px solid #f1f5f9;font-size:13px;color:#475569;">City</td>
-                    <td style="padding:10px 16px;border-bottom:1px solid #f1f5f9;font-size:13px;">{{ $product->city ?? '-' }}</td>
-                  </tr>
-
-                  <tr>
-                    <td style="padding:10px 16px;border-bottom:1px solid #f1f5f9;font-size:13px;color:#475569;">State ID</td>
-                    <td style="padding:10px 16px;border-bottom:1px solid #f1f5f9;font-size:13px;">{{ $product->state_id ?? '-' }}</td>
-                  </tr>
-
                   <tr>
                     <td style="padding:10px 16px;border-bottom:1px solid #f1f5f9;font-size:13px;color:#475569;">Status</td>
                     <td style="padding:10px 16px;border-bottom:1px solid #f1f5f9;font-size:13px;">
@@ -100,18 +79,6 @@
                           active
                         </span>
                       @endif
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td style="padding:10px 16px;border-bottom:1px solid #f1f5f9;font-size:13px;color:#475569;">Dimensions</td>
-                    <td style="padding:10px 16px;border-bottom:1px solid #f1f5f9;font-size:13px;">{{ $product->dimensions ?? '-' }}</td>
-                  </tr>
-
-                  <tr>
-                    <td style="padding:10px 16px;font-size:13px;color:#475569;">Description</td>
-                    <td style="padding:10px 16px;font-size:13px;">
-                      {{ $product->description ?? '-' }}
                     </td>
                   </tr>
                 </table>
