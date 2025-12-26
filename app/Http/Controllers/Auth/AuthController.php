@@ -388,6 +388,20 @@ class AuthController extends Controller
 
     public function forgotPassword(Request $request)
     {
+        // ✅ Normalize username: if it's a 10-digit mobile, prefix +91
+        $username = trim((string) $request->input('username', ''));
+
+        if (!filter_var($username, FILTER_VALIDATE_EMAIL)) {
+            // keep only digits for mobile check (handles spaces, hyphens)
+            $digits = preg_replace('/\D+/', '', $username);
+
+            if (strlen($digits) === 10) {
+                $username = '+91' . $digits;
+                $request->merge(['username' => $username]);
+            }
+        }
+
+
         try {
             // $request->validate([
             //     'username' => 'required|email|exists:users,email',
