@@ -211,11 +211,8 @@ class AuthController extends Controller
                     ], 200);
                 }
             }
-            
 
-            
             // Step 2: Fallback to standard username/password login
-
             $request->validate([
                 'username' => 'required|string',
                 'password' => [
@@ -256,9 +253,7 @@ class AuthController extends Controller
                     ],
                     'message' => 'User logged in successfully!',
                 ], 200);
-            }
-
-            else {
+            } else {
                 return response()->json([
                     'success' => false,
                     'message' => 'Invalid Username or Password.',

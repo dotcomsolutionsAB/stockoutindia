@@ -29,99 +29,6 @@ class UserController extends Controller
         $this->appleAuth = $appleAuth;
     }
     // create
-    // public function register(Request $request)
-    // {
-    //     try {
-
-    //         $google_id_token = $request->input('idToken'); // idToken from Google
-
-    //         $googleEmail = null;
-    //         $googleId = null;
-    
-    //         // Step 1: If idToken is provided, verify it
-    //         if ($google_id_token) {
-    //             $payload = $this->googleAuth->verifyGoogleToken(
-    //                 $google_id_token,
-    //                 env('GOOGLE_CLIENT_ID')
-    //             );
-    
-    //             $googleEmail = $payload['email'] ?? null;
-    //             $googleId = $payload['sub'] ?? null;
-    //         }
-
-    //         // Step 2: Dynamically set validation rules
-    //         $rules = [
-    //             // 'email' => ['required', 'email', 'unique:users,email'],
-    //             'role' => ['required', Rule::in(['admin', 'user'])],
-    //             'phone' => 'required|string|unique:users,phone',
-    //             'gstin' => 'nullable|string|unique:users,gstin',
-    //             'name' => 'required_without:gstin|string|max:255',
-    //             'company_name' => 'required_without:gstin|string|max:255',
-    //             'address' => 'required_without:gstin|string|max:255',
-    //             'pincode' => 'required_without:gstin|string|max:10',
-    //             'city' => 'required_without:gstin|string',
-    //             'state' => 'required_without:gstin|integer|exists:t_states,id',
-    //             'industry' => 'nullable|integer|exists:t_industries,id',
-    //             'sub_industry' => 'nullable|integer|exists:t_sub_industries,id',
-    //         ];
-
-    //         // If googleId is not available, validate email
-    //         if (!$googleId) {
-    //             $rules['email'] = ['required', 'email', 'unique:users,email'];
-    //         }
-
-    //         // Validate the data
-    //         $validator = Validator::make($request->all(), $rules);
-
-    //         if ($validator->fails()) {
-    //             return response()->json([
-    //                 'success' => false,
-    //                 'message' => $validator->errors()->first(),
-    //             ], 200);
-    //         }
-
-    //         // If googleEmail exists, ensure it is unique
-    //         if ($googleEmail && User::where('email', $googleEmail)->exists()) {
-    //             return response()->json([
-    //                 'success' => false,
-    //                 'message' => 'The email associated with the Google account is already in use.',
-    //             ], 200);
-    //         }
-
-    //         // Create User
-    //         $user = User::create([
-    //             'name' => $request->name,
-    //             'email' => $googleEmail ?? $request->email,
-    //             'password' => bcrypt($request->password), // No password if using google login
-    //             'google_id' => $googleId,
-    //             'role' => $request->role,
-    //             'username' => $request->phone, // Store phone in username
-    //             'phone' => $request->phone,
-    //             'is_active' => "1",
-    //             'company_name' => $request->company_name,
-    //             'address' => $request->address,
-    //             'pincode' => $request->pincode,
-    //             'city' => $request->city,
-    //             'state' => $request->state,
-    //             'gstin' => $request->gstin,
-    //             'industry' => $request->industry,
-    //             'sub_industry' => $request->sub_industry,
-    //         ]);
-
-    //         return response()->json([
-    //             'success' => true,
-    //             'message' => 'User registered successfully!',
-    //             'data' => $user->makeHidden(['id', 'created_at', 'updated_at']),
-    //         ], 201);
-
-    //     } catch (\Exception $e) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Something went wrong: ' . $e->getMessage(),
-    //         ], 500);
-    //     }
-    // }
-
     public function register(Request $request)
     {
         try {
@@ -305,7 +212,6 @@ class UserController extends Controller
             ], 500);
         }
     }
-
 
     // view
     public function viewUsers($id = null)

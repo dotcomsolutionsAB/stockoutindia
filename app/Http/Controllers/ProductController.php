@@ -12,6 +12,10 @@ use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Storage;
 use Auth;
 use DB;
+use App\Models\User;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\ProductCreatedMail;
+use Illuminate\Support\Facades\Log;
 
 class ProductController extends Controller
 {
@@ -58,7 +62,16 @@ class ProductController extends Controller
                 'is_delete' => '0',
                 // 'image' => will be empty or null initially; handled in separate method
             ]);
+            // Send product created email to the owner (logged-in user)
+            try {
+                $user = User::find(Auth::id());
 
+                if ($user && $user->email) {
+                    Mail::to($user->email)->send(new ProductCreatedMail($product, $user));
+                }
+            } catch (\Exception $mailEx) {
+                Log::error('Failed to send product created email: ' . $mailEx->getMessage());
+            }
             return response()->json([
                 'success' => true,
                 'message' => 'Product created successfully!',
@@ -729,93 +742,6 @@ class ProductController extends Controller
         }
     }
 
-    // append the new images
-    // public function uploadProductImages(Request $request, $id)
-    // {
-    //     try {
-    //         $product = ProductModel::find($id);
-    //         if (!$product) {
-    //             return response()->json([
-    //                 'success' => false,
-    //                 'message' => 'Product not found!',
-    //             ], 404);
-    //         }
-
-    //         // Validate new files
-    //         $validator = Validator::make($request->all(), [
-    //             'files.*' => 'required|mimes:jpg,jpeg,png,heif|max:2048',
-    //         ]);
-
-    //         if ($validator->fails()) {
-    //             return response()->json([
-    //                 'success' => false,
-    //                 'message' => $validator->errors()->first(),
-    //             ], 422);
-    //         }
-
-    //         // Delete old images from DB + server
-    //         // $oldImageIds = $product->image ? explode(',', $product->image) : [];
-
-    //         // foreach ($oldImageIds as $imgId) {
-    //         //     $upload = UploadModel::find($imgId);
-    //         //     if ($upload) {
-    //         //         // Extract only the relative file path
-    //         //         $filePath = str_replace(asset('storage/'), '', $upload->file_url);
-
-    //         //         // Delete from server
-    //         //         if (Storage::disk('public')->exists($filePath)) {
-    //         //             Storage::disk('public')->delete($filePath);
-    //         //         }
-    //         //         // Delete from DB
-    //         //         $upload->delete();
-    //         //     }
-    //         // }
-
-    //         // Get old image IDs
-    //         $oldImageIds = $product->image ? explode(',', $product->image) : [];
-
-    //         $uploadIds = [];
-    //         // Handle new files
-    //         if ($request->hasFile('files')) {
-    //             foreach ($request->file('files') as $file) {
-    //                 // 1. Store file in "uploads/products" folder on the "public" disk
-    //                 $path = $file->store('uploads/products/product_images', 'public');
-
-    //                 // 2. Extract file details
-    //                 $originalName = $file->getClientOriginalName(); // e.g. "photo.jpg"
-    //                 $extension = $file->extension();                // e.g. "jpg"
-    //                 $size = $file->getSize();                       // e.g. 123456 (bytes)
-
-    //                 $upload = UploadModel::create([
-    //                     'file_name' => $originalName,
-    //                     'file_ext' => $extension,
-    //                     'file_url' => asset("storage/$path"),
-    //                     'file_size' => $size,
-    //                 ]);
-    //                 $uploadIds[] = $upload->id;
-    //             }
-    //         }
-
-    //         // Merge old and new image IDs
-    //         $product->image = implode(',', array_merge($oldImageIds, $uploadIds));
-    //         $product->save();
-
-    //         return response()->json([
-    //             'success' => true,
-    //             'message' => 'Product images updated successfully!',
-    //             'data' => $product->makeHidden(['id', 'created_at', 'updated_at']),
-    //             // 'data_product' => $product->makeHidden(['id', 'created_at', 'updated_at']),
-    //             // 'data_upload' => $upload->makeHidden(['id', 'created_at', 'updated_at'])
-    //         ], 200);
-
-    //     } catch (\Exception $e) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Something went wrong: ' . $e->getMessage(),
-    //         ], 500);
-    //     }
-    // }
-
     // delete
     public function deleteProduct($id)
     {
@@ -896,71 +822,6 @@ class ProductController extends Controller
             ], 500);
         }
     }
-
-    // delete product image
-    // public function deleteProductImages(Request $request, $id)
-    // {
-    //     try {
-    //         // Find the product
-    //         $product = ProductModel::find($id);
-    //         if (!$product) {
-    //             return response()->json([
-    //                 'success' => false,
-    //                 'message' => 'Product not found!',
-    //             ], 404);
-    //         }
-
-    //         // Validate input
-    //         $validator = Validator::make($request->all(), [
-    //             'image_ids' => 'required|array',
-    //             'image_ids.*' => 'integer|exists:t_uploads,id',
-    //         ]);
-
-    //         if ($validator->fails()) {
-    //             return response()->json([
-    //                 'success' => false,
-    //                 'message' => $validator->errors()->first(),
-    //             ], 422);
-    //         }
-
-    //         $imageIdsToDelete = $request->image_ids;
-
-    //         // Fetch current images
-    //         $existingImageIds = $product->image ? explode(',', $product->image) : [];
-
-    //         // Find and delete the images from storage and database
-    //         foreach ($imageIdsToDelete as $imgId) {
-    //             $upload = UploadModel::find($imgId);
-    //             if ($upload) {
-    //                 // Remove file from storage
-    //                 $filePath = str_replace(asset('storage/'), '', $upload->file_url);
-    //                 if (Storage::disk('public')->exists($filePath)) {
-    //                     Storage::disk('public')->delete($filePath);
-    //                 }
-
-    //                 // Delete from uploads table
-    //                 $upload->delete();
-    //             }
-    //         }
-
-    //         // Remove deleted IDs from product images
-    //         $updatedImageIds = array_diff($existingImageIds, $imageIdsToDelete);
-    //         $product->image = implode(',', $updatedImageIds);
-    //         $product->save();
-
-    //         return response()->json([
-    //             'success' => true,
-    //             'message' => 'Selected product images deleted successfully!',
-    //             'remaining_images' => $product->image,
-    //         ], 200);
-
-    //     } catch (\Exception $e) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Something went wrong: ' . $e->getMessage(),
-    //         ], 500);
-    //     }
-    // }
 
     // Delete specific product specific image
     public function deleteSProductImages(int $product_id, int $upload_id)
